@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "turtmod",
+  "version": "1.0.0+1.21.11",
+  "name": "TurtMod",
+  "description": "Client-side PvP quality-of-life mod focused on visual clarity, combat feedback, and HUD customization.",
+  "authors": [
+    "TurtMod"
+  ],
+  "contact": {
+    "homepage": "https://example.com/",
+    "sources": "https://example.com/"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/turtmod/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      {
+        "value": "com.turtmod.TurtModClient"
+      }
+    ],
+    "modmenu": [
+      "com.turtmod.config.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "turtmod.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.18.4",
+    "minecraft": "~1.21.11",
+    "java": "\u003e\u003d21",
+    "fabric-api": "*",
+    "fabric-language-kotlin": "*",
+    "cloth-config": "*",
+    "modmenu": "*"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/DiscordIPC-0.11.3.jar"
+    }
+  ]
+}
