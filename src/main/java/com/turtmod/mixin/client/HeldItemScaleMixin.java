@@ -47,12 +47,22 @@ public abstract class HeldItemScaleMixin {
             if (config.visual.customOffhandHeldItemSize) {
                matrices.method_22905(config.visual.offhandHeldItemScaleX, config.visual.offhandHeldItemScaleY, config.visual.offhandHeldItemScaleZ);
                matrices.method_46416(config.visual.offhandHeldItemPosX, config.visual.offhandHeldItemPosY, config.visual.offhandHeldItemPosZ);
+               turtmod$rotate(matrices, config.visual.offhandHeldItemRotX, config.visual.offhandHeldItemRotY, config.visual.offhandHeldItemRotZ);
             }
          } else if (config.visual.customHeldItemSize) {
             matrices.method_22905(config.visual.heldItemScaleX, config.visual.heldItemScaleY, config.visual.heldItemScaleZ);
             matrices.method_46416(config.visual.heldItemPosX, config.visual.heldItemPosY, config.visual.heldItemPosZ);
+            turtmod$rotate(matrices, config.visual.heldItemRotX, config.visual.heldItemRotY, config.visual.heldItemRotZ);
          }
       }
+   }
+
+   private static void turtmod$rotate(class_4587 matrices, float degX, float degY, float degZ) {
+      if (degX == 0.0F && degY == 0.0F && degZ == 0.0F) {
+         return;
+      }
+      matrices.method_22907(new org.joml.Quaternionf().rotationXYZ(
+         (float)Math.toRadians(degX), (float)Math.toRadians(degY), (float)Math.toRadians(degZ)));
    }
 
    @Inject(

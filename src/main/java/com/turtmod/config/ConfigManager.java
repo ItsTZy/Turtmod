@@ -22,6 +22,10 @@ public final class ConfigManager {
    }
 
    public static TurtModConfig load() {
+      return migrate(loadRaw());
+   }
+
+   private static TurtModConfig loadRaw() {
       if (!Files.exists(CONFIG_PATH, new LinkOption[0])) {
          TurtModConfig defaults = loadBundledDefaults();
          save(defaults);
@@ -35,6 +39,20 @@ public final class ConfigManager {
             return recoverWithDefaults();
          }
       }
+   }
+
+   /** Forward-compat fixups applied to any loaded config (defaults included). */
+   private static TurtModConfig migrate(TurtModConfig config) {
+      if (config != null) {
+         if (config.misc != null) {
+            config.misc.ensureCommandKeys();
+            config.misc.ensurePinned();
+         }
+         if (config.hud != null) {
+            config.hud.ensureCleanF3();
+         }
+      }
+      return config;
    }
 
    public static void save(TurtModConfig config) {

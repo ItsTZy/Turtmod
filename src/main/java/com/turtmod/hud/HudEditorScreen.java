@@ -4,6 +4,7 @@ import com.turtmod.TurtModClient;
 import com.turtmod.config.ConfigManager;
 import com.turtmod.config.TurtModConfig;
 import com.turtmod.ui.BrandingRenderer;
+import com.turtmod.ui.Palette;
 import com.turtmod.ui.TurtUIButton;
 import com.turtmod.ui.TurtUIUtils;
 import java.awt.Color;
@@ -26,22 +27,17 @@ public class HudEditorScreen extends class_437 {
    private long lastFrameNs = System.nanoTime();
    private float openFade = 0.0F;
 
-   private static final Color PANEL_BG    = new Color(1709588, true);
-   private static final Color PANEL_BORDER= new Color(9289311, true);
-   private static final Color ACCENT_GREEN= new Color(9289311, false);
-   private static final Color ACCENT_PINK = new Color(16752046, false);
-   private static final Color TEXT_MAIN   = new Color(16775399, false);
-   private static final Color BTN_BG      = new Color(2433054, true);
-   private static final Color BTN_HOVER   = new Color(3482400, true);
+   // Colours come from the central Palette so a re-theme is one-file (values are identical).
+   private static final Color PANEL_BORDER = Palette.PANEL_BORDER;
+   private static final Color ACCENT_GREEN = Palette.GREEN;
+   private static final Color ACCENT_PINK  = Palette.PINK;
+   private static final Color TEXT_MAIN    = Palette.TEXT;
+   private static final Color BTN_BG       = Palette.BTN_BG;
+   private static final Color BTN_HOVER    = Palette.BTN_HOVER;
+   private float resetFlash = 0f;  // green confirmation flash after Reset
 
-   // Sidebar panel geometry (left side, top-anchored)
-   private static final int SIDE_W    = 130;
-   private static final int SIDE_PAD  = 8;
-   private static final int SIDE_ITEM = 20;
-
-   // Compact chrome: smaller header + footer so the editor keeps more screen space
-   private static final int HEADER_H  = 18;
-   private static final int FOOTER_H  = 22;
+   // Compact floating toolbar geometry (centered along the bottom edge).
+   private int barX, barY, barW, barH;
 
    public HudEditorScreen(class_437 parent) {
       super(class_2561.method_43470("HUD Editor"));
@@ -51,40 +47,52 @@ public class HudEditorScreen extends class_437 {
    protected void method_25426() {
       this.cfg = TurtModClient.getConfig();
       com.turtmod.ui.TurtUITheme btnTheme = new com.turtmod.ui.TurtUITheme(BTN_BG, PANEL_BORDER, TEXT_MAIN, BTN_HOVER, ACCENT_PINK);
-      int btnH = 14;
-      int btnY = this.field_22790 - FOOTER_H + (FOOTER_H - btnH) / 2;
       this.buttons.clear();
 
-      // Left side: snap controls
-      int bx = SIDE_W + SIDE_PAD + 4;
-      this.buttons.add(new TurtUIButton(bx, btnY, 72, btnH,
-         this.cfg.hud.snapToGrid ? "Grid ON" : "Grid OFF", btnTheme, () -> {
-            this.cfg.hud.snapToGrid = !this.cfg.hud.snapToGrid;
-            ConfigManager.save(this.cfg); this.method_25426();
-         }));
-      this.buttons.add(new TurtUIButton(bx + 76, btnY, 88, btnH,
-         this.cfg.hud.snapToCenter ? "Center ON" : "Center OFF", btnTheme, () -> {
-            this.cfg.hud.snapToCenter = !this.cfg.hud.snapToCenter;
-            ConfigManager.save(this.cfg); this.method_25426();
-         }));
-      this.buttons.add(new TurtUIButton(bx + 168, btnY, 60, btnH,
-         "Grid " + this.cfg.hud.gridSize, btnTheme, () -> {
-            this.cfg.hud.gridSize = this.cfg.hud.gridSize >= 32 ? 4 : this.cfg.hud.gridSize + 4;
-            ConfigManager.save(this.cfg); this.method_25426();
-         }));
+      // One compact, auto-sized, centered toolbar — no full-width chrome, so the
+      // whole screen stays visible for placing HUD elements.
+      String[] labels = {
+         this.cfg.hud.snapToGrid   ? "Grid: On"   : "Grid: Off",
+         this.cfg.hud.snapToCenter ? "Center: On" : "Center: Off",
+         "Grid " + this.cfg.hud.gridSize,
+         "Reset",
+         "Done"
+      };
+      Runnable[] actions = {
+         () -> { this.cfg.hud.snapToGrid   = !this.cfg.hud.snapToGrid;   ConfigManager.save(this.cfg); this.method_25426(); },
+         () -> { this.cfg.hud.snapToCenter = !this.cfg.hud.snapToCenter; ConfigManager.save(this.cfg); this.method_25426(); },
+         () -> { this.cfg.hud.gridSize = this.cfg.hud.gridSize >= 32 ? 4 : this.cfg.hud.gridSize + 4; ConfigManager.save(this.cfg); this.method_25426(); },
+         () -> { HudEditorFeature.resetAllPositions(TurtModClient.getConfig()); HudEditorFeature.resetSelectedScale(TurtModClient.getConfig()); this.resetFlash = 1f; },
+         this::method_25419
+      };
 
-      // Right side: actions — right-aligned with gaps so nothing overlaps.
-      int gap = 4;
-      int doneW = 50, resetW = 78;
-      int doneX = this.field_22789 - 6 - doneW;
-      int resetAllX = doneX - gap - resetW;
-      int resetScaleX = resetAllX - gap - resetW;
-      this.buttons.add(new TurtUIButton(resetScaleX, btnY, resetW, btnH, "Reset Scale", btnTheme,
-         () -> HudEditorFeature.resetSelectedScale(TurtModClient.getConfig())));
-      this.buttons.add(new TurtUIButton(resetAllX, btnY, resetW, btnH, "Reset All", btnTheme,
-         () -> HudEditorFeature.resetAllPositions(TurtModClient.getConfig())));
-      this.buttons.add(new TurtUIButton(doneX, btnY, doneW, btnH, "Done", btnTheme,
-         this::method_25419));
+      int btnH = 13;
+      int gap = 3;
+      int hpad = 6; // text padding inside each button
+
+      int[] widths = new int[labels.length];
+      int total = 0;
+      for (int i = 0; i < labels.length; i++) {
+         widths[i] = this.field_22793.method_1727(labels[i]) + hpad * 2;
+         total += widths[i];
+      }
+      total += gap * (labels.length - 1);
+
+      // Centered on screen (both axes) — most people don't place HUDs dead-center,
+      // and the row is small enough to leave room if they do.
+      int startX = (this.field_22789 - total) / 2;
+      int btnY = (this.field_22790 - btnH) / 2;
+
+      this.barW = total;
+      this.barH = btnH;
+      this.barX = startX;
+      this.barY = btnY;
+
+      int x = startX;
+      for (int i = 0; i < labels.length; i++) {
+         this.buttons.add(new TurtUIButton(x, btnY, widths[i], btnH, labels[i], btnTheme, actions[i]));
+         x += widths[i] + gap;
+      }
    }
 
    public void method_25394(class_332 ctx, int mx, int my, float delta) {
@@ -92,6 +100,7 @@ public class HudEditorScreen extends class_437 {
       float dt = Math.min((now - lastFrameNs) / 1_000_000_000f, 0.1f);
       lastFrameNs = now;
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1.0f, dt, 12f);
+      this.resetFlash = TurtUIUtils.lerp01(this.resetFlash, 0f, dt, 3.5f);
 
       TurtUIUtils.update();
       int sw = this.field_22787.method_22683().method_4486();
@@ -114,16 +123,42 @@ public class HudEditorScreen extends class_437 {
       // ── 4. Per-element cards (group backgrounds + labels)
       renderElementCards(ctx, mx, my, dt);
 
-      // ── 5. Left sidebar panel
-      renderSidebar(ctx, mx, my);
+      // ── 4a. Figma-style alignment guides + snap pulse + live position chip while dragging.
+      drawDragGuides(ctx);
 
-      // ── 6. Bottom control strip
-      int stripY = this.field_22790 - FOOTER_H;
-      ctx.method_25294(0, stripY, this.field_22789, this.field_22790, 0xDD000000);
-      ctx.method_25294(0, stripY, this.field_22789, stripY + 1, ACCENT_GREEN.getRGB());
+      // ── 4b. Small TurtMod logo, top-left corner (no header bar)
+      BrandingRenderer.drawLogo(ctx, 6, 6, 16, 16);
 
-      for (TurtUIButton btn : this.buttons)
+      // ── 4b2. Special (HUD Editor): live FPS readout, top-right, so you can gauge cost while editing.
+      String fpsStr = this.field_22787.method_47599() + " fps";
+      int fpsW = this.field_22793.method_1727(fpsStr) + 12;
+      int fpsX = this.field_22789 - fpsW - 6;
+      TurtUIUtils.drawRoundedRect(ctx, fpsX, 8, fpsW, 14, 4, new Color(0x66000000, true));
+      TurtUIUtils.drawRoundedBorder(ctx, fpsX, 8, fpsW, 14, 4, new Color(255, 255, 255, 22));
+      ctx.method_51433(this.field_22793, fpsStr, fpsX + 6, 11, 0xFF8CE05B, false);
+
+      // ── 4c. Hint chip near the top so the editor is self-explanatory (Lunar-style helper).
+      String hint = "Drag to move  •  Scroll to scale  •  Esc to save";
+      int hintW = this.field_22793.method_1727(hint) + 14;
+      int hintX = (this.field_22789 - hintW) / 2;
+      TurtUIUtils.drawRoundedRect(ctx, hintX, 8, hintW, 14, 4, new Color(0x66000000, true));
+      TurtUIUtils.drawRoundedBorder(ctx, hintX, 8, hintW, 14, 4, new Color(255, 255, 255, 22));
+      ctx.method_51433(this.field_22793, hint, hintX + 7, 11, 0xFFCCCCCC, false);
+
+      // ── 5. Floating rounded toolbar panel with animated (rounded/hover/press) buttons.
+      int pad = 4;
+      TurtUIUtils.drawShadow(ctx, this.barX - pad, this.barY - pad, this.barW + pad * 2, this.barH + pad * 2, 6);
+      TurtUIUtils.drawRoundedRect(ctx, this.barX - pad, this.barY - pad, this.barW + pad * 2, this.barH + pad * 2, 5, new Color(0xCC10131A, true));
+      TurtUIUtils.drawRoundedBorder(ctx, this.barX - pad, this.barY - pad, this.barW + pad * 2, this.barH + pad * 2, 5, PANEL_BORDER);
+      for (TurtUIButton btn : this.buttons) {
          btn.render(ctx, mx, my, this.field_22793);
+      }
+
+      // Inline "reset" confirmation: a brief green wash over the screen (no toast).
+      if (this.resetFlash > 0.02f) {
+         ctx.method_25294(0, 0, this.field_22789, this.field_22790,
+            ((int) (55 * this.resetFlash) << 24) | (ACCENT_GREEN.getRGB() & 0xFFFFFF));
+      }
 
       // Smooth fade-in from black when the editor opens (~180ms)
       if (this.openFade < 0.99f) {
@@ -132,6 +167,67 @@ public class HudEditorScreen extends class_437 {
       }
 
       super.method_25394(ctx, mx, my, delta);
+   }
+
+   /** Draws alignment guides (vs other elements), a snap pulse, and a position chip for the drag. */
+   private void drawDragGuides(class_332 ctx) {
+      HudEditorFeature.Anchor d = HudEditorFeature.getDragging();
+      if (d == null) {
+         return;
+      }
+      class_310 c = this.field_22787;
+      int sw = this.field_22789;
+      int sh = this.field_22790;
+      int dx = HudEditorFeature.getX(d, c, this.cfg);
+      int dy = HudEditorFeature.getY(d, c, this.cfg);
+      int dw = HudEditorFeature.getWidth(d, c, this.cfg);
+      int dh = HudEditorFeature.getHeight(d, c, this.cfg);
+      int[] dXs = { dx, dx + dw / 2, dx + dw };
+      int[] dYs = { dy, dy + dh / 2, dy + dh };
+      int guide = (0xCC << 24) | (ACCENT_PINK.getRGB() & 0xFFFFFF);
+
+      for (HudEditorFeature.Anchor o : HudEditorFeature.Anchor.values()) {
+         if (o == d || o == HudEditorFeature.Anchor.ZOOM || !HudEditorFeature.isEnabled(o, this.cfg)) {
+            continue;
+         }
+         int ox = HudEditorFeature.getX(o, c, this.cfg);
+         int oy = HudEditorFeature.getY(o, c, this.cfg);
+         int ow = HudEditorFeature.getWidth(o, c, this.cfg);
+         int oh = HudEditorFeature.getHeight(o, c, this.cfg);
+         int[] oXs = { ox, ox + ow / 2, ox + ow };
+         int[] oYs = { oy, oy + oh / 2, oy + oh };
+         for (int a : dXs) {
+            for (int b : oXs) {
+               if (Math.abs(a - b) <= 4) {
+                  ctx.method_25294(b, Math.min(dy, oy) - 4, b + 1, Math.max(dy + dh, oy + oh) + 4, guide);
+               }
+            }
+         }
+         for (int a : dYs) {
+            for (int b : oYs) {
+               if (Math.abs(a - b) <= 4) {
+                  ctx.method_25294(Math.min(dx, ox) - 4, b, Math.max(dx + dw, ox + ow) + 4, b + 1, guide);
+               }
+            }
+         }
+      }
+
+      // Snap pulse: an expanding white border flash shortly after a center-snap.
+      long age = System.nanoTime() - HudEditorFeature.snapPulseNs;
+      if (age >= 0L && age < 220_000_000L) {
+         float p = 1f - age / 220_000_000f;
+         int exp = (int) (6 * (1f - p));
+         ctx.method_73198(dx - 2 - exp, dy - 2 - exp, dw + 4 + exp * 2, dh + 4 + exp * 2, ((int) (220 * p) << 24) | 0xFFFFFF);
+      }
+
+      // Live position chip near the dragged element.
+      String pos = dx + ", " + dy + "  (" + dw + "×" + dh + ")";
+      int pw = this.field_22793.method_1727(pos) + 10;
+      int pxc = Math.max(2, Math.min(dx, sw - pw - 2));
+      int pyc = (dy + dh + 13 <= sh) ? dy + dh + 2 : dy - 13;
+      TurtUIUtils.drawRoundedRect(ctx, pxc, pyc, pw, 11, 3, new Color(0xCC10131A, true));
+      TurtUIUtils.drawRoundedBorder(ctx, pxc, pyc, pw, 11, 3, ACCENT_PINK);
+      ctx.method_51433(this.field_22793, pos, pxc + 5, pyc + 2, 0xFFFFFFFF, false);
    }
 
    private void renderElementCards(class_332 ctx, int mx, int my, float dt) {
@@ -181,20 +277,6 @@ public class HudEditorScreen extends class_437 {
       }
       // Let HudEditorFeature draw the actual HUD widgets + selection handles
       HudEditorFeature.render(ctx, client, this.cfg, mx, my);
-   }
-
-   private void renderSidebar(class_332 ctx, int mx, int my) {
-      // Sidebar removed — use full screen for HUD editing space
-      // Just draw a compact top bar with logo + title
-      ctx.method_25294(0, 0, this.field_22789, HEADER_H, 0xDD000000);
-      ctx.method_25294(0, HEADER_H, this.field_22789, HEADER_H + 1, ACCENT_GREEN.getRGB());
-      int logoSz = HEADER_H - 6;
-      BrandingRenderer.drawLogo(ctx, 5, 3, logoSz, logoSz);
-      int textY = (HEADER_H - 8) / 2;
-      TurtUIUtils.drawGradientText(ctx, this.field_22793, "TurtMod  HUD Editor",
-         5 + logoSz + 5, textY, ACCENT_GREEN, ACCENT_PINK, false, false);
-      TurtUIUtils.drawText(ctx, this.field_22793, "Drag to move  ·  Scroll = scale  ·  R = reset",
-         this.field_22789 - 6, textY, new Color(0x99AAAAAA, true), true, false);
    }
 
    private static String getAnchorName(HudEditorFeature.Anchor a) {

@@ -2,9 +2,12 @@ package com.turtmod.mixin.client;
 
 import com.turtmod.TurtModClient;
 import com.turtmod.config.TurtModConfig;
+//? if >=1.21.11 {
 import net.minecraft.class_12155;
+//?}
 import net.minecraft.class_1296;
 import net.minecraft.class_1297;
+import net.minecraft.class_1304;
 import net.minecraft.class_1309;
 import net.minecraft.class_1588;
 import net.minecraft.class_1657;
@@ -16,9 +19,15 @@ import net.minecraft.class_746;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
+//? if >=1.21.11 {
 @Mixin({class_12155.class})
+//?} else {
+/*@Mixin({net.minecraft.class_898.class})
+*///?}
 public abstract class EntityRenderDispatcherMixin {
+   //? if >=1.21.11 {
    @ModifyVariable(
       method = {"method_75432"},
       at = @At("STORE"),
@@ -46,6 +55,48 @@ public abstract class EntityRenderDispatcherMixin {
          return originalColor;
       }
    }
+
+   /**
+    * The debug-hitbox loop ({@code class_12155.method_23109}) skips any entity whose {@code method_5767()}
+    * (isInvisible) is true. When "Show On Invisible" is on we make that check report invisible PLAYERS as
+    * visible, so their hitbox is rendered (and the recolor injector above still colours it). Other
+    * call-effects of isInvisible are unaffected because the redirect is scoped to this method only.
+    */
+   @Redirect(
+      method = "method_23109",
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_1297;method_5767()Z")
+   )
+   private boolean turtmod$showInvisibleHitboxes(class_1297 entity) {
+      boolean invisible = entity.method_5767();
+      TurtModConfig cfg = TurtModClient.getConfig();
+      if (!invisible || cfg == null || !cfg.misc.enabled || !cfg.hud.customHitboxes || !cfg.hud.hitboxShowInvisible) {
+         return invisible;
+      }
+      if (entity instanceof class_1657 player) {
+         if (!cfg.hud.hitboxPlayers) {
+            return invisible;
+         }
+         // "Armor Only": keep invisible players hidden unless they're wearing armour.
+         if (cfg.hud.hitboxShowInvisibleArmorOnly && !turtmod$hasVisibleArmor(player)) {
+            return invisible;
+         }
+         return false;
+      }
+      // Non-player entities: only when "Include Mobs/Entities" is on. The recolor injector's per-type
+      // filters (hostile/passive/others/distance) still apply by zeroing the colour of unwanted types.
+      if (cfg.hud.hitboxShowInvisibleEntities) {
+         return false;
+      }
+      return invisible;
+   }
+
+   private static boolean turtmod$hasVisibleArmor(class_1657 player) {
+      return !player.method_6118(class_1304.field_6169).method_7960()
+         || !player.method_6118(class_1304.field_6174).method_7960()
+         || !player.method_6118(class_1304.field_6172).method_7960()
+         || !player.method_6118(class_1304.field_6166).method_7960();
+   }
+   //?}
 
    private static boolean turtmod$shouldRenderEntity(class_1297 entity, class_746 player, TurtModConfig config) {
       if (entity == player && !config.hud.hitboxSelf) {

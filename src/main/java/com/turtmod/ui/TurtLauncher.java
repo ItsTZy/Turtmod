@@ -54,6 +54,13 @@ public final class TurtLauncher {
    public static void drawChrome(class_332 ctx, class_327 tr,
                                  int panelX, int panelY, int panelW, int panelH,
                                  String title, String playerName, String version) {
+      drawChrome(ctx, tr, panelX, panelY, panelW, panelH, title, playerName, version, true);
+   }
+
+   /** Chrome variant; pass {@code sidebar=false} to omit the left nav strip for full-width content. */
+   public static void drawChrome(class_332 ctx, class_327 tr,
+                                 int panelX, int panelY, int panelW, int panelH,
+                                 String title, String playerName, String version, boolean sidebar) {
       // ── Drop shadow
       TurtUIUtils.drawShadow(ctx, panelX, panelY, panelW, panelH, 12);
 
@@ -62,14 +69,16 @@ public final class TurtLauncher {
       Color bgTop = new Color(Math.min(255, BG.getRed() + 8), Math.min(255, BG.getGreen() + 10), Math.min(255, BG.getBlue() + 12), BG.getAlpha());
       ctx.method_25296(panelX + 1, panelY + 1, panelX + panelW - 1, panelY + panelH / 2,
          bgTop.getRGB(), 0x00000000);
-      ctx.method_73198(panelX, panelY, panelW, panelH, BORDER.getRGB());
+      TurtUIUtils.drawRoundedBorder(ctx, panelX, panelY, panelW, panelH, 4, BORDER);
       // Soft top highlight
       ctx.method_25294(panelX + 2, panelY + 1, panelX + panelW - 2, panelY + 2, 0x18FFFFFF);
 
       // ── Header strip
       TurtUIUtils.drawRoundedRect(ctx, panelX, panelY, panelW, HEADER_H, 4, HEADER_BG);
-      // Logo in header left (uses BrandingRenderer so correct 640x640 texture dims)
-      BrandingRenderer.drawLogo(ctx, panelX + 8, panelY + (HEADER_H - LOGO_SZ) / 2, LOGO_SZ, LOGO_SZ);
+      // Logo in header left (uses BrandingRenderer so correct 640x640 texture dims).
+      // Gentle floating bob for a cute, living header (Lunar-style).
+      int logoBob = (int)Math.round(Math.sin(System.currentTimeMillis() * 0.0022) * 1.4);
+      BrandingRenderer.drawLogo(ctx, panelX + 8, panelY + (HEADER_H - LOGO_SZ) / 2 + logoBob, LOGO_SZ, LOGO_SZ);
       // Title text (gradient, after logo)
       TurtUIUtils.drawGradientText(ctx, tr, title, panelX + 10 + LOGO_SZ + 6, panelY + (HEADER_H - 8) / 2, GREEN, PINK, false, true);
       // Version right
@@ -77,12 +86,27 @@ public final class TurtLauncher {
          TurtUIUtils.drawText(ctx, tr, version, panelX + panelW - 8, panelY + (HEADER_H - 8) / 2, new Color(0x88AAAAAA, true), true, false);
       // Gradient divider below header
       TurtUIUtils.drawHGradientLine(ctx, panelX + 6, panelY + HEADER_H, panelW - 12, GREEN, PINK, 1);
+      // Lunar-style shine sweeping along the divider for a living, premium feel.
+      int lineX = panelX + 6;
+      int lineW = panelW - 12;
+      float st = (System.currentTimeMillis() % 3200L) / 3200.0F;
+      int sx = lineX + (int)(st * lineW);
+      for (int i = -10; i <= 10; i++) {
+         int a = (int)(140.0F * (1.0F - Math.abs(i) / 10.0F));
+         int xx = sx + i;
+         if (a <= 0 || xx < lineX || xx > lineX + lineW) {
+            continue;
+         }
+         ctx.method_25294(xx, panelY + HEADER_H, xx + 1, panelY + HEADER_H + 1, (a << 24) | 0xFFFFFF);
+      }
 
       // ── Sidebar bg + separator
-      ctx.method_25294(panelX, panelY + HEADER_H + 1,
-         panelX + SIDEBAR_W, panelY + panelH - FOOTER_H - 1, SIDEBAR_BG.getRGB());
-      ctx.method_25294(panelX + SIDEBAR_W, panelY + HEADER_H + 1,
-         panelX + SIDEBAR_W + 1, panelY + panelH - FOOTER_H - 1, BORDER.getRGB());
+      if (sidebar) {
+         ctx.method_25294(panelX, panelY + HEADER_H + 1,
+            panelX + SIDEBAR_W, panelY + panelH - FOOTER_H - 1, SIDEBAR_BG.getRGB());
+         ctx.method_25294(panelX + SIDEBAR_W, panelY + HEADER_H + 1,
+            panelX + SIDEBAR_W + 1, panelY + panelH - FOOTER_H - 1, BORDER.getRGB());
+      }
 
       // ── Footer
       ctx.method_25294(panelX, panelY + panelH - FOOTER_H,
@@ -97,7 +121,38 @@ public final class TurtLauncher {
          panelX + panelW - 8, panelY + panelH - 15, new Color(0x66AAAAAA, true), true, false);
    }
 
-   /** Draws a single sidebar nav item. */
+   // Sliding active-tab indicator state (one launcher screen open at a time, so shared is fine).
+   private static float navIndicatorY = -1f;
+   private static long  navIndicatorNs = System.nanoTime();
+
+   /**
+    * Draws the sliding highlight behind the active nav item. Call once, before the per-item
+    * {@link #drawNavItem} loop, so the highlight sits under the labels and glides between tabs.
+    */
+   public static void drawNavIndicator(class_332 ctx, int panelX, int panelY, int activeIndex) {
+      int x = panelX + 3;
+      int w = SIDEBAR_W - 6;
+      int h = NAV_ITEM_H;
+      float target = panelY + HEADER_H + 4 + activeIndex * (NAV_ITEM_H + NAV_ITEM_PAD);
+
+      long now = System.nanoTime();
+      float dt = Math.min((now - navIndicatorNs) / 1_000_000_000f, 0.1f);
+      navIndicatorNs = now;
+      navIndicatorY = navIndicatorY < 0f ? target : TurtUIUtils.lerp01(navIndicatorY, target, dt, 18f);
+      int y = Math.round(navIndicatorY);
+
+      // Gentle breathing pulse for a living, Lunar-style feel.
+      float pulse = 0.5f + 0.5f * (float) Math.sin(now * 3.5e-9);
+      int fillA = 30 + (int)(14 * pulse);
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4,
+         new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), fillA));
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4,
+         new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), 70));
+      // Rounded accent bar on the left edge.
+      TurtUIUtils.drawRoundedRect(ctx, x, y + 4, 3, h - 8, 1, GREEN);
+   }
+
+   /** Draws a single sidebar nav item's label (highlight handled by {@link #drawNavIndicator}). */
    public static void drawNavItem(class_332 ctx, class_327 tr,
                                   int panelX, int panelY, int index,
                                   String label, boolean active, boolean hovered) {
@@ -107,9 +162,6 @@ public final class TurtLauncher {
       int h = NAV_ITEM_H;
 
       if (active) {
-         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 3,
-            new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), 40));
-         ctx.method_25294(x, y + 3, x + 3, y + h - 3, GREEN.getRGB());
          TurtUIUtils.drawText(ctx, tr, label, x + 10, y + (h - 8) / 2, GREEN, false, true);
       } else if (hovered) {
          TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 3, new Color(0x1EFFFFFF, true));
@@ -139,6 +191,21 @@ public final class TurtLauncher {
    public static int contentW(int panelW) { return panelW - SIDEBAR_W - CONTENT_PAD * 2; }
    /** Height of the content area (above footer). */
    public static int contentH(int panelH) { return panelH - HEADER_H - FOOTER_H - CONTENT_PAD * 2; }
+
+   /**
+    * Draws a polished content sub-panel (rounded, faint top sheen, border, optional title strip) so
+    * every screen's inner panels match the chrome instead of looking like flat boxes.
+    */
+   public static void drawContentPanel(class_332 ctx, class_327 tr, int x, int y, int w, int h, String title) {
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, new Color(0x3A05080A, true));
+      ctx.method_25296(x + 1, y + 1, x + w - 1, y + h / 2, 0x12FFFFFF, 0x00000000);
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, BORDER);
+      ctx.method_25294(x + 2, y + 1, x + w - 2, y + 2, 0x14FFFFFF); // top highlight
+      if (title != null) {
+         TurtUIUtils.drawText(ctx, tr, title, x + 7, y + 6, GREEN, false, true);
+         TurtUIUtils.drawHGradientLine(ctx, x + 7, y + 16, w - 14, GREEN, PINK, 1);
+      }
+   }
 
    /** Draws a section header label + subtle line in the content area. */
    public static void drawSectionTitle(class_332 ctx, class_327 tr, int x, int y, int maxW, String label) {

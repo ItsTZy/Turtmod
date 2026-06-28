@@ -3,17 +3,35 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
 	id("net.fabricmc.fabric-loom-remap")
 	`maven-publish`
-	id("org.jetbrains.kotlin.jvm") version "2.3.21"
+	id("org.jetbrains.kotlin.jvm")
 }
 
-version = providers.gradleProperty("mod_version").get()
+// The active Minecraft version for this Stonecutter node (e.g. "1.21.11").
+val mcVersion: String = stonecutter.current.version
+
+version = "${providers.gradleProperty("mod_version").get()}+$mcVersion"
 group = providers.gradleProperty("maven_group").get()
+base { archivesName.set("turtmod") }
 
 repositories {
 	maven("https://maven.terraformersmc.com/releases/")
 	maven("https://maven.shedaniel.me/")
 	maven("https://api.modrinth.com/maven")
 	mavenCentral()
+}
+
+// Per-Minecraft-version dependency coordinates. See PORTING_HANDOFF.md for the full table.
+// 1.21.11 mirrors the verified-working baseline exactly; newer nodes use version-matched libs.
+data class Deps(
+	val fabricApi: String,
+	val cloth: String,
+	val modmenu: String,
+	val kotlin: String,
+)
+
+val deps: Deps = when (mcVersion) {
+	"1.21.11" -> Deps("0.141.4+1.21.11", "17.0.144", "17.0.0", "1.13.11+kotlin.2.3.21")
+	else -> error("No dependency coordinates configured for Minecraft $mcVersion (add a row to build.gradle.kts)")
 }
 
 loom {
@@ -25,27 +43,26 @@ loom {
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
-	mappings("net.fabricmc:intermediary:${providers.gradleProperty("minecraft_version").get()}:v2")
+	minecraft("com.mojang:minecraft:$mcVersion")
+	mappings("net.fabricmc:intermediary:$mcVersion:v2")
 	modImplementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
-	implementation(files("src/main/resources/META-INF/jars/DiscordIPC-0.11.3.jar"))
+	implementation(files(rootProject.file("src/main/resources/META-INF/jars/DiscordIPC-0.11.3.jar")))
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
-	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
-	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${providers.gradleProperty("cloth_config_version").get()}")
-	modImplementation("com.terraformersmc:modmenu:${providers.gradleProperty("modmenu_version").get()}")
-	modImplementation("maven.modrinth:walksylib:${providers.gradleProperty("walksylib_version").get()}")
-	modImplementation("maven.modrinth:ukulib:${providers.gradleProperty("ukulib_version").get()}")
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${deps.fabricApi}")
+	modImplementation("net.fabricmc:fabric-language-kotlin:${deps.kotlin}")
+	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${deps.cloth}")
+	modImplementation("com.terraformersmc:modmenu:${deps.modmenu}")
 }
 
 tasks.processResources {
-	val version = version
-	inputs.property("version", version)
+	val props = mapOf(
+		"version" to version,
+		"minecraft" to mcVersion,
+	)
+	props.forEach { (k, v) -> inputs.property(k, v) }
 
 	filesMatching("fabric.mod.json") {
-		expand("version" to version)
+		expand(props)
 	}
 }
 
@@ -62,7 +79,6 @@ kotlin {
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_21
@@ -73,7 +89,7 @@ tasks.jar {
 	val projectName = project.name
 	inputs.property("projectName", projectName)
 
-	from("LICENSE") {
+	from(rootProject.file("LICENSE")) {
 		rename { "${it}_$projectName" }
 	}
 }
@@ -86,11 +102,7 @@ publishing {
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 	repositories {
 		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }

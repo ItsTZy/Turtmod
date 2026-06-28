@@ -36,10 +36,8 @@ public class ScreenshotGalleryScreen extends class_437 {
    private final Path currentDir;
    private final List<File> screenshots = new ArrayList();
    private final Map<String, class_2960> thumbCache = new HashMap();
-   private static final int THUMB_SIZE = 90;
-   private static final int THUMB_PAD = 8;
-   private static final int ROW_H = 115;
-   private static final int BUTTON_H = 20;
+   private static final int THUMB_W = 160;   // 16:9 thumbnail texture (no distortion for screenshots)
+   private static final int THUMB_H = 90;
    private static final Color PANEL_BG = new Color(1709588, true);
    private static final Color PANEL_BORDER = new Color(9289311, true);
    private static final Color ACCENT_GREEN = new Color(9289311, false);
@@ -140,12 +138,12 @@ public class ScreenshotGalleryScreen extends class_437 {
             if (img == null) {
                return null;
             } else {
-               class_1011 thumb = new class_1011(img.method_4318(), 90, 90, false);
+               class_1011 thumb = new class_1011(img.method_4318(), THUMB_W, THUMB_H, false);
 
-               for(int x = 0; x < 90; ++x) {
-                  for(int y = 0; y < 90; ++y) {
-                     int sx = Math.min((int)((float)x / 90.0F * (float)img.method_4307()), img.method_4307() - 1);
-                     int sy = Math.min((int)((float)y / 90.0F * (float)img.method_4323()), img.method_4323() - 1);
+               for(int x = 0; x < THUMB_W; ++x) {
+                  for(int y = 0; y < THUMB_H; ++y) {
+                     int sx = Math.min((int)((float)x / (float)THUMB_W * (float)img.method_4307()), img.method_4307() - 1);
+                     int sy = Math.min((int)((float)y / (float)THUMB_H * (float)img.method_4323()), img.method_4323() - 1);
 
                      try {
                         thumb.method_61941(x, y, img.method_61940(sx, sy));
@@ -226,10 +224,31 @@ public class ScreenshotGalleryScreen extends class_437 {
       this.setStatus("Opened folder.");
    }
 
-   // Gallery layout constants — 3 top (large) + 3 bottom (medium)
-   private static final int TOP_COUNT  = 3;
-   private static final int BOT_COUNT  = 3;
-   private static final int GAP        = 6;
+   // Uniform grid layout: columns adapt to width, every card is the same 16:9 size.
+   private static final int CELL_GAP = 10;
+   private static final int LABEL_H  = 12;
+
+   private int cols() {
+      return Math.max(2, Math.min(4, (this.gridW + CELL_GAP) / 180));
+   }
+
+   private int cellW() {
+      int c = cols();
+      return (this.gridW - CELL_GAP * (c - 1)) / c;
+   }
+
+   private int imgH() {
+      return cellW() * 9 / 16;
+   }
+
+   private int cellStride() {
+      return imgH() + LABEL_H + 6 + CELL_GAP;
+   }
+
+   private int maxScrollPx() {
+      int rows = (this.screenshots.size() + cols() - 1) / Math.max(1, cols());
+      return Math.max(0, rows * cellStride() - CELL_GAP - this.gridH);
+   }
 
    public void method_25394(class_332 context, int mouseX, int mouseY, float delta) {
       long now = System.nanoTime();
@@ -238,6 +257,7 @@ public class ScreenshotGalleryScreen extends class_437 {
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, this.frameDt, 12f);
 
       TurtUIUtils.drawMenuBackdrop(context, this.field_22789, this.field_22790);
+      TurtUIUtils.drawCursorGlow(context, mouseX, mouseY);
       TurtUIUtils.update();
 
       // Fit the fixed logical layout to the screen, then work in logical mouse coords.
@@ -248,7 +268,10 @@ public class ScreenshotGalleryScreen extends class_437 {
 
       // subtle slide-up on open
       context.method_51448().pushMatrix();
-      context.method_51448().translate(0f, (1f - this.openFade) * 7f);
+      float introE = TurtUIUtils.ease(this.openFade);
+      context.method_51448().translate(LOGICAL_W / 2f, LOGICAL_H / 2f + (1f - introE) * 12f);
+      context.method_51448().scale(0.97f + 0.03f * introE, 0.97f + 0.03f * introE);
+      context.method_51448().translate(-LOGICAL_W / 2f, -LOGICAL_H / 2f);
 
       String player = this.field_22787 != null && this.field_22787.method_1548() != null
          ? this.field_22787.method_1548().method_1676() : "Player";
@@ -256,12 +279,12 @@ public class ScreenshotGalleryScreen extends class_437 {
          "Gallery", player, "Screenshots");
 
       // ── CONTENT LAYER (strictly within content area) ──
+      TurtLauncher.drawContentPanel(context, this.field_22793, this.gridX - 6, this.gridY - 6, this.gridW + 12, this.gridH + 12, null);
       if (this.screenshots.isEmpty()) {
          context.method_25300(this.field_22793, "No screenshots found",
             this.gridX + this.gridW / 2, this.gridY + this.gridH / 2, -5592406);
       } else {
          renderFeaturedRow(context, mouseX, mouseY);
-         renderSmallGrid(context, mouseX, mouseY);
       }
 
       if (this.messageTicks > 0) {
@@ -277,110 +300,97 @@ public class ScreenshotGalleryScreen extends class_437 {
 
       context.method_51448().popMatrix();
       this.uiScale.pop(context);
+      TurtUIUtils.drawOpenFade(context, this.field_22789, this.field_22790, this.openFade);
       super.method_25394(context, mouseX, mouseY, delta);
    }
 
-   /**
-    * Renders a clean 3×2 gallery grid:
-    *  Row 1 (TOP_COUNT=3): large featured thumbnails
-    *  Row 2 (BOT_COUNT=3): smaller secondary thumbnails
-    * Additional screenshots accessible via scroll.
-    */
+   /** Clean uniform grid of equal-size 16:9 cards, vertically scrolled. */
    private void renderFeaturedRow(class_332 context, int mouseX, int mouseY) {
       if (this.screenshots.isEmpty()) return;
+      int cols = cols();
+      int cellW = cellW();
+      int imgH = imgH();
+      int stride = cellStride();
+      int cardH = imgH + LABEL_H + 6;
 
-      // ── Row geometry — each row reserves a label strip below its thumbnails
-      int labelH   = 11;
-      int rowGap   = 16;        // generous gap between the two rows
-      int cellGap  = 12;        // generous gap between thumbnails in a row
-      int availW   = this.gridW;
-      int availH   = this.gridH - labelH * 2 - rowGap;  // space for 2 image rows
-      int topH     = availH * 52 / 100;
-      int botH     = availH - topH;
-      int topW     = (availW - cellGap * (TOP_COUNT - 1)) / TOP_COUNT;
-      int botW     = (availW - cellGap * (BOT_COUNT - 1)) / BOT_COUNT;
-      int topY     = this.gridY;
-      int topLabelY= topY + topH;
-      int botY     = topLabelY + labelH + rowGap;
-      int botLabelY= botY + botH;
+      // Count readout, top-right of the grid.
+      context.method_25303(this.field_22793, this.screenshots.size() + " screenshots",
+         this.gridX, this.gridY - 11, 0x88CCCCCC);
 
-      // ── Top row (large, scrolled) — centred
-      int topRowW = TOP_COUNT * topW + cellGap * (TOP_COUNT - 1);
-      int topStart = this.gridX + (availW - topRowW) / 2;
-      for (int j = 0; j < TOP_COUNT; j++) {
-         int idx = this.scrollOffset + j;
-         if (idx >= this.screenshots.size()) break;
-         File file = this.screenshots.get(idx);
-         int tx = topStart + j * (topW + cellGap);
-         renderThumb(context, mouseX, mouseY, file, idx, tx, topY, topW, topH, topLabelY);
+      context.method_44379(this.gridX, this.gridY, this.gridX + this.gridW, this.gridY + this.gridH);
+      for (int idx = 0; idx < this.screenshots.size(); idx++) {
+         int col = idx % cols;
+         int row = idx / cols;
+         int tx = this.gridX + col * (cellW + CELL_GAP);
+         int ty = this.gridY + row * stride - this.scrollOffset;
+         if (ty + cardH < this.gridY || ty > this.gridY + this.gridH) continue; // off-view
+         renderThumb(context, mouseX, mouseY, this.screenshots.get(idx), idx, tx, ty, cellW, imgH);
       }
-
-      // ── Bottom row (medium, offset by TOP_COUNT) — centred
-      int botRowW = BOT_COUNT * botW + cellGap * (BOT_COUNT - 1);
-      int botStart = this.gridX + (availW - botRowW) / 2;
-      for (int j = 0; j < BOT_COUNT; j++) {
-         int idx = this.scrollOffset + TOP_COUNT + j;
-         if (idx >= this.screenshots.size()) break;
-         File file = this.screenshots.get(idx);
-         int tx = botStart + j * (botW + cellGap);
-         renderThumb(context, mouseX, mouseY, file, idx, tx, botY, botW, botH, botLabelY);
-      }
+      context.method_44380();
 
       // ── Scrollbar (right of grid)
-      int totalScreenshots = this.screenshots.size();
-      int perPage = TOP_COUNT + BOT_COUNT;
-      if (totalScreenshots > perPage) {
+      int maxScroll = maxScrollPx();
+      if (maxScroll > 0) {
          int sbX = this.gridX + this.gridW + 3;
          int sbH = this.gridH;
-         context.method_25294(sbX, this.gridY, sbX + 2, this.gridY + sbH, 1429093934);
-         int maxScroll = Math.max(1, totalScreenshots - perPage);
-         float ratio  = (float) perPage / totalScreenshots;
-         int tbH = Math.max(14, (int)(sbH * ratio));
-         int tbY = this.gridY + (maxScroll > 0 ? (int)((sbH - tbH) * ((float)this.scrollOffset / maxScroll)) : 0);
-         context.method_25294(sbX, tbY, sbX + 2, tbY + tbH, ACCENT_GREEN.getRGB());
+         TurtUIUtils.drawRoundedRect(context, sbX, this.gridY, 3, sbH, 1, new Color(0x33353535, true));
+         float ratio = (float) this.gridH / (this.gridH + maxScroll);
+         int tbH = Math.max(16, (int)(sbH * ratio));
+         int tbY = this.gridY + (int)((sbH - tbH) * ((float)this.scrollOffset / maxScroll));
+         TurtUIUtils.drawRoundedRect(context, sbX, tbY, 3, tbH, 1, ACCENT_GREEN);
       }
    }
 
    private void renderThumb(class_332 ctx, int mx, int my,
-                            File file, int idx, int tx, int ty, int tw, int th, int labelY) {
+                            File file, int idx, int tx, int ty, int tw, int imgH) {
+      int cardH = imgH + LABEL_H + 6;
       boolean sel = idx == this.selectedIdx;
-      boolean hov = mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th;
+      boolean hov = mx >= tx && mx <= tx + tw && my >= ty && my <= ty + cardH
+         && my >= this.gridY && my <= this.gridY + this.gridH;
 
-      // Smooth per-thumb hover animation
       float anim = this.thumbHover.getOrDefault(idx, 0f);
       anim = TurtUIUtils.lerp01(anim, hov ? 1f : 0f, this.frameDt, 12f);
       this.thumbHover.put(idx, anim);
 
-      // Card bg
-      int bg = sel ? 0x33000000 : (hov ? 0x28FFFFFF : 0x18FFFFFF);
-      TurtUIUtils.drawRoundedRect(ctx, tx, ty, tw, th, 3, new Color(bg, true));
-      if (sel)      ctx.method_73198(tx - 2, ty - 2, tw + 4, th + 4, ACCENT_GREEN.getRGB());
-      else if (anim > 0.01f) {
-         int a = (int)(255 * Math.min(1f, anim));
-         ctx.method_73198(tx - 1, ty - 1, tw + 2, th + 2,
-            new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), a).getRGB());
+      // Lunar-style hover lift: gently raise + glow the card while hovered.
+      float lift = TurtUIUtils.ease(anim);
+      ctx.method_51448().pushMatrix();
+      ctx.method_51448().translate(0f, -lift * 2.5f);
+      if (lift > 0.01f) {
+         TurtUIUtils.drawHoverGlow(ctx, tx, ty, tw, cardH, 3, lift * 0.7f, ACCENT_PINK);
       }
 
-      // Thumbnail (fills card; zooms in slightly on hover, clipped to the card)
+      // Card background.
+      int bg = sel ? 0x55000000 : (hov ? 0x33000000 : 0x22000000);
+      TurtUIUtils.drawRoundedRect(ctx, tx, ty, tw, cardH, 3, new Color(bg, true));
+
+      // Thumbnail image (16:9, clipped to its rounded top).
       class_2960 tid = this.getThumbnail(file);
       if (tid != null) {
-         int z = (int)(anim * 5f);   // up to 5px inflation each side on hover
-         ctx.method_44379(tx, ty, tx + tw, ty + th);
-         ctx.method_25290(class_10799.field_56883, tid, tx - z, ty - z, 0f, 0f, tw + z * 2, th + z * 2, tw + z * 2, th + z * 2);
+         ctx.method_44379(tx + 1, ty + 1, tx + tw - 1, ty + 1 + imgH);
+         ctx.method_25290(class_10799.field_56883, tid, tx + 1, ty + 1, 0f, 0f, tw - 2, imgH, tw - 2, imgH);
          ctx.method_44380();
       } else {
-         ctx.method_25294(tx, ty, tx + tw, ty + th, 1149798536);
+         ctx.method_25294(tx + 1, ty + 1, tx + tw - 1, ty + 1 + imgH, 0x44555555);
       }
 
-      // Filename in its own dedicated strip below the thumbnail (never overlaps image)
+      // Filename strip.
       String name = file.getName();
-      if (name.length() > 22) name = name.substring(0, 20) + "..";
-      ctx.method_25300(this.field_22793, name, tx + tw / 2, labelY + 1,
-         sel ? ACCENT_GREEN.getRGB() : 0xFFCCCCCC);
-   }
+      int maxChars = Math.max(8, tw / 6);
+      if (name.length() > maxChars) name = name.substring(0, maxChars - 2) + "..";
+      ctx.method_25300(this.field_22793, name, tx + tw / 2, ty + imgH + 5,
+         sel ? ACCENT_GREEN.getRGB() : 0xFFC8C8C8);
 
-   private void renderSmallGrid(class_332 ctx, int mx, int my) {
-      // No-op — renderFeaturedRow handles both rows now
+      // Selection / hover border on top.
+      if (sel) {
+         TurtUIUtils.drawRoundedBorder(ctx, tx, ty, tw, cardH, 3, ACCENT_GREEN);
+      } else if (anim > 0.01f) {
+         int a = (int)(180 * Math.min(1f, anim));
+         TurtUIUtils.drawRoundedBorder(ctx, tx, ty, tw, cardH, 3,
+            new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), a));
+      }
+
+      ctx.method_51448().popMatrix();
    }
 
    public boolean method_25402(class_11909 click, boolean bl) {
@@ -391,42 +401,30 @@ public class ScreenshotGalleryScreen extends class_437 {
       for (TurtUIButton btn : this.buttons) {
          if (btn.mouseClicked(mouseX, mouseY, button)) return true;
       }
-      // ── 3×2 grid click detection (matches centred renderFeaturedRow layout)
+      // Uniform-grid click detection (mirrors renderFeaturedRow).
       if (mouseX >= this.gridX && mouseX <= this.gridX + this.gridW
           && mouseY >= this.gridY && mouseY <= this.gridY + this.gridH) {
-         int labelH = 11, rowGap = 16, cellGap = 12;
-         int availW = this.gridW;
-         int availH = this.gridH - labelH * 2 - rowGap;
-         int topH = availH * 52 / 100;
-         int botH = availH - topH;
-         int topW = (availW - cellGap * (TOP_COUNT - 1)) / TOP_COUNT;
-         int botW = (availW - cellGap * (BOT_COUNT - 1)) / BOT_COUNT;
-         int topY = this.gridY;
-         int botY = topY + topH + labelH + rowGap;
-         int topStart = this.gridX + (availW - (TOP_COUNT * topW + cellGap * (TOP_COUNT - 1))) / 2;
-         int botStart = this.gridX + (availW - (BOT_COUNT * botW + cellGap * (BOT_COUNT - 1))) / 2;
-         // Top row
-         if (mouseY >= topY && mouseY < topY + topH) {
-            int rel = (int)(mouseX - topStart);
-            int col = rel / (topW + cellGap);
-            if (col >= 0 && col < TOP_COUNT && rel >= 0) {
-               int idx = this.scrollOffset + col;
+         int cols = cols();
+         int cellW = cellW();
+         int imgH = imgH();
+         int stride = cellStride();
+         int cardH = imgH + LABEL_H + 6;
+         int relX = (int)(mouseX - this.gridX);
+         int col = relX / (cellW + CELL_GAP);
+         int inCol = relX - col * (cellW + CELL_GAP);
+         if (col >= 0 && col < cols && inCol <= cellW) {
+            int relY = (int)(mouseY - this.gridY) + this.scrollOffset;
+            int row = relY / stride;
+            int inRow = relY - row * stride;
+            if (inRow <= cardH) {
+               int idx = row * cols + col;
                if (idx >= 0 && idx < this.screenshots.size()) {
-                  this.selectedIdx = idx;
-                  this.setStatus("Selected: " + this.screenshots.get(idx).getName());
-                  return true;
-               }
-            }
-         }
-         // Bottom row
-         if (mouseY >= botY && mouseY < botY + botH) {
-            int rel = (int)(mouseX - botStart);
-            int col = rel / (botW + cellGap);
-            if (col >= 0 && col < BOT_COUNT && rel >= 0) {
-               int idx = this.scrollOffset + TOP_COUNT + col;
-               if (idx >= 0 && idx < this.screenshots.size()) {
-                  this.selectedIdx = idx;
-                  this.setStatus("Selected: " + this.screenshots.get(idx).getName());
+                  if (idx == this.selectedIdx) {
+                     this.viewSelected(); // double-tap feel: click selected card again to open viewer
+                  } else {
+                     this.selectedIdx = idx;
+                     this.setStatus("Selected: " + this.screenshots.get(idx).getName());
+                  }
                   return true;
                }
             }
@@ -437,10 +435,9 @@ public class ScreenshotGalleryScreen extends class_437 {
    }
 
    public boolean method_25401(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-      int perPage = TOP_COUNT + BOT_COUNT;
-      int maxScroll = Math.max(0, this.screenshots.size() - perPage);
+      int maxScroll = maxScrollPx();
       if (maxScroll > 0) {
-         this.scrollOffset = Math.max(0, Math.min(maxScroll, this.scrollOffset - (int)verticalAmount));
+         this.scrollOffset = Math.max(0, Math.min(maxScroll, this.scrollOffset - (int)(verticalAmount * 40)));
          return true;
       }
       return super.method_25401(mouseX, mouseY, horizontalAmount, verticalAmount);

@@ -4,7 +4,9 @@ import java.util.WeakHashMap;
 import net.minecraft.class_10042;
 import net.minecraft.class_10725;
 import net.minecraft.class_12075;
+//? if >=1.21.11 {
 import net.minecraft.class_12249;
+//?}
 import net.minecraft.class_1058;
 import net.minecraft.class_1059;
 import net.minecraft.class_2960;
@@ -99,7 +101,11 @@ public final class PlayerHeartSpriteRenderer {
       float heartSize = 9.0F;
       matrices.method_22903();
       Matrix4f model = matrices.method_23760().method_23761();
+      //? if >=1.21.11 {
       class_4588 vc = sprite.method_24108(client.method_22940().method_23000().method_73477(class_12249.method_75994(GUI_ATLAS)));
+      //?} else {
+      /*class_4588 vc = sprite.method_24108(client.method_22940().method_23000().method_73477(net.minecraft.class_1921.method_23578(GUI_ATLAS)));
+      *///?}
       drawVertex(model, vc, x, y - heartSize, z, minU, maxV);
       drawVertex(model, vc, x - heartSize, y - heartSize, z, maxU, maxV);
       drawVertex(model, vc, x - heartSize, y, z, maxU, minV);

@@ -3,13 +3,9 @@ package com.turtmod.ui;
 import java.awt.Color;
 import java.util.Objects;
 import java.util.function.Consumer;
-import net.minecraft.class_10799;
-import net.minecraft.class_1109;
 import net.minecraft.class_2960;
-import net.minecraft.class_310;
 import net.minecraft.class_327;
 import net.minecraft.class_332;
-import net.minecraft.class_3417;
 
 public class TurtUICheckbox {
    /** Flip to false to fall back to the classic square checkbox. While true, the module toggles
@@ -53,6 +49,16 @@ public class TurtUICheckbox {
    public final TurtUITheme theme;
    public final boolean gradient;
 
+   // Lunar-style row mode: when rowWidth>0 the widget draws a full-width row card with the name on
+   // the left and a sliding pill toggle on the right (set by the host screen after construction).
+   public int rowWidth = 0;
+   public int rowHeight = 18;
+   /** When set (search active), the matching substring of the label is drawn in the accent pink. */
+   public String highlightQuery = null;
+   private float knobAnim = -1f;     // -1 = uninitialised (snaps to state on first frame)
+   private float hoverAnim = 0f;     // eased 0..1 hover for the Lunar lift/glow
+   private long lastNs = System.nanoTime();
+
    public TurtUICheckbox(int x, int y, int size, int gap, class_327 textRenderer, String label, TurtUITheme theme, boolean gradient, boolean initial, Consumer<Boolean> onChange) {
       this.x = x;
       this.y = y;
@@ -67,57 +73,107 @@ public class TurtUICheckbox {
    }
 
    public void render(class_332 context, int mx, int my) {
+      if (this.rowWidth > 0) {
+         this.renderRow(context, mx, my);
+         return;
+      }
       boolean hovered = this.isHovered((double)mx, (double)my);
       Color textColor = hovered ? this.theme.highlighted() : this.theme.text();
       int boxX = this.x;
       int boxY = this.y;
-      class_2960 moduleIcon = MODULE_ICONS.get(this.label);
-      if (moduleIcon != null) {
-         // Per-module turtle icon. Centre the (slightly larger) icon on the toggle footprint so the
-         // label position is untouched. Dim/grey tint when off, full colour when on.
-         int s = ICON_SIZE + (hovered ? 2 : 0);
-         int sx = boxX + (this.size - s) / 2;
-         int sy = boxY + (this.size - s) / 2;
-         int tint = this.checked ? -1 : (hovered ? -7895161 /*0xFF8A8A8A*/ : -10921639 /*0xFF595959*/);
-         context.method_52707(class_10799.field_56883, moduleIcon, sx, sy, s, s, tint);
-      } else if (USE_TURTLE_SHELL) {
-         // Turtle-shell toggle: grey shell when off, green shell when on. Sprite is drawn at the
-         // exact checkbox footprint (size x size) so layout/hitbox are unchanged.
-         class_2960 tex = this.checked ? SHELL_ON : SHELL_OFF;
-         int s = this.size;
-         int sx = boxX;
-         int sy = boxY;
-         if (hovered) { // tiny pop on hover
-            s += 2;
-            sx -= 1;
-            sy -= 1;
-         }
-         context.method_52706(class_10799.field_56883, tex, sx, sy, s, s);
-      } else {
-         Color boxBorder = this.checked ? this.theme.highlighted() : this.theme.border();
-         Color boxFill = this.checked ? this.theme.highlighted() : this.theme.background();
-         TurtUIUtils.drawBorder(context, boxX, boxY, this.size, this.size, boxBorder);
-         if (this.checked) {
-            TurtUIUtils.drawRectangle(context, boxX + 2, boxY + 2, this.size - 4, this.size - 4, boxFill);
-         } else if (hovered) {
-            TurtUIUtils.drawRectangle(context, boxX + 2, boxY + 2, this.size - 4, this.size - 4, this.theme.hovered());
-         }
+      Color boxBorder = this.checked ? this.theme.highlighted() : this.theme.border();
+      Color boxFill = this.checked ? this.theme.highlighted() : this.theme.background();
+      TurtUIUtils.drawBorder(context, boxX, boxY, this.size, this.size, boxBorder);
+      if (this.checked) {
+         TurtUIUtils.drawRectangle(context, boxX + 2, boxY + 2, this.size - 4, this.size - 4, boxFill);
+      } else if (hovered) {
+         TurtUIUtils.drawRectangle(context, boxX + 2, boxY + 2, this.size - 4, this.size - 4, this.theme.hovered());
+      }
+      int textX = this.x + this.size + this.gap;
+      Objects.requireNonNull(this.textRenderer);
+      TurtUIUtils.drawText(context, this.textRenderer, this.label, textX, this.y + (this.size - 9) / 2 + 1, textColor, false, false, false);
+   }
+
+   /** Lunar-style module row: card + name + sliding pill toggle. */
+   private void renderRow(class_332 ctx, int mx, int my) {
+      long now = System.nanoTime();
+      float dt = Math.min((now - this.lastNs) / 1_000_000_000f, 0.1f);
+      this.lastNs = now;
+      float target = this.checked ? 1f : 0f;
+      this.knobAnim = this.knobAnim < 0f ? target : TurtUIUtils.lerp01(this.knobAnim, target, dt, 16f);
+
+      boolean hovered = this.isHovered(mx, my);
+      this.hoverAnim = TurtUIUtils.lerp01(this.hoverAnim, hovered ? 1f : 0f, dt, 14f);
+      Color accent = this.theme.highlighted();
+      int w = this.rowWidth;
+      int h = this.rowHeight;
+
+      // Lunar-style hover lift: nudge the whole row up/right a touch while hovered.
+      float lift = TurtUIUtils.ease(this.hoverAnim);
+      ctx.method_51448().pushMatrix();
+      ctx.method_51448().translate(lift * 2.5f, -lift * 1.0f);
+
+      // Soft accent glow behind the card on hover.
+      if (lift > 0.01f) {
+         TurtUIUtils.drawHoverGlow(ctx, this.x, this.y, w, h, 4, lift * 0.8f, accent);
       }
 
-      int textX = this.x + this.size + this.gap;
-      class_327 var10001 = this.textRenderer;
-      String var10002 = this.label;
-      int var10004 = this.y;
-      int var10005 = this.size;
-      Objects.requireNonNull(this.textRenderer);
-      TurtUIUtils.drawText(context, var10001, var10002, textX, var10004 + (var10005 - 9) / 2 + 1, textColor, false, false, false);
+      // Row card.
+      int bg = this.checked ? 0x33000000 : (hovered ? 0x2BFFFFFF : 0x16FFFFFF);
+      TurtUIUtils.drawRoundedRect(ctx, this.x, this.y, w, h, 4, new Color(bg, true));
+      if (this.checked) {
+         ctx.method_25294(this.x + 2, this.y + 3, this.x + 4, this.y + h - 3, accent.getRGB());
+      } else if (lift > 0.01f) {
+         TurtUIUtils.drawRoundedBorder(ctx, this.x, this.y, w, h, 4, new Color(255, 255, 255, (int)(36 * lift)));
+      }
+
+      // Name (with optional search-match highlight in accent pink so it reads on any row state).
+      Color textColor = this.checked ? accent : (hovered ? new Color(0xFFFFFFFF, true) : this.theme.text());
+      int nx = this.x + 8;
+      int ny = this.y + (h - 8) / 2;
+      String q = this.highlightQuery;
+      int idx = (q == null || q.isEmpty()) ? -1 : this.label.toLowerCase(java.util.Locale.ROOT).indexOf(q);
+      if (idx < 0) {
+         TurtUIUtils.drawText(ctx, this.textRenderer, this.label, nx, ny, textColor, false, false, false);
+      } else {
+         String pre = this.label.substring(0, idx);
+         String mid = this.label.substring(idx, idx + q.length());
+         String post = this.label.substring(idx + q.length());
+         TurtUIUtils.drawText(ctx, this.textRenderer, pre, nx, ny, textColor, false, false, false);
+         int cx = nx + this.textRenderer.method_1727(pre);
+         TurtUIUtils.drawText(ctx, this.textRenderer, mid, cx, ny, Palette.PINK, false, false, false);
+         cx += this.textRenderer.method_1727(mid);
+         TurtUIUtils.drawText(ctx, this.textRenderer, post, cx, ny, textColor, false, false, false);
+      }
+
+      // Sliding pill toggle on the right (larger radius reads as a cleaner pill).
+      int ph = Math.min(12, h - 4);
+      int pw = ph * 2;
+      int px = this.x + w - pw - 6;
+      int py = this.y + (h - ph) / 2;
+      int r = ph / 2;
+      TurtUIUtils.drawRoundedRect(ctx, px, py, pw, ph, r, new Color(0x66262626, true)); // off track
+      TurtUIUtils.drawRoundedBorder(ctx, px, py, pw, ph, r, new Color(255, 255, 255, 20));
+      int aa = (int)(this.knobAnim * 255f);
+      if (aa > 0) {
+         TurtUIUtils.drawRoundedRect(ctx, px, py, pw, ph, r,
+            new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), aa));   // on track fades in
+      }
+      int knob = ph - 4;
+      int travel = pw - knob - 4;
+      int kx = px + 2 + Math.round(travel * this.knobAnim);
+      TurtUIUtils.drawRoundedRect(ctx, kx, py + 2, knob, knob, knob / 2, new Color(250, 250, 250, 255));
+
+      ctx.method_51448().popMatrix();
    }
 
    private boolean isHovered(double mx, double my) {
+      if (this.rowWidth > 0) {
+         return mx >= this.x && mx <= this.x + this.rowWidth && my >= this.y && my <= this.y + this.rowHeight;
+      }
       int totalWidth = this.textRenderer.method_1727(this.label) + this.gap + this.size;
-      int var10000 = this.size;
       Objects.requireNonNull(this.textRenderer);
-      int height = Math.max(var10000, 9);
+      int height = Math.max(this.size, 9);
       return mx >= (double)this.x && mx <= (double)(this.x + totalWidth) && my >= (double)this.y && my <= (double)(this.y + height);
    }
 
@@ -129,19 +185,11 @@ public class TurtUICheckbox {
       if (button == 0 && this.isHovered(mx, my)) {
          this.checked = !this.checked;
          this.onChange.accept(this.checked);
-         this.playSound();
+         TurtSounds.toggle(this.checked);
          return true;
       } else {
          return false;
       }
-   }
-
-   private void playSound() {
-      try {
-         class_310.method_1551().method_1483().method_4873(class_1109.method_47978(class_3417.field_15015, 1.0F));
-      } catch (Exception var2) {
-      }
-
    }
 
    public int getWidth() {

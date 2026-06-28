@@ -57,7 +57,9 @@ public abstract class FogEnvironmentMixin {
       } else if (self instanceof class_7284) {
          disable = config.visual.disableDarknessOverlay;
       } else if (self instanceof class_11398) {
-         disable = config.visual.disableAllFog || config.visual.disableAtmosphericFog;
+         boolean nether = level != null && "the_nether".equals(level.method_27983().method_29177().method_12832());
+         disable = config.visual.disableAllFog || config.visual.disableAtmosphericFog
+            || (nether && config.visual.disableNetherFog);
       } else {
          return;
       }
@@ -67,8 +69,9 @@ public abstract class FogEnvironmentMixin {
          fog.field_60584 = Float.MAX_VALUE;
          fog.field_60585 = Float.MAX_VALUE;
       } else if (self instanceof class_11398 && config.visual.fogDensityPercent != 100) {
-         // Density style: scale atmospheric fog distances. >100% = closer/thicker, <100% = farther/thinner.
-         float f = 100.0F / (float)Math.max(1, config.visual.fogDensityPercent);
+         // "Fog Distance %": scale atmospheric fog distances. >100% pushes fog farther (clearer),
+         // <100% pulls it closer (thicker). 100% = vanilla.
+         float f = (float)Math.max(1, config.visual.fogDensityPercent) / 100.0F;
          fog.field_60582 *= f;
          fog.field_60583 *= f;
          fog.field_60584 *= f;

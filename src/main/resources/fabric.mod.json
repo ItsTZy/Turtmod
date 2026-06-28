@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "turtmod",
-  "version": "1.0.0+1.21.11",
+  "version": "${version}",
   "name": "TurtMod",
   "description": "Client-side PvP quality-of-life mod focused on visual clarity, combat feedback, and HUD customization.",
   "authors": [
@@ -32,7 +32,7 @@
   ],
   "depends": {
     "fabricloader": "\u003e\u003d0.18.4",
-    "minecraft": "~1.21.11",
+    "minecraft": "${minecraft}",
     "java": "\u003e\u003d21",
     "fabric-api": "*",
     "fabric-language-kotlin": "*",

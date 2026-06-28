@@ -137,15 +137,47 @@ public final class TurtUIUtils {
       return mx >= x && mx <= x + w && my >= y && my <= y + h;
    }
 
-   // Rounded corner rect (corner-cut style, no shader needed)
+   // Rounded corner rect (corner-cut style, no shader needed). Cheap O(r) per corner.
    public static void drawRoundedRect(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
       int argb = c.getRGB();
-      // center fill
-      context.method_25294(x + r, y, x + w - r, y + h, argb);
-      // left/right strips
-      context.method_25294(x, y + r, x + r, y + h - r, argb);
-      context.method_25294(x + w - r, y + r, x + w, y + h - r, argb);
+      if (r <= 0) {
+         context.method_25294(x, y, x + w, y + h, argb);
+         return;
+      }
+      // Middle full-width band.
+      context.method_25294(x, y + r, x + w, y + h - r, argb);
+      // Top + bottom rows, inset along a true quarter-circle so the corners are actually round.
+      for (int i = 0; i < r; i++) {
+         double dy = r - i - 0.5;
+         int inset = r - (int) Math.round(Math.sqrt((double) r * r - dy * dy));
+         context.method_25294(x + inset, y + i, x + w - inset, y + i + 1, argb);
+         context.method_25294(x + inset, y + h - i - 1, x + w - inset, y + h - i, argb);
+      }
+   }
+
+   /** 1px border that follows the same rounded corners as {@link #drawRoundedRect}. */
+   public static void drawRoundedBorder(class_332 context, int x, int y, int w, int h, int radius, Color c) {
+      int r = Math.min(radius, Math.min(w, h) / 2);
+      int argb = c.getRGB();
+      if (r <= 0) {
+         context.method_73198(x, y, w, h, argb);
+         return;
+      }
+      // Straight edges between the corner arcs.
+      context.method_25294(x + r, y, x + w - r, y + 1, argb);
+      context.method_25294(x + r, y + h - 1, x + w - r, y + h, argb);
+      context.method_25294(x, y + r, x + 1, y + h - r, argb);
+      context.method_25294(x + w - 1, y + r, x + w, y + h - r, argb);
+      // Corner arc pixels.
+      for (int i = 0; i < r; i++) {
+         double dy = r - i - 0.5;
+         int inset = r - (int) Math.round(Math.sqrt((double) r * r - dy * dy));
+         context.method_25294(x + inset, y + i, x + inset + 1, y + i + 1, argb);
+         context.method_25294(x + w - inset - 1, y + i, x + w - inset, y + i + 1, argb);
+         context.method_25294(x + inset, y + h - i - 1, x + inset + 1, y + h - i, argb);
+         context.method_25294(x + w - inset - 1, y + h - i - 1, x + w - inset, y + h - i, argb);
+      }
    }
 
    // Glass-style panel: body at ~60% alpha, bright top strip, 1px outline
@@ -192,6 +224,31 @@ public final class TurtUIUtils {
       }
    }
 
+   /**
+    * Reusable "presentation stage" backdrop (the look used behind the skin preview): an accent-tinted
+    * spotlight fading into a dark floor, plus a faint bright core near the top. Use behind any framed
+    * content (model previews, icons, feature cards) for a premium, consistent feel.
+    */
+   public static void drawStage(class_332 context, int x, int y, int w, int h, Color accent) {
+      int topGlow = new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 42).getRGB();
+      context.method_25296(x, y, x + w, y + h, topGlow, 0x00101418);
+      // faint bright core near the top-centre
+      int cx = x + w / 2;
+      int coreY = y + h / 5;
+      for (int r = Math.min(w, h) / 3; r > 4; r -= 6) {
+         int a = (int)(10.0f * (1.0f - (float) r / (Math.min(w, h) / 3f))) + 1;
+         drawRoundedRect(context, cx - r, coreY - r / 2, r * 2, r, r / 2, new Color(255, 255, 255, a));
+      }
+   }
+
+   /** Subtle accent glow that follows the cursor — draw over the backdrop, under the panel. */
+   public static void drawCursorGlow(class_332 context, int mx, int my) {
+      for (int r = 64; r >= 10; r -= 9) {
+         int a = (int)(4.5f * (1.0f - (float) r / 64f)) + 1;
+         drawRoundedRect(context, mx - r, my - r, r * 2, r * 2, r / 2, new Color(120, 230, 160, a));
+      }
+   }
+
    private static void drawSoftGlow(class_332 context, int cx, int cy, Color color) {
       for (int r = 96; r >= 12; r -= 14) {
          int a = (int)(6.0f * (1.0f - (float) r / 96f)) + 1;
@@ -200,9 +257,68 @@ public final class TurtUIUtils {
       }
    }
 
+   /**
+    * Consistent ~180 ms black fade-in overlay used when a screen opens. Pass the screen's eased
+    * {@code openFade} (0→1); draw LAST, in screen-space, so the whole UI fades up together. Cheap
+    * (one fill); keeps cross-screen motion uniform without a fade-OUT (which would need async).
+    */
+   public static void drawOpenFade(class_332 context, int w, int h, float openFade) {
+      if (openFade < 0.99f) {
+         int a = (int) ((1.0f - openFade) * 255.0f) & 0xFF;
+         context.method_25294(0, 0, w, h, a << 24);
+      }
+   }
+
    // Exponential lerp — widget stores a float, calls this each frame
    public static float lerp01(float current, float target, float dtSeconds, float speed) {
       float t = 1.0f - (float) Math.exp(-speed * dtSeconds);
       return current + (target - current) * t;
+   }
+
+   // ----- Lunar-style screen intro animation (shared, keyed by screen) -----
+   private static final java.util.Map<String, float[]> introVal = new java.util.HashMap<>();
+   private static final java.util.Map<String, Long> introTs = new java.util.HashMap<>();
+
+   /** Eased 0→1 intro progress for a screen, auto-advanced by real frame time. Call once per frame. */
+   public static float intro(String key) {
+      long now = System.nanoTime();
+      float[] v = introVal.computeIfAbsent(key, k -> new float[]{0.0F});
+      Long last = introTs.put(key, now);
+      float dt = last == null ? 0.0F : Math.min((now - last) / 1.0E9F, 0.05F);
+      v[0] = lerp01(v[0], 1.0F, dt, 11.0F);
+      if (v[0] > 0.999F) {
+         v[0] = 1.0F;
+      }
+      return v[0];
+   }
+
+   /** Restart a screen's intro (call from the screen's init()/onOpen). */
+   public static void resetIntro(String key) {
+      introVal.remove(key);
+      introTs.remove(key);
+   }
+
+   /** Smoothstep ease for nicer accel/decel than linear progress. */
+   public static float ease(float p) {
+      p = p < 0 ? 0 : (p > 1 ? 1 : p);
+      return p * p * (3.0F - 2.0F * p);
+   }
+
+   /**
+    * Push a subtle scale-up + rise transform around a centre point for a Lunar-style screen entrance.
+    * Call {@link #endIntro} after drawing the screen's content. {@code p} is the value from {@link #intro}.
+    */
+   public static void beginIntro(class_332 ctx, float p, int cx, int cy) {
+      float e = ease(p);
+      float scale = 0.97F + 0.03F * e;
+      float rise = (1.0F - e) * 12.0F;
+      ctx.method_51448().pushMatrix();
+      ctx.method_51448().translate((float) cx, (float) cy + rise);
+      ctx.method_51448().scale(scale, scale);
+      ctx.method_51448().translate((float) -cx, (float) -cy);
+   }
+
+   public static void endIntro(class_332 ctx) {
+      ctx.method_51448().popMatrix();
    }
 }

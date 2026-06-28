@@ -8,7 +8,10 @@ import com.turtmod.utils.ShieldTracker;
 import java.util.UUID;
 import net.minecraft.class_10509;
 import net.minecraft.class_11659;
+//? if >=1.21.11 {
 import net.minecraft.class_12249;
+//?}
+import net.minecraft.class_11701;
 import net.minecraft.class_1657;
 import net.minecraft.class_1767;
 import net.minecraft.class_1921;
@@ -16,7 +19,6 @@ import net.minecraft.class_2960;
 import net.minecraft.class_310;
 import net.minecraft.class_4587;
 import net.minecraft.class_4588;
-import net.minecraft.class_4597;
 import net.minecraft.class_4722;
 import net.minecraft.class_4730;
 import net.minecraft.class_600;
@@ -25,7 +27,6 @@ import net.minecraft.class_811;
 import net.minecraft.class_9307;
 import net.minecraft.class_9323;
 import net.minecraft.class_9334;
-import net.minecraft.class_9848;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,6 +49,13 @@ public abstract class ShieldModelRendererMixin {
    @Shadow
    @Final
    private class_600 field_55441;
+
+   // The atlas SpriteGetter the vanilla shield renderer uses to resolve banner-pattern sprites.
+   // Needed so banner layers map their [0,1] UVs into the correct atlas sub-region — without it the
+   // pattern samples an empty atlas region and the banner vanishes ("shield without a banner").
+   @Shadow
+   @Final
+   private class_11701 field_61858;
 
    @Inject(
       method = {"method_65707"},
@@ -92,7 +100,11 @@ public abstract class ShieldModelRendererMixin {
       if (config.visual.shieldGrayscaleTexture) {
          baseTexture = GrayscaleTextureCache.get(baseTexture);
       }
+      //? if >=1.21.11 {
       final class_1921 layer = class_12249.method_76000(baseTexture);
+      //?} else {
+      /*final class_1921 layer = class_1921.method_23580(baseTexture);
+      *///?}
       final int fLight = light;
       final int fOverlay = overlay;
       final class_600 model = this.field_55441;
@@ -110,10 +122,33 @@ public abstract class ShieldModelRendererMixin {
       if (hasPatterns) {
          final class_1767 canvasBase = baseColor == null ? class_1767.field_7952 : baseColor;
          final class_9307 canvasPatterns = patterns;
+
+         // 1) Plate base (nopattern texture) — recoloured, through the deferred queue.
          queue.method_73483(matrices, layer, (entry, vc) -> {
             class_4587 stack = new class_4587();
             stack.method_23760().method_66521(entry);
-            this.renderCanvas(stack, fLight, fOverlay, model.method_23774(), canvasBase, canvasPatterns, color, vc);
+            model.method_23774().method_22699(stack, vc, fLight, fOverlay, color);
+         });
+
+         // 2) Banner layers (shield-pattern base + each pattern) on the shield-pattern atlas, ALSO
+         //    through the deferred queue. The previous code drew these into the immediate world
+         //    buffer (method_23000) and never flushed it, so in the GUI/held pipeline they rendered
+         //    with stale state and ignored the status colour — only the base appeared recoloured.
+         //? if >=1.21.11 {
+         final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_12249::method_76000);
+         //?} else {
+         /*final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_1921::method_23580);
+         *///?}
+         queue.method_73483(matrices, bannerLayer, (entry, vc) -> {
+            class_4587 stack = new class_4587();
+            stack.method_23760().method_66521(entry);
+            class_630 plate = model.method_23774();
+            this.renderBannerLayer(stack, fLight, fOverlay, plate, vc, class_4722.field_49770, canvasBase, color);
+            for (int i = 0; i < 16 && i < canvasPatterns.comp_2428().size(); ++i) {
+               class_9307.class_9308 pl = (class_9307.class_9308) canvasPatterns.comp_2428().get(i);
+               class_4730 mat = class_4722.method_33083(pl.comp_2429());
+               this.renderBannerLayer(stack, fLight, fOverlay, plate, vc, mat, pl.comp_2430(), color);
+            }
          });
       } else {
          queue.method_73483(matrices, layer, (entry, vc) -> {
@@ -188,22 +223,21 @@ public abstract class ShieldModelRendererMixin {
       return (int)((float)a1 + (float)(a2 - a1) * progress) << 24 | (int)((float)r1 + (float)(r2 - r1) * progress) << 16 | (int)((float)g1 + (float)(g2 - g1) * progress) << 8 | (int)((float)b1 + (float)(b2 - b1) * progress);
    }
 
-   private void renderCanvas(class_4587 matrices, int light, int overlay, class_630 canvas, class_1767 color, class_9307 patterns, int statusColor, class_4588 baseConsumer) {
-      canvas.method_22699(matrices, baseConsumer, light, overlay, statusColor);
-      class_4597 consumers = class_310.method_1551().method_22940().method_23000();
-      this.renderLayer(matrices, consumers, light, overlay, canvas, class_4722.field_49770, color, statusColor);
+   // How strongly the status colour washes over the banner pattern (0 = banner keeps its real
+   // colours, 1 = fully replaced by the status colour). A partial blend keeps the banner's own
+   // colour and pattern shape visible with the status colour tinted over it.
+   private static final float BANNER_STATUS_TINT = 0.5F;
 
-      for(int i = 0; i < 16 && i < patterns.comp_2428().size(); ++i) {
-         class_9307.class_9308 patternLayer = (class_9307.class_9308)patterns.comp_2428().get(i);
-         class_4730 sprite = class_4722.method_33083(patternLayer.comp_2429());
-         this.renderLayer(matrices, consumers, light, overlay, canvas, sprite, patternLayer.comp_2430(), statusColor);
-      }
-
-   }
-
-   private void renderLayer(class_4587 matrices, class_4597 consumers, int light, int overlay, class_630 canvas, class_4730 textureId, class_1767 color, int statusColor) {
-      int tinted = class_9848.method_61330(class_9848.method_61320(statusColor), color.method_7787());
-      class_1921 layer = textureId.method_24146(class_12249::method_76000);
-      canvas.method_22699(matrices, consumers.method_73477(layer), light, overlay, tinted);
+   private void renderBannerLayer(class_4587 matrices, int light, int overlay, class_630 plate, class_4588 vc, class_4730 material, class_1767 color, int statusColor) {
+      // With no active status (-1) render the layer with its real dye colour. When a status colour
+      // IS active, blend the dye colour toward it so the banner is washed with the status colour but
+      // its own colours and pattern shape still show through (a "translucent" status tint).
+      int dye = color.method_7787() | 0xFF000000;
+      int tinted = statusColor == -1 ? dye : this.interpolateColor(dye, statusColor, BANNER_STATUS_TINT);
+      // Wrap the queue's consumer with the sprite's UV expander (SpriteGetter -> Sprite ->
+      // getTextureSpecificVertexConsumer) so the pattern samples its atlas sub-region; a raw
+      // consumer would ignore the sprite UVs and break the banner texture.
+      class_4588 expanded = this.field_61858.method_73030(material).method_24108(vc);
+      plate.method_22699(matrices, expanded, light, overlay, tinted);
    }
 }

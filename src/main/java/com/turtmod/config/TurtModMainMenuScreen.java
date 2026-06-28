@@ -145,6 +145,7 @@ public class TurtModMainMenuScreen extends class_437 {
 
       ctx.method_51448().popMatrix();
       this.uiScale.pop(ctx);
+      TurtUIUtils.drawOpenFade(ctx, this.field_22789, this.field_22790, this.openFade);
       super.method_25394(ctx, mx, my, delta);
    }
 

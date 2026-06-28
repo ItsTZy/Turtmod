@@ -58,5 +58,6 @@ replay_*.log
 HANDOFF.md
 HISTORY_SUMMARY.md
 MOD_HANDOFF.md
+PORTING_HANDOFF.md
 hand.txt
 .claude/

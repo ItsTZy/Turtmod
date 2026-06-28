@@ -2,17 +2,24 @@ package com.turtmod.mixin.client;
 
 import com.turtmod.TurtModClient;
 import com.turtmod.config.TurtModConfig;
+//? if >=1.21.11 {
 import net.minecraft.class_12155;
 import net.minecraft.class_12178;
 import net.minecraft.class_12179;
+//?}
 import net.minecraft.class_238;
 import net.minecraft.class_310;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+//? if >=1.21.11 {
 @Mixin(class_12155.class)
+//?} else {
+/*@Mixin(net.minecraft.class_898.class)
+*///?}
 public abstract class DebugHitboxCleanupMixin {
+   //? if >=1.21.11 {
    @Redirect(
       method = "method_75432",
       at = @At(
@@ -60,6 +67,7 @@ public abstract class DebugHitboxCleanupMixin {
    private class_12178 turtmod$hideVelocityArrow(net.minecraft.class_243 from, net.minecraft.class_243 to, int color) {
       return this.turtmod$shouldCleanDebugHitboxes() ? null : net.minecraft.class_12180.method_75555(from, to, color);
    }
+   //?}
 
    private boolean turtmod$shouldCleanDebugHitboxes() {
       TurtModConfig config = TurtModClient.getConfig();

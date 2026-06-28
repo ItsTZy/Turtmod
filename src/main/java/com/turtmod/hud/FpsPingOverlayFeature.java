@@ -36,16 +36,19 @@ public final class FpsPingOverlayFeature {
          context.method_51448().scale(scale, scale);
           context.method_51448().translate((float)(-x), (float)(-y));
           int textColor = CustomThemeRenderer.getTextColor(config);
+          int fpsColor = config.hud.fpsColorCoded ? fpsColor(fps) : textColor;
           String fpsText = "Fps " + fps;
           String pingText = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
           int w = getBaseWidth(client, config);
           if (transparentText) {
-             int cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, fpsText, x, y, textColor, config);
+             int cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, fpsText, x, y, fpsColor, config);
              cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, pingText, cursor + 4, y, textColor, config);
           } else {
              CustomThemeRenderer.renderThemedBox(context, x, y, w, getBaseHeight(), config);
              String pingPart = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
-             CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText + "  " + pingPart, x + 6, y + 3, textColor, config);
+             int fpsW = CustomThemeRenderer.textWidth(client.field_1772, fpsText, config);
+             CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, x + 6, y + 3, fpsColor, config);
+             CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingPart, x + 6 + fpsW, y + 3, textColor, config);
           }
 
          context.method_51448().popMatrix();
@@ -74,5 +77,13 @@ public final class FpsPingOverlayFeature {
 
    private static int getBaseHeight() {
       return 14;
+   }
+
+   /** Green ≥120, lime ≥60, yellow ≥30, red below — a quick visual FPS-health cue. */
+   private static int fpsColor(int fps) {
+      if (fps >= 120) return 0xFF55E08A;
+      if (fps >= 60)  return 0xFF8CE05B;
+      if (fps >= 30)  return 0xFFE0C24E;
+      return 0xFFE0556B;
    }
 }

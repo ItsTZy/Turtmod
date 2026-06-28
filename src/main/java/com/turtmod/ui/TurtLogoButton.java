@@ -9,16 +9,28 @@ import net.minecraft.class_4185;
  * Used for the Hub launcher buttons on the title and pause screens.
  * Extends the concrete button (class_12231) so renderWidget is implemented.
  */
+//? if >=1.21.11 {
 public class TurtLogoButton extends class_4185.class_12231 {
+//?} else {
+/*public class TurtLogoButton extends class_4185 {
+*///?}
 
    public TurtLogoButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
       super(x, y, w, h, class_2561.method_43473(), onPress, field_40754);
    }
 
    @Override
+   //? if >=1.21.11 {
    protected void method_75752(class_332 ctx, int mouseX, int mouseY, float delta) {
+   //?} else {
+   /*protected void method_48579(class_332 ctx, int mouseX, int mouseY, float delta) {
+   *///?}
       // Draw the vanilla button background/hover first
+      //? if >=1.21.11 {
       super.method_75752(ctx, mouseX, mouseY, delta);
+      //?} else {
+      /*super.method_48579(ctx, mouseX, mouseY, delta);
+      *///?}
       // Draw the logo centred inside, with a small inset
       int inset = 3;
       BrandingRenderer.drawLogo(ctx,

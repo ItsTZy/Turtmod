@@ -26,6 +26,13 @@ public final class HudPanelsFeature {
    private static final int TITLE_HEIGHT = 0;
    private static final int ARMOR_TEXT_WIDTH = 24;
    private static final int ARMOR_DURABILITY_GAP = 4;
+   private static final int POTION_CELL_WIDTH = 26;
+   private static final int POTION_CELL_HEIGHT = 24;
+   private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
+   private static final int POTION_FULL_COL_WIDTH = 132;
+   private static final int POTION_FULL_ROW_H = 22;
+   private static final int POTION_COMPACT_COL_WIDTH = 116;
+   private static final int POTION_COMPACT_ROW_H = 18;
    // Vanilla hotbar tray sprite (class_329.field_45310 = "hud/hotbar"), 182x22, registered as a
    // nine-slice sprite so it stretches cleanly to any width without distorting the slot dividers.
    private static final class_2960 HOTBAR_SPRITE = class_2960.method_60656("hud/hotbar");
@@ -84,7 +91,7 @@ public final class HudPanelsFeature {
       if (stacks.isEmpty()) {
          return;
       }
-      boolean hotbarTray = isHotbarTray(config) && !vertical;
+      boolean hotbarTray = isHotbarTray(config);
       PanelSize size = getArmorHudSize(config);
       int scaledWidth = client.method_22683().method_4486();
       int scaledHeight = client.method_22683().method_4502();
@@ -92,15 +99,21 @@ public final class HudPanelsFeature {
       int hudHeight = Math.round((float)size.height * scale);
       x = Math.max(0, Math.min(x, scaledWidth - hudWidth));
       y = Math.max(0, Math.min(y, scaledHeight - hudHeight));
+      int drawX = x + getArmorHudDrawOffsetX(config);
+      int drawY = y + getArmorHudDrawOffsetY(config);
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)x, (float)y);
       context.method_51448().scale(scale, scale);
       context.method_51448().translate((float)(-x), (float)(-y));
 
       if (hotbarTray) {
-         renderArmorHotbarTray(context, client, config, x, y, stacks);
+         if (vertical) {
+            renderArmorHotbarTrayVertical(context, client, config, drawX, drawY, stacks);
+         } else {
+            renderArmorHotbarTray(context, client, config, drawX, drawY, stacks);
+         }
       } else {
-         renderArmorThemed(context, client, config, x, y, size, vertical, stacks);
+         renderArmorThemed(context, client, config, x, y, drawX, drawY, size, vertical, stacks);
       }
 
       context.method_51448().popMatrix();
@@ -142,16 +155,60 @@ public final class HudPanelsFeature {
          if (durabilityText != null) {
             int durabilityColor = CustomThemeRenderer.applyHudOpacity(config, -16777216 | stack.method_31580());
             int textX = itemX + (16 - client.field_1772.method_1727(durabilityText)) / 2;
-            int textY = y + HOTBAR_HEIGHT + 2;
+            // Horizontal row: TOP places text above the tray, otherwise below.
+            int textY = config.hud.armorHudSide == TurtModConfig.ArmorHudSide.TOP ? y - 10 : y + HOTBAR_HEIGHT + 2;
+            context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
+         }
+      }
+   }
+
+   /** Vertical vanilla hotbar tray: the same 182x22 sprite, rotated 90° so the slot dividers run
+    *  horizontally and the rounded caps land top/bottom. Items are drawn upright (unrotated) so
+    *  they stay readable. Mirrors the horizontal HOTBAR style but stacked downward. */
+   private static void renderArmorHotbarTrayVertical(class_332 context, class_310 client, TurtModConfig config, int x, int y, List<class_1799> stacks) {
+      int count = stacks.size();
+      int textureWidth = HOTBAR_HEIGHT + (count - 1) * HOTBAR_STEP;
+      int color = CustomThemeRenderer.applyHudOpacity(config, -1);
+
+      // Background: translate to the top-right of the vertical strip, rotate +90°, then blit the
+      // horizontal sprite — it maps onto a vertical 22-wide strip running downward from (x,y).
+      context.method_51448().pushMatrix();
+      context.method_51448().translate((float)(x + HOTBAR_HEIGHT), (float)y);
+      context.method_51448().rotate((float)(Math.PI / 2.0));
+      context.method_52708(class_10799.field_56883, HOTBAR_SPRITE, 182, 22, 0, 0, 0, 0, textureWidth - 3, HOTBAR_HEIGHT, color);
+      context.method_52708(class_10799.field_56883, HOTBAR_SPRITE, 182, 22, 182 - 3, 0, textureWidth - 3, 0, 3, HOTBAR_HEIGHT, color);
+      context.method_51448().popMatrix();
+
+      for(int i = 0; i < count; ++i) {
+         class_1799 stack = stacks.get(i);
+         int itemX = x + 3;
+         int itemY = y + 3 + i * HOTBAR_STEP;
+         if (!stack.method_7960()) {
+            context.method_51427(stack, itemX, itemY);
+            context.method_51431(client.field_1772, stack, itemX, itemY);
+         }
+
+         if (config.hud.armorHudWarnings && isLowDurability(stack, config.hud.armorHudWarningThresholdPercent)) {
+            drawLowDurabilityWarning(context, client, config, itemX, itemY);
+         }
+
+         String durabilityText = getDurabilityText(stack, config.hud.armorHudDurabilityMode, config.hud.armorHudShowDurability);
+         if (durabilityText != null) {
+            int durabilityColor = CustomThemeRenderer.applyHudOpacity(config, -16777216 | stack.method_31580());
+            // Place to the side (right by default, left if anchored left) so it never overlaps the slot.
+            int textX = config.hud.armorHudSide == TurtModConfig.ArmorHudSide.LEFT
+               ? x - 4 - client.field_1772.method_1727(durabilityText)
+               : x + HOTBAR_HEIGHT + 4;
+            int textY = itemY + 4;
             context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
          }
       }
    }
 
    /** themed-box style (CLASSIC / MINIMAL) — turtmod's own panel look. */
-   private static void renderArmorThemed(class_332 context, class_310 client, TurtModConfig config, int x, int y, PanelSize size, boolean vertical, List<class_1799> stacks) {
+   private static void renderArmorThemed(class_332 context, class_310 client, TurtModConfig config, int panelX, int panelY, int x, int y, PanelSize size, boolean vertical, List<class_1799> stacks) {
       if (config.hud.armorHudStyle != TurtModConfig.ArmorHudStyle.MINIMAL) {
-         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+         CustomThemeRenderer.renderThemedBox(context, panelX, panelY, size.width, size.height, config);
       }
 
       int slotStartX = x + 4;
@@ -183,7 +240,8 @@ public final class HudPanelsFeature {
                context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
             } else {
                int textX = slotX + (18 - client.field_1772.method_1727(durabilityText)) / 2;
-               int textY = slotY + 18 + 6;
+               // Horizontal row: TOP places text above the slot, otherwise below.
+               int textY = config.hud.armorHudSide == TurtModConfig.ArmorHudSide.TOP ? slotY - 10 : slotY + 18 + 6;
                context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
             }
          }
@@ -217,6 +275,16 @@ public final class HudPanelsFeature {
       return Math.round((float)size.height * CustomThemeRenderer.getHudScale(config, config.hud.armorHudScalePercent));
    }
 
+   private static int getArmorHudDrawOffsetX(TurtModConfig config) {
+      boolean showDurability = config.hud.armorHudShowDurability && config.hud.armorHudDurabilityMode != TurtModConfig.ArmorHudDurabilityMode.OFF;
+      return config.hud.armorHudVertical && showDurability && config.hud.armorHudSide == TurtModConfig.ArmorHudSide.LEFT ? 28 : 0;
+   }
+
+   private static int getArmorHudDrawOffsetY(TurtModConfig config) {
+      boolean showDurability = config.hud.armorHudShowDurability && config.hud.armorHudDurabilityMode != TurtModConfig.ArmorHudDurabilityMode.OFF;
+      return !config.hud.armorHudVertical && showDurability && config.hud.armorHudSide == TurtModConfig.ArmorHudSide.TOP ? 12 : 0;
+   }
+
    private static int getDisplayedSlotCount(TurtModConfig config) {
       class_310 c = class_310.method_1551();
       if (c != null && c.field_1724 != null) {
@@ -229,7 +297,12 @@ public final class HudPanelsFeature {
       boolean vertical = config.hud.armorHudVertical;
       boolean showDurability = config.hud.armorHudShowDurability && config.hud.armorHudDurabilityMode != TurtModConfig.ArmorHudDurabilityMode.OFF;
       int count = getDisplayedSlotCount(config);
-      if (isHotbarTray(config) && !vertical) {
+      if (isHotbarTray(config)) {
+         if (vertical) {
+            int width = HOTBAR_HEIGHT + (showDurability ? 28 : 0);
+            int height = HOTBAR_HEIGHT + (count - 1) * HOTBAR_STEP;
+            return new PanelSize(width, height);
+         }
          int width = count * HOTBAR_STEP + 2;
          int height = HOTBAR_HEIGHT + (showDurability ? 12 : 0);
          return new PanelSize(width, height);
@@ -312,125 +385,131 @@ public final class HudPanelsFeature {
       return percent <= Math.max(1, Math.min(100, thresholdPercent));
    }
 
+   // ── Scoreboard HUD-editor sync: live bounds captured from the sidebar's background fills, so the
+   //    editor box overlays the real scoreboard exactly (and dragging stays in sync). ──
+   private static int sbL, sbT, sbR, sbB;
+   private static boolean sbValid;
+   private static long sbNs;
+
+   public static void captureScoreboard(int x1, int y1, int x2, int y2) {
+      long now = System.nanoTime();
+      int l = Math.min(x1, x2), t = Math.min(y1, y2), r = Math.max(x1, x2), b = Math.max(y1, y2);
+      if (now - sbNs > 5_000_000L) { sbL = l; sbT = t; sbR = r; sbB = b; }
+      else { sbL = Math.min(sbL, l); sbT = Math.min(sbT, t); sbR = Math.max(sbR, r); sbB = Math.max(sbB, b); }
+      sbNs = now;
+      sbValid = true;
+   }
+
+   private static float sbScale(TurtModConfig c) {
+      int sp = c.visual.scoreboardScalePercent;
+      return (sp <= 0 ? 100 : sp) / 100.0F;
+   }
+
+   public static int scoreboardEditorWidth(TurtModConfig c) { return Math.round((sbValid ? sbR - sbL : 100) * sbScale(c)); }
+   public static int scoreboardEditorHeight(TurtModConfig c) { return Math.round((sbValid ? sbB - sbT : 90) * sbScale(c)); }
+
+   public static int scoreboardEditorX(class_310 mc, TurtModConfig c) {
+      float s = sbScale(c);
+      int sw = mc.method_22683().method_4486();
+      int ox = c.visual.scoreboardOffsetX;
+      return sbValid ? Math.round(sw + ox + (sbL - sw) * s) : (sw - 103 + ox);
+   }
+
+   public static int scoreboardEditorY(class_310 mc, TurtModConfig c) {
+      float s = sbScale(c);
+      int sh = mc.method_22683().method_4502();
+      int oy = c.visual.scoreboardOffsetY;
+      return sbValid ? Math.round(oy + sbT * s) : (sh / 2 - 45 + oy);
+   }
+
+   public static void scoreboardApplyMove(class_310 mc, TurtModConfig c, int x, int y) {
+      float s = sbScale(c);
+      int sw = mc.method_22683().method_4486();
+      int sh = mc.method_22683().method_4502();
+      if (sbValid) {
+         c.visual.scoreboardOffsetX = Math.round(x - sw - (sbL - sw) * s);
+         c.visual.scoreboardOffsetY = Math.round(y - sbT * s);
+      } else {
+         c.visual.scoreboardOffsetX = x - (sw - 103);
+         c.visual.scoreboardOffsetY = y - (sh / 2 - 45);
+      }
+   }
+
    private static void renderPotionHud(class_332 context, class_310 client, TurtModConfig config) {
       List<class_1293> effects = new ArrayList(client.field_1724.method_6026());
       if (!effects.isEmpty()) {
-         sortEffects(effects, config.hud.potionSortMode);
-         int columns = Math.max(1, Math.min(8, config.hud.potionHudColumns));
-         int visibleCount = Math.max(1, Math.min(effects.size(), Math.max(1, config.hud.potionMaxRows) * columns));
-         List<class_1293> var13 = new ArrayList(effects.subList(0, visibleCount));
-         int x = config.hud.potionHudX;
-         int y = config.hud.potionHudY;
+         // Honour the user's chosen sort order (was hard-coded to longest-duration before).
+         if (config.hud.potionSortMode != null) {
+            sortEffects(effects, config.hud.potionSortMode);
+         } else {
+            sortEffectsByLongestDuration(effects);
+         }
+         int visibleCount = Math.max(1, Math.min(effects.size(), POTION_MAX_SIMPLE_EFFECTS));
+         List<class_1293> visibleEffects = new ArrayList(effects.subList(0, visibleCount));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent);
-         PanelSize size = getPotionHudSize(client, config, columns, var13);
+         PanelSize size = getPotionHudSize(config, visibleEffects.size());
          int scaledWidth = client.method_22683().method_4486();
          int scaledHeight = client.method_22683().method_4502();
          int hudWidth = Math.round((float)size.width * scale);
          int hudHeight = Math.round((float)size.height * scale);
+         int x = config.hud.potionHudX;
+         int y = config.hud.potionHudY;
          x = Math.max(0, Math.min(x, scaledWidth - hudWidth));
          y = Math.max(0, Math.min(y, scaledHeight - hudHeight));
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
          context.method_51448().translate((float)(-x), (float)(-y));
-         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+         // Honour the chosen style (FULL / COMPACT / ICONS_ONLY) — previously only icons rendered.
+         int cols = potionTextColumns(config, visibleEffects.size());
          switch (config.hud.potionHudStyle) {
-            case ICONS_ONLY -> renderPotionIconsOnly(context, client, config, x, y, var13);
-            case COMPACT -> renderPotionCompact(context, client, config, x, y, size.width, columns, var13);
-            case FULL -> renderPotionFull(context, client, config, x, y, size.width, columns, var13);
+            case FULL -> renderPotionFull(context, client, config, x, y, size.width, cols, visibleEffects);
+            case COMPACT -> renderPotionCompact(context, client, config, x, y, size.width, cols, visibleEffects);
+            default -> renderPotionIconsOnly(context, client, config, x, y, visibleEffects);
          }
 
          context.method_51448().popMatrix();
       }
    }
 
+   /** Column count for the text potion styles (FULL/COMPACT). Horizontal = one row of all effects. */
+   private static int potionTextColumns(TurtModConfig config, int count) {
+      if (config.hud.potionHudHorizontal) {
+         return Math.max(1, count);
+      }
+      int c = config.hud.potionHudColumns <= 0 ? 1 : config.hud.potionHudColumns;
+      return Math.max(1, Math.min(c, count));
+   }
+
    public static int getPotionHudScaledWidth(TurtModConfig config) {
-      class_310 client = class_310.method_1551();
-      PanelSize size = getPotionHudSampleSize(client, config);
+      PanelSize size = getPotionHudSize(config, getPotionHudEditorEffectCount(config));
       return Math.round((float)size.width * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
    }
 
    public static int getPotionHudScaledHeight(TurtModConfig config) {
-      class_310 client = class_310.method_1551();
-      PanelSize size = getPotionHudSampleSize(client, config);
+      PanelSize size = getPotionHudSize(config, getPotionHudEditorEffectCount(config));
       return Math.round((float)size.height * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
    }
 
-   private static PanelSize getPotionHudSampleSize(class_310 client, TurtModConfig config) {
-      if (client != null && client.field_1772 != null) {
-         List<class_1293> live = client.field_1724 != null ? new ArrayList<class_1293>(client.field_1724.method_6026()) : new ArrayList<class_1293>();
-         if (live.isEmpty()) {
-            PanelSize var5;
-            switch (config.hud.potionHudStyle) {
-               case ICONS_ONLY -> var5 = new PanelSize(86, 26);
-               case COMPACT -> var5 = new PanelSize(112, 26);
-               case FULL -> var5 = new PanelSize(132, 30);
-               default -> throw new MatchException((String)null, (Throwable)null);
-            }
-
-            return var5;
-         } else {
-            sortEffects(live, config.hud.potionSortMode);
-            int cols = Math.max(1, Math.min(8, config.hud.potionHudColumns));
-            int visible = Math.max(1, Math.min(live.size(), Math.max(1, config.hud.potionMaxRows) * cols));
-            return getPotionHudSize(client, config, cols, new ArrayList(live.subList(0, visible)));
-         }
-      } else {
-         int rows = Math.max(1, Math.min(4, config.hud.potionMaxRows));
-         PanelSize var10000;
-         switch (config.hud.potionHudStyle) {
-            case ICONS_ONLY -> var10000 = new PanelSize(86, 30);
-            case COMPACT -> var10000 = new PanelSize(118, 8 + rows * 18);
-            case FULL -> var10000 = new PanelSize(148, 8 + rows * 22);
-            default -> throw new MatchException((String)null, (Throwable)null);
-         }
-
-         return var10000;
-      }
+   private static int getPotionHudEditorEffectCount(TurtModConfig config) {
+      class_310 client = class_310.method_1551();
+      int count = client != null && client.field_1724 != null ? client.field_1724.method_6026().size() : 1;
+      return Math.max(1, Math.min(count, POTION_MAX_SIMPLE_EFFECTS));
    }
 
-   private static PanelSize getPotionHudSize(class_310 client, TurtModConfig config, int columns, List<class_1293> effects) {
-      columns = Math.max(1, Math.min(8, columns));
-      PanelSize var10000;
-      switch (config.hud.potionHudStyle) {
-         case ICONS_ONLY:
-            int iconCols = Math.max(1, Math.min(8, effects.size()));
-            int rows = Math.max(1, class_3532.method_15386((float)effects.size() / (float)iconCols));
-            int width = 8 + iconCols * 18 + (iconCols - 1) * 2;
-            int height = 8 + rows * 18 + (rows - 1) * 2;
-            var10000 = new PanelSize(width, height);
-            break;
-         case COMPACT:
-            int widest = 0;
-
-            for(class_1293 effect : effects) {
-               String name = buildPotionName(effect);
-               String duration = formatDuration(effect, config);
-               widest = Math.max(widest, 26 + client.field_1772.method_1727(trim(name, 16)) + 8 + client.field_1772.method_1727(duration));
-            }
-
-            int compactColWidth = 8 + widest;
-            int compactRows = class_3532.method_15386((float)effects.size() / (float)columns);
-            var10000 = new PanelSize(compactColWidth * columns, 8 + compactRows * 18);
-            break;
-         case FULL:
-            int widestText = 0;
-
-            for(class_1293 effect : effects) {
-               String name = buildPotionName(effect);
-               String duration = buildPotionMeta(effect, config);
-               widestText = Math.max(widestText, Math.max(client.field_1772.method_1727(trim(name, 22)), client.field_1772.method_1727(trim(duration, 22))));
-            }
-
-            int fullColWidth = Math.max(136, 34 + widestText);
-            int fullRows = class_3532.method_15386((float)effects.size() / (float)columns);
-            var10000 = new PanelSize(fullColWidth * columns, 8 + fullRows * 22);
-            break;
-         default:
-            throw new MatchException((String)null, (Throwable)null);
+   private static PanelSize getPotionHudSize(TurtModConfig config, int effectCount) {
+      int count = Math.max(1, Math.min(effectCount, POTION_MAX_SIMPLE_EFFECTS));
+      TurtModConfig.PotionHudStyle style = config.hud.potionHudStyle;
+      if (style == TurtModConfig.PotionHudStyle.FULL || style == TurtModConfig.PotionHudStyle.COMPACT) {
+         int cols = potionTextColumns(config, count);
+         int rowsPerColumn = class_3532.method_15386((float) count / (float) cols);
+         int colW = style == TurtModConfig.PotionHudStyle.FULL ? POTION_FULL_COL_WIDTH : POTION_COMPACT_COL_WIDTH;
+         int rowH = style == TurtModConfig.PotionHudStyle.FULL ? POTION_FULL_ROW_H : POTION_COMPACT_ROW_H;
+         return new PanelSize(cols * colW, rowsPerColumn * rowH + 8);
       }
-
-      return var10000;
+      return config.hud.potionHudHorizontal
+         ? new PanelSize(count * POTION_CELL_WIDTH, POTION_CELL_HEIGHT)
+         : new PanelSize(POTION_CELL_WIDTH, count * POTION_CELL_HEIGHT);
    }
 
    private static void renderPotionFull(class_332 context, class_310 client, TurtModConfig config, int x, int y, int panelWidth, int columns, List<class_1293> effects) {
@@ -488,18 +567,15 @@ public final class HudPanelsFeature {
    }
 
    private static void renderPotionIconsOnly(class_332 context, class_310 client, TurtModConfig config, int x, int y, List<class_1293> effects) {
-      int startX = x + 4;
-      int startY = y + 4 + 0;
-      int columns = Math.max(1, Math.min(8, effects.size()));
+      int columns = config.hud.potionHudHorizontal ? Math.max(1, effects.size()) : 1;
 
       for(int i = 0; i < effects.size(); ++i) {
          class_1293 effect = (class_1293)effects.get(i);
          int col = i % columns;
          int row = i / columns;
-         int cellX = startX + col * 20;
-         int cellY = startY + row * 20;
-         CustomThemeRenderer.renderSlotCell(context, cellX, cellY, 18, 18, config, true);
-         drawEffectIcon(context, effect, cellX + 1, cellY + 1);
+         int cellX = x + col * POTION_CELL_WIDTH;
+         int cellY = y + row * POTION_CELL_HEIGHT;
+         drawEffectIcon(context, effect, cellX, cellY);
          drawIconOverlay(context, client, effect, cellX, cellY);
       }
 
@@ -542,13 +618,30 @@ public final class HudPanelsFeature {
       switch (mode) {
          case DURATION_ASC -> var10000 = Comparator.comparingInt(class_1293::method_5584);
          case AMPLIFIER_DESC -> var10000 = Comparator.comparingInt(class_1293::method_5578).reversed().thenComparingInt(class_1293::method_5584).reversed();
+         case AMPLIFIER_ASC -> var10000 = Comparator.comparingInt(class_1293::method_5578).thenComparingInt(class_1293::method_5584);
          case NAME_ASC -> var10000 = Comparator.comparing(HudPanelsFeature::buildPotionName, String.CASE_INSENSITIVE_ORDER);
+         case NAME_DESC -> var10000 = Comparator.comparing(HudPanelsFeature::buildPotionName, String.CASE_INSENSITIVE_ORDER).reversed();
          case DURATION_DESC -> var10000 = Comparator.comparingInt(class_1293::method_5584).reversed();
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
       Comparator<class_1293> comparator = var10000;
       effects.sort(comparator);
+   }
+
+   private static void sortEffectsByLongestDuration(List<class_1293> effects) {
+      effects.sort((a, b) -> {
+         boolean aInfinite = isInfinitePotion(a);
+         boolean bInfinite = isInfinitePotion(b);
+         if (aInfinite != bInfinite) {
+            return aInfinite ? -1 : 1;
+         }
+         return Integer.compare(b.method_5584(), a.method_5584());
+      });
+   }
+
+   private static boolean isInfinitePotion(class_1293 effect) {
+      return effect.method_48559();
    }
 
    private static String buildPotionName(class_1293 effect) {

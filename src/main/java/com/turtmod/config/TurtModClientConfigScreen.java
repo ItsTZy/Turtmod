@@ -6,6 +6,7 @@ import com.turtmod.ui.TurtLauncher;
 import com.turtmod.ui.TurtUIButton;
 import com.turtmod.ui.TurtUICheckbox;
 import com.turtmod.ui.TurtUILabel;
+import com.turtmod.ui.TurtSounds;
 import com.turtmod.ui.TurtUIScale;
 import com.turtmod.ui.TurtUIPanel;
 import com.turtmod.ui.TurtUITheme;
@@ -16,14 +17,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import net.minecraft.class_1109;
 import net.minecraft.class_11905;
 import net.minecraft.class_11908;
 import net.minecraft.class_11909;
 import net.minecraft.class_2561;
-import net.minecraft.class_310;
 import net.minecraft.class_332;
-import net.minecraft.class_3417;
 import net.minecraft.class_342;
 import net.minecraft.class_437;
 
@@ -37,9 +35,15 @@ public final class TurtModClientConfigScreen extends class_437 {
    private final List<TurtUIButton> controlButtons;
    private class_342 moduleSearchField;
    private boolean searchFieldFocused;
+   private float searchFocusAnim = 0f;
+   private long searchFocusNs = System.nanoTime();
    private float openFade = 0f;
    private float tabFade = 1f;     // eases 0→1 on tab switch for a slide-in
+   private float resetFlash = 0f;  // green confirmation flash over the grid after Reset All
    private long lastFrameNs = System.nanoTime();
+   private long statCountNs = 0L;  // throttle for the sidebar active-module counter
+   private int cachedActiveCount = 0;
+   private int cachedTotalCount = 0;
 
    // ── Fit-to-screen + scrolling state ───────────────────────────────────────
    // The panel is laid out at a fixed LOGICAL size and scaled to fit any resolution / GUI scale.
@@ -96,13 +100,14 @@ public final class TurtModClientConfigScreen extends class_437 {
       int btnGap = 6;
       int btnW = (contentW - btnGap * 3) / 4;
       this.controlButtons.add(new TurtUIButton(contentX, btnZoneTop, btnW, btnH, "All Config", btnTheme,
-         () -> this.field_22787.method_1507(TurtModWalksyConfigScreenFactory.create(this))));
+         () -> this.field_22787.method_1507(TurtModConfigScreenFactory.create(this))));
       this.controlButtons.add(new TurtUIButton(contentX + (btnW + btnGap), btnZoneTop, btnW, btnH, "HUD Editor", btnTheme,
          () -> this.field_22787.method_1507(new HudEditorScreen(this))));
       this.controlButtons.add(new TurtUIButton(contentX + (btnW + btnGap) * 2, btnZoneTop, btnW, btnH, "Reset All", btnTheme, () -> {
          ConfigManager.reset();
          TurtModClient.reloadConfig();
          this.rebuildModuleList();
+         this.resetFlash = 1f;
       }));
       this.controlButtons.add(new TurtUIButton(contentX + (btnW + btnGap) * 3, btnZoneTop, btnW, btnH, "Back", btnTheme,
          () -> this.field_22787.method_1507(this.parent)));
@@ -149,6 +154,17 @@ public final class TurtModClientConfigScreen extends class_437 {
          ? this.getModuleOptionsForTab(this.activeTab)
          : getAllModuleOptions(cfg).stream().filter((o) -> o.displayName.toLowerCase(Locale.ROOT).contains(q)).toList();
 
+      // Pinned modules float to the front (stable — order within each group is preserved).
+      List<String> pins = cfg.misc.pinnedModules;
+      if (pins != null && !pins.isEmpty()) {
+         options = new ArrayList<>(options);
+         options.sort((a, b) -> {
+            boolean pa = pins.contains(a.displayName);
+            boolean pb = pins.contains(b.displayName);
+            return pa == pb ? 0 : (pa ? -1 : 1);
+         });
+      }
+
       for (int i = 0; i < options.size(); i++) {
          ModuleOption option = options.get(i);
          int col = i % cols;
@@ -157,6 +173,9 @@ public final class TurtModClientConfigScreen extends class_437 {
          int cy = this.listTop + row * rowHeight;
          TurtUICheckbox cb = new TurtUICheckbox(cx, cy, 12, 6, this.field_22793, option.displayName, theme, true,
             (Boolean)option.getEnabled.get(), (v) -> option.setEnabled.accept(v));
+         cb.rowWidth = colWidth;          // Lunar-style full-width row + pill toggle
+         cb.rowHeight = rowHeight - 2;
+         cb.highlightQuery = q.isEmpty() ? null : q;
          this.checkboxes.add(cb);
       }
 
@@ -191,16 +210,122 @@ public final class TurtModClientConfigScreen extends class_437 {
          // 🎨 Visuals (10)
          case 0 -> var10000 = List.of(new ModuleOption("Fullbright", () -> cfg.visual.fullbright.enabled, (v) -> cfg.visual.fullbright.enabled = v), new ModuleOption("Low Fire", () -> cfg.visual.disableFireOverlay, (v) -> cfg.visual.disableFireOverlay = v), new ModuleOption("Fog Tweaks", () -> cfg.visual.disableAllFog, (v) -> cfg.visual.disableAllFog = v), new ModuleOption("Overlays", () -> cfg.visual.disablePumpkinBlur, (v) -> cfg.visual.disablePumpkinBlur = v), new ModuleOption("Hurt Cam", () -> cfg.visual.hurtCamEnabled, (v) -> cfg.visual.hurtCamEnabled = v), new ModuleOption("Block Outline", () -> cfg.visual.recolorBlockOutline, (v) -> cfg.visual.recolorBlockOutline = v), new ModuleOption("Hit Color", () -> cfg.visual.hitColor.enabled, (v) -> cfg.visual.hitColor.enabled = v), new ModuleOption("Totem Tweaks", () -> cfg.visual.enableSmallTotem, (v) -> cfg.visual.enableSmallTotem = v), new ModuleOption("Own Nametag", () -> cfg.visual.showOwnNametag, (v) -> cfg.visual.showOwnNametag = v), new ModuleOption("Hitboxes", () -> cfg.hud.customHitboxes, (v) -> cfg.hud.customHitboxes = v));
          // 🖥 HUD (10)
-         case 1 -> var10000 = List.of(new ModuleOption("Armor HUD", () -> cfg.hud.movableArmorHud, (v) -> cfg.hud.movableArmorHud = v), new ModuleOption("Potion HUD", () -> cfg.hud.movablePotionHud, (v) -> cfg.hud.movablePotionHud = v), new ModuleOption("FPS/Ping", () -> cfg.hud.minimalFpsPingOverlay, (v) -> cfg.hud.minimalFpsPingOverlay = v), new ModuleOption("Inventory HUD", () -> cfg.hud.inventoryHudEnabled, (v) -> cfg.hud.inventoryHudEnabled = v), new ModuleOption("Keystrokes", () -> cfg.hud.keystrokesHud, (v) -> cfg.hud.keystrokesHud = v), new ModuleOption("CPS Counter", () -> cfg.hud.cpsCounterHud, (v) -> cfg.hud.cpsCounterHud = v), new ModuleOption("Elytra Pitch HUD", () -> cfg.visual.elytraPitchHud, (v) -> cfg.visual.elytraPitchHud = v), new ModuleOption("Coordinates", () -> cfg.hud.coordinatesHud, (v) -> cfg.hud.coordinatesHud = v), new ModuleOption("Health Indicator", () -> cfg.combat.playerHealthIndicator, (v) -> cfg.combat.playerHealthIndicator = v), new ModuleOption("Reach Display", () -> cfg.hud.reachDisplay, (v) -> cfg.hud.reachDisplay = v));
+         case 1 -> var10000 = List.of(new ModuleOption("Armor HUD", () -> cfg.hud.movableArmorHud, (v) -> cfg.hud.movableArmorHud = v), new ModuleOption("Potion HUD", () -> cfg.hud.movablePotionHud, (v) -> cfg.hud.movablePotionHud = v), new ModuleOption("FPS/Ping", () -> cfg.hud.minimalFpsPingOverlay, (v) -> cfg.hud.minimalFpsPingOverlay = v), new ModuleOption("Inventory HUD", () -> cfg.hud.inventoryHudEnabled, (v) -> cfg.hud.inventoryHudEnabled = v), new ModuleOption("Keystrokes", () -> cfg.hud.keystrokesHud, (v) -> cfg.hud.keystrokesHud = v), new ModuleOption("CPS Counter", () -> cfg.hud.cpsCounterHud, (v) -> cfg.hud.cpsCounterHud = v), new ModuleOption("Elytra Pitch HUD", () -> cfg.visual.elytraPitchHud, (v) -> cfg.visual.elytraPitchHud = v), new ModuleOption("Coordinates", () -> cfg.hud.coordinatesHud, (v) -> cfg.hud.coordinatesHud = v), new ModuleOption("Health Indicator", () -> cfg.combat.playerHealthIndicator, (v) -> cfg.combat.playerHealthIndicator = v), new ModuleOption("Reach Display", () -> cfg.hud.reachDisplay, (v) -> cfg.hud.reachDisplay = v), new ModuleOption("Sprint Display", () -> cfg.hud.toggleSprintHud, (v) -> cfg.hud.toggleSprintHud = v), new ModuleOption("Ping Display", () -> cfg.hud.pingInTab || cfg.visual.pingOnNametag, (v) -> { cfg.hud.pingInTab = v; cfg.visual.pingOnNametag = v; }));
          // 🛠 Utility (7)
-         case 2 -> var10000 = List.of(new ModuleOption("Freelook", () -> cfg.visual.freelookEnabled, (v) -> cfg.visual.freelookEnabled = v), new ModuleOption("Hide Scoreboard", () -> cfg.visual.hideScoreboard, (v) -> cfg.visual.hideScoreboard = v), new ModuleOption("Shield Tweaks", () -> cfg.visual.shieldStatusRecolor, (v) -> cfg.visual.shieldStatusRecolor = v), new ModuleOption("Held Item Tweaks", () -> cfg.visual.heldItemTweaksEnabled, (v) -> cfg.visual.heldItemTweaksEnabled = v), new ModuleOption("Zoom", () -> cfg.visual.zoomEnabled, (v) -> cfg.visual.zoomEnabled = v), new ModuleOption("Clean F3", () -> cfg.hud.cleanF3Mode, (v) -> cfg.hud.cleanF3Mode = v), new ModuleOption("Screenshot Tools", () -> cfg.hud.betterScreenshotActions, (v) -> cfg.hud.betterScreenshotActions = v));
+         case 2 -> var10000 = List.of(new ModuleOption("Freelook", () -> cfg.visual.freelookEnabled, (v) -> cfg.visual.freelookEnabled = v), new ModuleOption("Scoreboard Tweaks", () -> !cfg.visual.hideScoreboard, (v) -> cfg.visual.hideScoreboard = !v), new ModuleOption("Shield Tweaks", () -> cfg.visual.shieldStatusRecolor, (v) -> cfg.visual.shieldStatusRecolor = v), new ModuleOption("Held Item Tweaks", () -> cfg.visual.heldItemTweaksEnabled, (v) -> cfg.visual.heldItemTweaksEnabled = v), new ModuleOption("Zoom", () -> cfg.visual.zoomEnabled, (v) -> cfg.visual.zoomEnabled = v), new ModuleOption("Clean F3", () -> cfg.hud.cleanF3Mode, (v) -> cfg.hud.cleanF3Mode = v), new ModuleOption("Screenshot Tools", () -> cfg.hud.betterScreenshotActions, (v) -> cfg.hud.betterScreenshotActions = v), new ModuleOption("Death Coords", () -> cfg.misc.deathCoords, (v) -> cfg.misc.deathCoords = v), new ModuleOption("Mute Sounds", () -> cfg.misc.muteSoundsEnabled, (v) -> cfg.misc.muteSoundsEnabled = v), new ModuleOption("Hide Particles", () -> cfg.misc.hideParticlesEnabled, (v) -> cfg.misc.hideParticlesEnabled = v), new ModuleOption("Command Keys", () -> cfg.misc.commandKeysEnabled, (v) -> cfg.misc.commandKeysEnabled = v), new ModuleOption("Kit Loader", () -> true, (v) -> {}));
          // 📦 Misc (3)
          case 3 -> var10000 = List.of(new ModuleOption("Theme Settings", () -> true, (v) -> {
-}), new ModuleOption("Enable TurtMod", () -> cfg.misc.enabled, (v) -> cfg.misc.enabled = v), new ModuleOption("Discord RPC", () -> cfg.misc.discordRpc.enabled, (v) -> cfg.misc.discordRpc.enabled = v));
+}), new ModuleOption("Enable TurtMod", () -> cfg.misc.enabled, (v) -> cfg.misc.enabled = v), new ModuleOption("Discord RPC", () -> cfg.misc.discordRpc.enabled, (v) -> cfg.misc.discordRpc.enabled = v), new ModuleOption("Gamemode Switcher", () -> cfg.misc.noOpGamemodeSwitcher, (v) -> cfg.misc.noOpGamemodeSwitcher = v));
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
       return var10000;
+   }
+
+   /** One-line descriptions shown as a hover tooltip in the module grid (keyed by display name). */
+   private static final java.util.Map<String, String> MODULE_DESC = buildModuleDescriptions();
+
+   private static java.util.Map<String, String> buildModuleDescriptions() {
+      java.util.Map<String, String> m = new java.util.HashMap<>();
+      m.put("Fullbright", "See in the dark — removes all darkness without night vision.");
+      m.put("Low Fire", "Lowers the fire overlay so you can see while burning.");
+      m.put("Fog Tweaks", "Reduce or remove world fog for clearer view distance.");
+      m.put("Overlays", "Hide pumpkin/powder-snow screen overlays.");
+      m.put("Hurt Cam", "Toggle the camera tilt when you take damage.");
+      m.put("Block Outline", "Recolor the block selection outline.");
+      m.put("Hit Color", "Tint entities red when you hit them.");
+      m.put("Totem Tweaks", "Shrink the totem-of-undying pop animation.");
+      m.put("Own Nametag", "Render your own nametag above your head.");
+      m.put("Hitboxes", "Custom entity hitbox rendering.");
+      m.put("Armor HUD", "Show your worn armor + durability on screen.");
+      m.put("Potion HUD", "Movable active-effects display with styles & sorting.");
+      m.put("FPS/Ping", "Minimal FPS and ping overlay.");
+      m.put("Inventory HUD", "Show your inventory contents on screen.");
+      m.put("Keystrokes", "WASD / mouse keystroke display with CPS.");
+      m.put("CPS Counter", "Clicks-per-second counter.");
+      m.put("Elytra Pitch HUD", "Show elytra glide pitch angle.");
+      m.put("Coordinates", "On-screen XYZ coordinates.");
+      m.put("Health Indicator", "Numeric health indicator.");
+      m.put("Reach Display", "Show your attack reach distance.");
+      m.put("Sprint Display", "Show sprint / sneak / swim state.");
+      m.put("Ping Display", "Show ping in tab list and on nametags.");
+      m.put("Freelook", "Hold a key to look around without turning.");
+      m.put("Scoreboard Tweaks", "Hide numbers/background, scale & move the scoreboard.");
+      m.put("Shield Tweaks", "Recolor the shield by its status.");
+      m.put("Held Item Tweaks", "Custom held-item size, position & rotation.");
+      m.put("Zoom", "Hold a key to zoom in (Optifine-style).");
+      m.put("Clean F3", "Cleaner, minimal debug screen.");
+      m.put("Screenshot Tools", "Copy / upload / open actions after a screenshot.");
+      m.put("Death Coords", "Save the coordinates where you last died.");
+      m.put("Mute Sounds", "Mute selected in-game sounds.");
+      m.put("Hide Particles", "Hide selected particle types.");
+      m.put("Command Keys", "Bind keys to run chat commands / macros.");
+      m.put("Kit Loader", "Save and load hotbar/inventory kits.");
+      m.put("Theme Settings", "Customize the HUD theme (colors, borders, opacity).");
+      m.put("Enable TurtMod", "Master switch for all TurtMod features.");
+      m.put("Discord RPC", "Show TurtMod activity on your Discord profile.");
+      m.put("Gamemode Switcher", "Open the F3+F4 gamemode wheel without op.");
+      return m;
+   }
+
+   private void drawModuleTooltip(class_332 ctx, int mlx, int mly) {
+      String desc = null;
+      for (TurtUICheckbox cb : this.checkboxes) {
+         float vy = cb.y - this.scrollY;
+         if (vy < this.listTop - 2 || vy > this.listBottom) {
+            continue; // scrolled out of the viewport
+         }
+         if (cb.isHoveredPublic(mlx, mly + Math.round(this.scrollY))) {
+            desc = MODULE_DESC.get(cb.label);
+            break;
+         }
+      }
+      if (desc == null) {
+         return;
+      }
+      // Simple word wrap to ~150px.
+      java.util.List<String> lines = new ArrayList<>();
+      String[] words = desc.split(" ");
+      StringBuilder cur = new StringBuilder();
+      for (String w : words) {
+         String trial = cur.length() == 0 ? w : cur + " " + w;
+         if (this.field_22793.method_1727(trial) > 150 && cur.length() > 0) {
+            lines.add(cur.toString());
+            cur = new StringBuilder(w);
+         } else {
+            cur = new StringBuilder(trial);
+         }
+      }
+      if (cur.length() > 0) {
+         lines.add(cur.toString());
+      }
+
+      int tw = 0;
+      for (String l : lines) {
+         tw = Math.max(tw, this.field_22793.method_1727(l));
+      }
+      int pad = 5;
+      int lh = 10;
+      int boxW = tw + pad * 2 + 4;
+      int boxH = lines.size() * lh + pad * 2 - 2;
+      int bx = mlx + 12;
+      int by = mly + 10;
+      int panelR = this.mainPanel.x + this.mainPanel.width - 4;
+      int panelB = this.mainPanel.y + this.mainPanel.height - 4;
+      if (bx + boxW > panelR) {
+         bx = mlx - boxW - 8;
+      }
+      if (by + boxH > panelB) {
+         by = panelB - boxH;
+      }
+      TurtUIUtils.drawRoundedRect(ctx, bx, by, boxW, boxH, 4, new Color(0xF00C0F15, true));
+      TurtUIUtils.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, ACCENT_GREEN);
+      ctx.method_25294(bx + 2, by + 4, bx + 4, by + boxH - 4, ACCENT_GREEN.getRGB());
+      int ty = by + pad;
+      for (String l : lines) {
+         ctx.method_51433(this.field_22793, l, bx + pad + 4, ty, 0xFFD8DEE6, false);
+         ty += lh;
+      }
    }
 
    public void method_25394(class_332 context, int mouseX, int mouseY, float delta) {
@@ -209,8 +334,10 @@ public final class TurtModClientConfigScreen extends class_437 {
       this.lastFrameNs = now;
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, dt, 12f);
       this.tabFade = TurtUIUtils.lerp01(this.tabFade, 1f, dt, 14f);
+      this.resetFlash = TurtUIUtils.lerp01(this.resetFlash, 0f, dt, 3.5f);
 
       TurtUIUtils.drawMenuBackdrop(context, this.field_22789, this.field_22790);
+      TurtUIUtils.drawCursorGlow(context, mouseX, mouseY);
 
       // Fit the fixed logical layout to the real screen (any resolution / GUI scale).
       this.uiScale.compute(this.field_22789, this.field_22790, LOGICAL_W, LOGICAL_H, 8);
@@ -221,19 +348,42 @@ public final class TurtModClientConfigScreen extends class_437 {
       this.uiScale.push(context);
       // subtle slide-up on open
       context.method_51448().pushMatrix();
-      context.method_51448().translate(0f, (1f - this.openFade) * 7f);
+      float introE = TurtUIUtils.ease(this.openFade);
+      context.method_51448().translate(LOGICAL_W / 2f, LOGICAL_H / 2f + (1f - introE) * 12f);
+      context.method_51448().scale(0.97f + 0.03f * introE, 0.97f + 0.03f * introE);
+      context.method_51448().translate(-LOGICAL_W / 2f, -LOGICAL_H / 2f);
 
       int px = this.mainPanel.x, py = this.mainPanel.y, pw = this.mainPanel.width, ph = this.mainPanel.height;
       TurtLauncher.drawChrome(context, this.field_22793, px, py, pw, ph, "SETTINGS", null, null);
 
-      // Sidebar: tab buttons as nav items
+      // Sidebar: tab buttons as nav items (sliding highlight under the labels)
       Tab[] tabs = TurtModClientConfigScreen.Tab.values();
+      TurtLauncher.drawNavIndicator(context, px, py, this.activeTab.ordinal());
       for (int i = 0; i < tabs.length; i++) {
          boolean active = this.activeTab == tabs[i];
          boolean hov = TurtLauncher.navItemHovered(px, py, i, mlx, mly);
          String name = tabs[i] == Tab.HUD ? "HUD" : tabs[i].name().charAt(0) + tabs[i].name().substring(1).toLowerCase();
          TurtLauncher.drawNavItem(context, this.field_22793, px, py, i, name, active, hov);
       }
+
+      // Special (Settings): live count of active modules at the foot of the sidebar.
+      // Throttled to ~4x/sec — recomputing the full option list every frame is needless allocation.
+      if (now - this.statCountNs > 250_000_000L) {
+         this.statCountNs = now;
+         int active = 0;
+         int total = 0;
+         for (ModuleOption o : this.getAllModuleOptions(TurtModClient.getConfig())) {
+            total++;
+            if (Boolean.TRUE.equals(o.getEnabled.get())) {
+               active++;
+            }
+         }
+         this.cachedActiveCount = active;
+         this.cachedTotalCount = total;
+      }
+      int statY = py + this.mainPanel.height - TurtLauncher.FOOTER_H - 15;
+      TurtUIUtils.drawRoundedRect(context, px + 6, statY - 3, TurtLauncher.SIDEBAR_W - 12, 14, 4, new Color(0x33000000, true));
+      TurtUIUtils.drawText(context, this.field_22793, "⚡ " + this.cachedActiveCount + " / " + this.cachedTotalCount + " active", px + 12, statY, ACCENT_GREEN, false, false);
 
       // Search bar inside content area
       this.drawSearchBar(context, mlx, mly);
@@ -242,22 +392,85 @@ public final class TurtModClientConfigScreen extends class_437 {
       // logical here; class_332 applies the current matrix, so they map to the right screen pixels.)
       context.method_44379(this.listLeft - 2, this.listTop - 2, this.listLeft + this.listW + 2, this.listBottom + 2);
       context.method_51448().pushMatrix();
-      context.method_51448().translate((1f - this.tabFade) * 14f, -this.scrollY);
-      for (TurtUICheckbox cb : this.checkboxes) {
+      context.method_51448().translate(0f, -this.scrollY);
+      // Lunar-style staggered reveal: rows cascade in from the right when a tab opens.
+      for (int i = 0; i < this.checkboxes.size(); i++) {
+         TurtUICheckbox cb = this.checkboxes.get(i);
+         float rp = this.tabFade * 2.0f - i * 0.12f;
+         rp = rp < 0f ? 0f : (rp > 1f ? 1f : rp);
+         float e = TurtUIUtils.ease(rp);
+         context.method_51448().pushMatrix();
+         context.method_51448().translate((1f - e) * 24f, 0f);
          cb.render(context, mlx, mly + Math.round(this.scrollY));
+         this.drawPinStar(context, cb, mlx, mly + Math.round(this.scrollY));
+         context.method_51448().popMatrix();
       }
       context.method_51448().popMatrix();
       context.method_44380();
 
+      // Friendly on-theme empty state when a search matches nothing.
+      if (this.checkboxes.isEmpty()) {
+         int ecx = this.listLeft + this.listW / 2;
+         int ecy = (this.listTop + this.listBottom) / 2 - 4;
+         TurtUIUtils.drawText(context, this.field_22793, "🐢  No modules match", ecx, ecy, new Color(0xFF9CA8B4, true), true, false);
+      }
+
       // Scrollbar (only when the grid overflows its viewport).
       this.drawScrollbar(context);
+
+      // Inline "reset" confirmation: a brief green wash over the grid (no toast).
+      if (this.resetFlash > 0.02f) {
+         TurtUIUtils.drawRoundedRect(context, this.listLeft - 2, this.listTop - 2, this.listW + 4,
+            this.listBottom - this.listTop + 4, 4,
+            new Color(ACCENT_GREEN.getRed(), ACCENT_GREEN.getGreen(), ACCENT_GREEN.getBlue(), (int) (70 * this.resetFlash)));
+      }
 
       // Bottom control buttons (already positioned in method_25426)
       for (TurtUIButton btn : this.controlButtons) btn.render(context, mlx, mly, this.field_22793);
 
+      // Lunar/Essential-style hover tooltip describing the module under the cursor.
+      this.drawModuleTooltip(context, mlx, mly);
+
       context.method_51448().popMatrix();
       this.uiScale.pop(context);
+      TurtUIUtils.drawOpenFade(context, this.field_22789, this.field_22790, this.openFade);
       super.method_25394(context, mouseX, mouseY, delta);
+   }
+
+   /** Star toggle on a module row: gold ★ when pinned, faint ☆ on row hover. */
+   private void drawPinStar(class_332 ctx, TurtUICheckbox cb, int mlx, int mly) {
+      List<String> pins = TurtModClient.getConfig().misc.pinnedModules;
+      boolean pinned = pins != null && pins.contains(cb.label);
+      boolean rowHov = cb.isHoveredPublic(mlx, mly);
+      if (!pinned && !rowHov) {
+         return;
+      }
+      int sx = cb.x + cb.rowWidth - 45;
+      int sy = cb.y + (cb.rowHeight - 8) / 2;
+      boolean starHov = mlx >= sx - 2 && mlx <= sx + 10 && mly >= sy - 2 && mly <= sy + 10;
+      int color = pinned ? 0xFFFFD24A : (starHov ? 0xFFFFFFFF : 0x66FFFFFF);
+      ctx.method_51433(this.field_22793, pinned ? "★" : "☆", sx, sy, color, false);
+   }
+
+   private boolean pinStarHit(TurtUICheckbox cb, double mx, double gy) {
+      int sx = cb.x + cb.rowWidth - 45;
+      int sy = cb.y + (cb.rowHeight - 8) / 2;
+      return mx >= sx - 2 && mx <= sx + 10 && gy >= sy - 2 && gy <= sy + 10;
+   }
+
+   private void togglePin(String label) {
+      TurtModConfig cfg = TurtModClient.getConfig();
+      if (cfg.misc.pinnedModules == null) {
+         cfg.misc.pinnedModules = new ArrayList<>();
+      }
+      if (cfg.misc.pinnedModules.contains(label)) {
+         cfg.misc.pinnedModules.remove(label);
+      } else {
+         cfg.misc.pinnedModules.add(label);
+      }
+      ConfigManager.save(cfg);
+      TurtSounds.tick();
+      this.rebuildModuleList();
    }
 
    private void drawScrollbar(class_332 context) {
@@ -269,8 +482,8 @@ public final class TurtModClientConfigScreen extends class_437 {
       int trackX = this.listLeft + this.listW - 2;
       int thumbH = Math.max(16, Math.round((float)viewportH * viewportH / (float)this.gridContentHeight));
       int thumbY = this.listTop + Math.round((this.scrollY / max) * (viewportH - thumbH));
-      context.method_25294(trackX, this.listTop, trackX + 2, this.listBottom, 0x33FFFFFF);
-      context.method_25294(trackX, thumbY, trackX + 2, thumbY + thumbH, ACCENT_GREEN.getRGB());
+      TurtUIUtils.drawRoundedRect(context, trackX, this.listTop, 3, this.listBottom - this.listTop, 1, new Color(0x22FFFFFF, true));
+      TurtUIUtils.drawRoundedRect(context, trackX, thumbY, 3, thumbH, 1, ACCENT_GREEN);
    }
 
    private void drawSearchBar(class_332 context, int mouseX, int mouseY) {
@@ -281,9 +494,21 @@ public final class TurtModClientConfigScreen extends class_437 {
          int h = this.moduleSearchField.method_25364();
          
          boolean hov = TurtUIUtils.isHovered(mouseX, mouseY, x, y, w, h);
+         long now = System.nanoTime();
+         float dt = Math.min((now - this.searchFocusNs) / 1_000_000_000f, 0.1f);
+         this.searchFocusNs = now;
+         this.searchFocusAnim = TurtUIUtils.lerp01(this.searchFocusAnim, this.searchFieldFocused ? 1f : 0f, dt, 14f);
+
          TurtUIUtils.drawRoundedRect(context, x, y, w, h, 4, SEARCH_BG);
-         TurtUIUtils.drawBorder(context, x, y, w, h, this.searchFieldFocused ? ACCENT_PINK : (hov ? ACCENT_GREEN : SEARCH_BORDER));
-         
+         TurtUIUtils.drawRoundedBorder(context, x, y, w, h, 4, this.searchFieldFocused ? ACCENT_PINK : (hov ? ACCENT_GREEN : SEARCH_BORDER));
+         // Lunar-style accent underline that grows from the centre when focused.
+         float fe = TurtUIUtils.ease(this.searchFocusAnim);
+         if (fe > 0.01f) {
+            int uw = (int)((w - 6) * fe);
+            int ux = x + w / 2 - uw / 2;
+            context.method_25294(ux, y + h - 1, ux + uw, y + h, ACCENT_PINK.getRGB());
+         }
+
          context.method_25303(this.field_22793, "\ud83d\udd0d ", x + 6, y + 6, -7487905);
          String text = this.moduleSearchField.method_1882();
          if (text.isEmpty() && !this.searchFieldFocused) {
@@ -303,15 +528,29 @@ public final class TurtModClientConfigScreen extends class_437 {
 
    public boolean method_25400(class_11905 input) {
       char chr = (char)input.comp_4793();
-      if (!this.searchFieldFocused || this.moduleSearchField == null || !Character.isLetterOrDigit(chr) && chr != ' ' && chr != '_' && chr != '-') {
+      if (this.moduleSearchField == null) {
          return super.method_25400(input);
-      } else {
-         class_342 var10000 = this.moduleSearchField;
-         String var10001 = this.moduleSearchField.method_1882();
-         var10000.method_1852(var10001 + chr);
+      }
+      // Auto-focus the search the moment the user starts typing (Steam/Discord-style); '/' focuses empty.
+      if (!this.searchFieldFocused) {
+         if (chr == '/') {
+            this.searchFieldFocused = true;
+            return true;
+         }
+         if (Character.isLetterOrDigit(chr)) {
+            this.searchFieldFocused = true;
+            this.moduleSearchField.method_1852(this.moduleSearchField.method_1882() + chr);
+            this.rebuildModuleList();
+            return true;
+         }
+         return super.method_25400(input);
+      }
+      if (Character.isLetterOrDigit(chr) || chr == ' ' || chr == '_' || chr == '-') {
+         this.moduleSearchField.method_1852(this.moduleSearchField.method_1882() + chr);
          this.rebuildModuleList();
          return true;
       }
+      return super.method_25400(input);
    }
 
    public boolean method_25404(class_11908 input) {
@@ -369,6 +608,7 @@ public final class TurtModClientConfigScreen extends class_437 {
                if (this.activeTab != tabs[i]) {
                   this.tabFade = 0f;   // trigger slide-in
                   this.scrollY = 0f;   // reset scroll for the new tab
+                  TurtSounds.tab();
                }
                this.activeTab = tabs[i];
                this.rebuildModuleList();
@@ -389,10 +629,15 @@ public final class TurtModClientConfigScreen extends class_437 {
          double gy = mouseY + this.scrollY;
          for (TurtUICheckbox cb : this.checkboxes) {
             if (cb.isHoveredPublic(mouseX, gy)) {
+               // Star hotspot toggles pin without toggling the module.
+               if (button == 0 && this.pinStarHit(cb, mouseX, gy)) {
+                  this.togglePin(cb.label);
+                  return true;
+               }
                if (button == 1) {
-                  TurtModWalksyConfigScreenFactory.ModuleKind kind = this.getModuleKind(cb.label);
+                  TurtModConfigScreenFactory.ModuleKind kind = this.getModuleKind(cb.label);
                   if (kind != null) {
-                     this.field_22787.method_1507(TurtModWalksyConfigScreenFactory.createForModule(this, kind));
+                     this.field_22787.method_1507(TurtModConfigScreenFactory.createForModule(this, kind));
                   }
                   return true;
                }
@@ -418,96 +663,119 @@ public final class TurtModClientConfigScreen extends class_437 {
       return super.method_25401(mouseX, mouseY, horizontalAmount, verticalAmount);
    }
 
-   private TurtModWalksyConfigScreenFactory.ModuleKind getModuleKind(String label) {
-      TurtModWalksyConfigScreenFactory.ModuleKind var10000;
+   private TurtModConfigScreenFactory.ModuleKind getModuleKind(String label) {
+      TurtModConfigScreenFactory.ModuleKind var10000;
       switch (label) {
          case "Fullbright":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.FULLBRIGHT;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.FULLBRIGHT;
             break;
          case "Freelook":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.FREELOOK;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.FREELOOK;
             break;
          case "Hit Color":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.HIT_COLOR;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.HIT_COLOR;
             break;
          case "Low Fire":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.LOW_FIRE;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.LOW_FIRE;
             break;
          case "Shield Tweaks":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.LOW_SHIELD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.LOW_SHIELD;
             break;
          case "Fog Tweaks":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.FOG_CONTROLS;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.FOG_CONTROLS;
             break;
          case "Overlays":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.OVERLAYS;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.OVERLAYS;
             break;
          case "Hurt Cam":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.CAMERA_SETTINGS;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.CAMERA_SETTINGS;
             break;
          case "Block Outline":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.BLOCK_OUTLINE;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.BLOCK_OUTLINE;
             break;
          case "Totem Tweaks":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.SMALL_TOTEM;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.SMALL_TOTEM;
             break;
          case "Discord RPC":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.DISCORD_RPC;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.DISCORD_RPC;
             break;
          case "Armor HUD":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.ARMOR_HUD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.ARMOR_HUD;
             break;
          case "Potion HUD":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.POTION_HUD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.POTION_HUD;
             break;
          case "FPS/Ping":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.FPS_PING;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.FPS_PING;
             break;
          case "Reach Display":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.REACH;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.REACH;
             break;
          case "Keystrokes":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.KEYSTROKES;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.KEYSTROKES;
             break;
          case "CPS Counter":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.CPS_COUNTER;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.CPS_COUNTER;
+            break;
+         case "Sprint Display":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.SPRINT_HUD;
             break;
          case "Inventory HUD":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.INVENTORY_HUD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.INVENTORY_HUD;
             break;
          case "Coordinates":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.COORDINATES_HUD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.COORDINATES_HUD;
+            break;
+         case "Ping Display":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.PING_DISPLAY;
             break;
          case "Hitboxes":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.CUSTOM_HITBOXES;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.CUSTOM_HITBOXES;
             break;
          case "Scoreboard Tweaks":
-         case "Hide Scoreboard":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.SCOREBOARD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.SCOREBOARD;
             break;
          case "Screenshot Tools":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.BETTER_SCREENSHOT;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.BETTER_SCREENSHOT;
             break;
          case "Clean F3":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.CLEAN_F3;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.CLEAN_F3;
             break;
          case "Health Indicator":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.HEALTH_INDICATOR;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.HEALTH_INDICATOR;
             break;
          case "Held Item Tweaks":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.HELD_ITEM;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.HELD_ITEM;
             break;
          case "Theme Settings":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.THEME_SETTINGS;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.THEME_SETTINGS;
             break;
          case "Zoom":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.ZOOM;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.ZOOM;
             break;
          case "Elytra Pitch HUD":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.ELYTRA_HUD;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.ELYTRA_HUD;
             break;
          case "Own Nametag":
-            var10000 = TurtModWalksyConfigScreenFactory.ModuleKind.OWN_NAMETAG;
+            var10000 = TurtModConfigScreenFactory.ModuleKind.OWN_NAMETAG;
+            break;
+         case "Death Coords":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.DEATH_COORDS;
+            break;
+         case "Mute Sounds":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.MUTE_SOUNDS;
+            break;
+         case "Hide Particles":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.HIDE_PARTICLES;
+            break;
+         case "Command Keys":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.COMMAND_KEYS;
+            break;
+         case "Kit Loader":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.KIT_LOADER;
+            break;
+         case "Gamemode Switcher":
+            var10000 = TurtModConfigScreenFactory.ModuleKind.GAMEMODE_SWITCHER;
             break;
          default:
             var10000 = null;
@@ -520,14 +788,6 @@ public final class TurtModClientConfigScreen extends class_437 {
       ConfigManager.save(TurtModClient.getConfig());
       if (this.field_22787 != null) {
          this.field_22787.method_1507(this.parent);
-      }
-
-   }
-
-   private void playSound() {
-      try {
-         class_310.method_1551().method_1483().method_4873(class_1109.method_47978(class_3417.field_15015, 1.0F));
-      } catch (Exception var2) {
       }
 
    }

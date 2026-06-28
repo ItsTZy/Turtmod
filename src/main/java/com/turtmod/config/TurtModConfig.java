@@ -41,20 +41,6 @@ public final class TurtModConfig {
        public boolean disablePowderSnowFog = false;
        public boolean disableAtmosphericFog = false;
        public int fogDensityPercent = 100;
-       public boolean disableDarknessFog = false;
-       public int fogDistance = 8;
-       public float waterFogStart = -1.0F;
-       public float waterFogEnd = -1.0F;
-       public float lavaFogStart = -1.0F;
-       public float lavaFogEnd = -1.0F;
-       public float netherFogStart = -1.0F;
-       public float netherFogEnd = -1.0F;
-       public float blindnessFogStart = -1.0F;
-       public float blindnessFogEnd = -1.0F;
-       public float powderSnowFogStart = -1.0F;
-       public float powderSnowFogEnd = -1.0F;
-       public float darknessFogStart = -1.0F;
-       public float darknessFogEnd = -1.0F;
       public int fireYOffset = -40;
       public int shieldYOffset = -1;
       public boolean shieldStatusRecolor = true;
@@ -74,7 +60,6 @@ public final class TurtModConfig {
       public float othersShieldScale = 1.0F;
       public boolean showEatingInThirdPerson = false;
       public boolean onlyShowShieldWhenBlocking = false;
-      public float attackCooldownHandOffset = 0.0F;
       public boolean hideFishingBobber = true;
       public int heldItemScalePercent = 100;
       public int totemPopScalePercent = 36;
@@ -101,8 +86,6 @@ public final class TurtModConfig {
        public boolean blockOutlineInvertDepth = false;
        public boolean blockOutlineRainbow = false;
        public float blockOutlineRainbowSpeed = 5.0F;
-      public boolean recolorEnchantGlint;
-      public int enchantGlintColor;
       public boolean freelookEnabled;
       public int freelookSensitivityPercent;
       public boolean projectileTrails;
@@ -142,6 +125,11 @@ public final class TurtModConfig {
       public boolean cleanF3HideBiome;
       public boolean cleanF3CompactMode;
       public boolean hideScoreboard;
+      public boolean scoreboardHideNumbers = false;
+      public boolean scoreboardHideBackground = false;
+      public int scoreboardScalePercent = 100;
+      public int scoreboardOffsetX = 0;
+      public int scoreboardOffsetY = 0;
       public boolean smoothSneak;
       public boolean customNameTags;
       public final HitColorConfig hitColor;
@@ -158,6 +146,9 @@ public final class TurtModConfig {
       public float heldItemPosX;
       public float heldItemPosY;
       public float heldItemPosZ;
+      public float heldItemRotX;
+      public float heldItemRotY;
+      public float heldItemRotZ;
       public boolean customOffhandHeldItemSize;
       public float offhandHeldItemScaleX;
       public float offhandHeldItemScaleY;
@@ -165,6 +156,9 @@ public final class TurtModConfig {
       public float offhandHeldItemPosX;
       public float offhandHeldItemPosY;
       public float offhandHeldItemPosZ;
+      public float offhandHeldItemRotX;
+      public float offhandHeldItemRotY;
+      public float offhandHeldItemRotZ;
       public boolean fishingRodOverlay;
       public int fishingRodOverlayColor;
       public float fishingRodOverlayAlpha;
@@ -174,6 +168,10 @@ public final class TurtModConfig {
       public boolean showOwnNametag = true;
       public boolean elytraPitchHud = false;
       public boolean elytraPitchShowYaw = false;
+      public boolean pingOnNametag = false;
+      public boolean pingNametagAutoColor = true;
+      public String pingNametagFormat = "%dms";
+      public PingTextPosition pingNametagPosition = TurtModConfig.PingTextPosition.RIGHT;
 
       public Visual() {
          this.hurtCamMode = TurtModConfig.HurtCamMode.OLD_NON_DIRECTIONAL;
@@ -185,8 +183,6 @@ public final class TurtModConfig {
           this.blockOutlineInvertDepth = false;
           this.blockOutlineRainbow = false;
           this.blockOutlineRainbowSpeed = 5.0F;
-         this.recolorEnchantGlint = false;
-         this.enchantGlintColor = -4626433;
          this.freelookEnabled = true;
          this.freelookSensitivityPercent = 85;
          this.pearlDetectorEnabled = false;
@@ -225,6 +221,11 @@ public final class TurtModConfig {
          this.cleanF3HideBiome = false;
          this.cleanF3CompactMode = false;
          this.hideScoreboard = false;
+         this.scoreboardHideNumbers = false;
+         this.scoreboardHideBackground = false;
+         this.scoreboardScalePercent = 100;
+         this.scoreboardOffsetX = 0;
+         this.scoreboardOffsetY = 0;
          this.smoothSneak = true;
          this.customNameTags = true;
          this.hitColor = new HitColorConfig();
@@ -248,26 +249,19 @@ public final class TurtModConfig {
          this.offhandHeldItemPosX = 0.0F;
          this.offhandHeldItemPosY = 0.0F;
          this.offhandHeldItemPosZ = 0.0F;
-         this.fishingRodOverlay = true;
+         this.heldItemRotX = 0.0F;
+         this.heldItemRotY = 0.0F;
+         this.heldItemRotZ = 0.0F;
+         this.offhandHeldItemRotX = 0.0F;
+         this.offhandHeldItemRotY = 0.0F;
+         this.offhandHeldItemRotZ = 0.0F;
+         this.fishingRodOverlay = false;
          this.fishingRodOverlayColor = -16711936;
-         this.fishingRodOverlayAlpha = 0.3F;
+         this.fishingRodOverlayAlpha = 1.0F;
       }
    }
 
 public static final class Combat {
-       public boolean customAttackCooldownIndicator = true;
-       public boolean chargedSound = true;
-       public boolean chargedColor = true;
-       public int chargedColorArgb = -12326533;
-       public int unchargedColorArgb = -5195837;
-       public int cooldownOffsetX = -14;
-       public int cooldownOffsetY = 14;
-       public int cooldownWidth = 28;
-       public int cooldownHeight = 2;
-       public int cooldownScalePercent = 100;
-       public boolean cooldownVertical = false;
-       public boolean cooldownOutline = true;
-       public boolean cooldownOnlyWeapon = false;
        public boolean totemCounterHud = false;
        public TotemLabelStyle totemLabelStyle;
        public boolean totemColorByCount = true;
@@ -287,6 +281,7 @@ public static final class Combat {
        public boolean potionThrowCounterColors = false;
        public boolean playerHealthIndicator;
        public boolean playerHealthIndicatorInvisible;
+       public boolean playerHealthIndicatorArmorOnly = false;
        public PlayerHealthIndicatorStyle playerHealthIndicatorStyle;
        public int playerHealthIndicatorMaxHearts;
        public boolean showExactHealthNumber;
@@ -338,6 +333,10 @@ public static final class Combat {
       public boolean coordsShowDimension = true;
       public boolean coordsShowDay = true;
       public boolean coordsShowBackground = true;
+      public boolean pingInTab = false;
+      public boolean pingTabAutoColor = true;
+      public String pingTabFormat = "%dms";
+      public int pingTabColor = -1;
       public boolean snapToGrid = false;
       public int gridSize = 16;
       public boolean snapToCenter = true;
@@ -362,6 +361,7 @@ public static final class Combat {
       public int potionHudY = 0;
       public int potionMaxRows = 6;
       public int potionHudColumns = 1;
+      public boolean potionHudHorizontal = false;   // false = vertical (stacked), true = single row
       public int potionRowSpacing = 28;
       public boolean potionShowFlags = true;
       public boolean potionTimerCompact = true;
@@ -371,6 +371,7 @@ public static final class Combat {
       public PotionHudStyle potionHudStyle;
       public int potionHudScalePercent;
       public boolean minimalFpsPingOverlay;
+      public boolean fpsColorCoded;
       public int minimalOverlayX;
       public int minimalOverlayY;
       public int overlayScalePercent;
@@ -387,9 +388,35 @@ public static final class Combat {
       public boolean cleanF3ShowDayTime;
       public boolean cleanF3ShowMemory;
       public boolean cleanF3ShowHeldItem;
+      public boolean cleanF3ShowDimension;
+      public boolean cleanF3ShowFpsExtremes;
+      // BetterF3-style two-tone colouring + the line order (list of line keys, see DebugHudMixin).
+      public int cleanF3LabelColor = 0xFF7FE08A;
+      public int cleanF3ValueColor = 0xFFE6E6E6;
+      public java.util.List<String> cleanF3Order;
       public int cleanF3X;
       public int cleanF3Y;
       public int cleanF3ScalePercent;
+
+      /** Fills in Clean F3 fields that GSON left unset (older configs) so colours/order are valid. */
+      public void ensureCleanF3() {
+         if (this.cleanF3Order == null || this.cleanF3Order.isEmpty()) {
+            this.cleanF3Order = defaultCleanF3Order();
+         }
+         if ((this.cleanF3LabelColor & 0xFF000000) == 0) {
+            this.cleanF3LabelColor = 0xFF7FE08A;
+         }
+         if ((this.cleanF3ValueColor & 0xFF000000) == 0) {
+            this.cleanF3ValueColor = 0xFFE6E6E6;
+         }
+      }
+
+      /** Canonical default order of Clean F3 line keys. */
+      public static java.util.List<String> defaultCleanF3Order() {
+         return new java.util.ArrayList<>(java.util.List.of(
+            "fps", "pos", "block", "chunk", "light", "facing", "speed",
+            "biome", "dim", "daytime", "held", "mem", "look"));
+      }
       public boolean customHitboxes;
       public boolean hitboxPlayers;
       public boolean hitboxHostile;
@@ -403,6 +430,9 @@ public static final class Combat {
       public boolean hitboxHurtColorEnabled;
       public int hitboxHurtColor;
       public boolean hitboxHideFireworks;
+      public boolean hitboxShowInvisible = false;
+      public boolean hitboxShowInvisibleArmorOnly = false;
+      public boolean hitboxShowInvisibleEntities = false;
       public boolean cleanDebugHitboxes = false;
       public int totemHudX;
       public int totemHudY;
@@ -421,6 +451,9 @@ public static final class Combat {
       public int toggleSprintHudX;
       public int toggleSprintHudY;
       public int toggleSprintHudScalePercent;
+      public SprintDisplayStyle sprintDisplayStyle = SprintDisplayStyle.VERBOSE;
+      public boolean sprintShowSneaking = true;
+      public boolean sprintShowSwimming = true;
       public boolean keystrokesHud;
       public boolean keystrokesShowCps;
       public int keystrokesHudX;
@@ -456,6 +489,7 @@ public static final class Combat {
          this.potionHudStyle = TurtModConfig.PotionHudStyle.ICONS_ONLY;
          this.potionHudScalePercent = 105;
          this.minimalFpsPingOverlay = true;
+         this.fpsColorCoded = false;
          this.minimalOverlayX = 0;
          this.minimalOverlayY = 0;
          this.overlayScalePercent = 100;
@@ -472,6 +506,11 @@ public static final class Combat {
          this.cleanF3ShowDayTime = false;
          this.cleanF3ShowMemory = false;
          this.cleanF3ShowHeldItem = false;
+         this.cleanF3ShowDimension = false;
+         this.cleanF3ShowFpsExtremes = false;
+         this.cleanF3LabelColor = 0xFF7FE08A;
+         this.cleanF3ValueColor = 0xFFE6E6E6;
+         this.cleanF3Order = defaultCleanF3Order();
          this.cleanF3X = 0;
          this.cleanF3Y = 25;
          this.cleanF3ScalePercent = 90;
@@ -562,15 +601,41 @@ public static final class Combat {
       }
    }
 
+   /** One line of a command-key macro: text to send (or "/cmd") plus a delay (in ticks) before it. */
+   public static class CmdMsg {
+      public String text = "";
+      public int delay = 0;
+
+      public CmdMsg() {
+      }
+
+      public CmdMsg(String text, int delay) {
+         this.text = text;
+         this.delay = delay;
+      }
+   }
+
+   /** A bindable command-key macro: an ordered list of messages, a fire mode, and a send/type flag. */
+   public static class CommandKey {
+      public java.util.List<CmdMsg> messages = new java.util.ArrayList<>();
+      // SEND = fire all messages once (honouring delays); CYCLE = each press fires the next message;
+      // REPEAT = keep firing the whole sequence on a loop until the key is pressed again.
+      public String mode = "SEND";
+      // When true, the (first) message is typed into the chat box instead of being sent immediately.
+      public boolean typeInChat = false;
+   }
+
    public static enum PotionSortMode {
       DURATION_DESC,
       DURATION_ASC,
       AMPLIFIER_DESC,
-      NAME_ASC;
+      AMPLIFIER_ASC,
+      NAME_ASC,
+      NAME_DESC;
 
       // $FF: synthetic method
       private static PotionSortMode[] $values() {
-         return new PotionSortMode[]{DURATION_DESC, DURATION_ASC, AMPLIFIER_DESC, NAME_ASC};
+         return new PotionSortMode[]{DURATION_DESC, DURATION_ASC, AMPLIFIER_DESC, AMPLIFIER_ASC, NAME_ASC, NAME_DESC};
       }
    }
 
@@ -614,9 +679,14 @@ public static final class Combat {
       MINIMAL;
    }
 
+   // Durability-text placement. LEFT/RIGHT apply to the VERTICAL layout (text beside the column);
+   // TOP/BOTTOM apply to the HORIZONTAL layout (text above/below the row). Each layout falls back
+   // to its natural default if given a position that doesn't fit it.
    public static enum ArmorHudSide {
       LEFT,
-      RIGHT;
+      RIGHT,
+      TOP,
+      BOTTOM;
    }
 
    public static enum ArmorHudDurabilityMode {
@@ -632,10 +702,87 @@ public static final class Combat {
       LINE;
    }
 
+   // Sprint-display text style (ported from toggle-sprint-display). VERBOSE = "Sprint Held/Toggled",
+   // SHORT = "Sprinting", ICON = emoji glyphs merged onto one line.
+   public static enum SprintDisplayStyle {
+      VERBOSE,
+      SHORT,
+      ICON;
+   }
+
+   public static enum PingTextPosition {
+      LEFT,
+      RIGHT;
+   }
+
    public static final class Misc {
       public boolean enabled = true;
       public boolean containerButtons = true;
+      // Lets the F3+F4 gamemode switcher work without the local op-permission gate (sends a
+      // /gamemode command). Server still decides — works in singleplayer / where you have perms.
+      public boolean noOpGamemodeSwitcher = false;
       public final DiscordRpc discordRpc = new DiscordRpc();
+      // Utility features (ported from fireclient / command-key mods).
+      public boolean deathCoords = true;
+      // Module master switches: when false the whole module does nothing (incl. the per-id lists).
+      public boolean hideParticlesEnabled = true;
+      public boolean muteSoundsEnabled = true;
+      public boolean hideParticles = false;
+      public boolean muteAnvil = false;
+      public boolean muteNoteBlocks = false;
+      public boolean muteTotemPop = false;
+      public boolean muteXpOrb = false;
+      public boolean commandKeysEnabled = true;
+      // Legacy: one command/message per slot (migrated into commandKeyMacros on load; kept for
+      // backwards compatibility so old configs don't get wiped). "/" prefix = command, else chat.
+      public String[] commandKeys = new String[]{"", "", "", "", ""};
+      // Rich macros: each bindable slot can fire a sequence of messages with per-message delays,
+      // in one of several modes. Populated by ensureCommandKeys() (migrates legacy commandKeys).
+      public CommandKey[] commandKeyMacros;
+
+      /** Ensures commandKeyMacros has one entry per slot and migrates any legacy single-string slot. */
+      public void ensureCommandKeys() {
+         int slots = com.turtmod.hud.CommandKeysFeature.SLOTS;
+         if (this.commandKeyMacros == null) {
+            this.commandKeyMacros = new CommandKey[slots];
+         } else if (this.commandKeyMacros.length < slots) {
+            CommandKey[] grown = new CommandKey[slots];
+            System.arraycopy(this.commandKeyMacros, 0, grown, 0, this.commandKeyMacros.length);
+            this.commandKeyMacros = grown;
+         }
+         for (int i = 0; i < slots; i++) {
+            if (this.commandKeyMacros[i] == null) {
+               this.commandKeyMacros[i] = new CommandKey();
+            }
+            CommandKey key = this.commandKeyMacros[i];
+            if (key.messages == null) {
+               key.messages = new java.util.ArrayList<>();
+            }
+            if (key.mode == null) {
+               key.mode = "SEND";
+            }
+            // Migrate a legacy single-string slot into the first message.
+            if (key.messages.isEmpty() && this.commandKeys != null && i < this.commandKeys.length
+                  && this.commandKeys[i] != null && !this.commandKeys[i].trim().isEmpty()) {
+               CmdMsg m = new CmdMsg();
+               m.text = this.commandKeys[i].trim();
+               key.messages.add(m);
+            }
+         }
+      }
+      // Per-id granular lists (managed via /turtmod particle|sound commands). hideParticles above is
+      // the "hide everything" master switch; these hide/mute only the listed registry ids.
+      public java.util.List<String> hiddenParticleIds = new java.util.ArrayList<>();
+      public java.util.List<String> mutedSoundIds = new java.util.ArrayList<>();
+      // Module display names the user pinned; they float to a "★ Pinned" group at the top of the grid.
+      public java.util.List<String> pinnedModules = new java.util.ArrayList<>();
+
+      /** Null-guards the pinned list for configs written before this field existed. */
+      public void ensurePinned() {
+         if (this.pinnedModules == null) {
+            this.pinnedModules = new java.util.ArrayList<>();
+         }
+      }
    }
 
    public static final class ToggleWithSlider {

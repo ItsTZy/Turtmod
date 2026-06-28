@@ -1,83 +1,117 @@
 package com.turtmod.hud;
 
 import com.turtmod.config.TurtModConfig;
-import net.minecraft.class_2561;
+import com.turtmod.mixin.client.GameOptionsAccessor;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.class_310;
+import net.minecraft.class_327;
 import net.minecraft.class_332;
 
 public final class ToggleSprintFeature {
-   private static boolean toggleSprintActive = false;
-   private static boolean lastSprintState = false;
-   private static long lastToggleTime = 0L;
+   // Emoji glyphs (match toggle-sprint-display's lang file).
+   private static final String ICON_SPRINT = "🏃";
+   private static final String ICON_SWIM   = "🏊";
+   private static final String ICON_SNEAK  = "🦵";
+   private static final int LINE_H = 10;
 
    private ToggleSprintFeature() {
    }
 
    public static void tick(class_310 client, TurtModConfig config) {
-      if (client.field_1724 != null && config.misc.enabled && config.hud.toggleSprintHud) {
-         boolean isSprinting = client.field_1724.method_5624();
-         long currentTime = System.currentTimeMillis();
-         if (isSprinting && !lastSprintState) {
-            if (currentTime - lastToggleTime < 300L) {
-               toggleSprintActive = true;
-            }
-
-            lastToggleTime = currentTime;
-         }
-
-         boolean movingForward = client.field_1724.field_6250 > 0.8F;
-         if (!movingForward && isSprinting) {
-            toggleSprintActive = true;
-         }
-
-         if (!isSprinting && lastSprintState) {
-            toggleSprintActive = false;
-         }
-
-         lastSprintState = isSprinting;
-      } else {
-         toggleSprintActive = false;
-         lastSprintState = false;
-      }
+      // No runtime state needed — "Toggled" vs "Held" is read from the control setting.
    }
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
-      if (client.field_1724 != null && config.misc.enabled && config.hud.toggleSprintHud) {
-         String status;
-         int statusColor;
-         if (toggleSprintActive) {
-            status = "sprint toggle";
-            statusColor = CustomThemeRenderer.getAccentColor(config);
-         } else if (client.field_1724.method_5624()) {
-            status = "sprint active";
-            statusColor = CustomThemeRenderer.applyHudOpacity(config, -733073);
-         } else {
-            status = "sprint off";
-            statusColor = CustomThemeRenderer.applyHudOpacity(config, -1739917);
-         }
-
-         int x = config.hud.toggleSprintHudX;
-         int y = config.hud.toggleSprintHudY;
-         float scale = CustomThemeRenderer.getHudScale(config, config.hud.toggleSprintHudScalePercent);
-         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
-         context.method_51448().pushMatrix();
-         context.method_51448().translate((float)x, (float)y);
-         context.method_51448().scale(scale, scale);
-         context.method_51448().translate((float)(-x), (float)(-y));
-         if (transparentText) {
-            CustomThemeRenderer.renderBracketedText(context, client.field_1772, status, x, y, statusColor, config);
-         } else {
-            int width = CustomThemeRenderer.textWidth(client.field_1772, status.toUpperCase(), config) + 12;
-            CustomThemeRenderer.renderThemedBox(context, x, y, width, 14, config);
-            CustomThemeRenderer.drawHudLabel(context, client.field_1772, status.toUpperCase(), x + 6, y + 3, statusColor, config);
-         }
-
-         context.method_51448().popMatrix();
+      if (client.field_1724 == null || !config.misc.enabled || !config.hud.toggleSprintHud) {
+         return;
       }
+
+      boolean isSprinting = client.field_1724.method_5624();
+      boolean isSwimming = config.hud.sprintShowSwimming && client.field_1724.method_5681();
+      boolean isSneaking = config.hud.sprintShowSneaking && client.field_1724.method_5715();
+      boolean toggleMode = isToggleSprintEnabled(client);
+      TurtModConfig.SprintDisplayStyle style = config.hud.sprintDisplayStyle;
+      boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
+      int accent = CustomThemeRenderer.getAccentColor(config);
+      int normal = CustomThemeRenderer.getTextColor(config);
+
+      // Dimmed colour for the idle state (sprint line stays visible even when not sprinting).
+      int muted = 0xFF8A8A8A;
+
+      // Build the lines (and their colours). The primary sprint/swim line is ALWAYS shown so the HUD
+      // stays put and doesn't disappear when you stop moving; it just dims while idle.
+      List<String> lines = new ArrayList<>();
+      List<Integer> colors = new ArrayList<>();
+      if (isSwimming) {
+         lines.add(style == TurtModConfig.SprintDisplayStyle.ICON ? ICON_SWIM : "Swimming");
+         colors.add(normal);
+      } else {
+         switch (style) {
+            case VERBOSE -> lines.add("Sprint " + (toggleMode ? "Toggled" : "Held"));
+            case SHORT   -> lines.add(isSprinting ? "Sprinting" : "Sprint");
+            case ICON    -> lines.add(ICON_SPRINT);
+         }
+         colors.add(isSprinting ? (toggleMode ? accent : normal) : muted);
+      }
+      if (isSneaking) {
+         lines.add(style == TurtModConfig.SprintDisplayStyle.ICON ? ICON_SNEAK : "Sneaking");
+         colors.add(normal);
+      }
+      // Icon mode collapses everything onto one line.
+      if (style == TurtModConfig.SprintDisplayStyle.ICON && lines.size() > 1) {
+         String merged = String.join(" ", lines);
+         lines.clear();
+         colors.clear();
+         lines.add(merged);
+         colors.add(normal);
+      }
+
+      if (lines.isEmpty()) {
+         return;
+      }
+
+      int x = config.hud.toggleSprintHudX;
+      int y = config.hud.toggleSprintHudY;
+      float scale = CustomThemeRenderer.getHudScale(config, config.hud.toggleSprintHudScalePercent);
+      class_327 font = client.field_1772;
+
+      int maxW = 0;
+      for (String s : lines) {
+         maxW = Math.max(maxW, CustomThemeRenderer.textWidth(font, transparentText ? s : s.toUpperCase(), config));
+      }
+      int boxW = maxW + (transparentText ? 0 : 12);
+      int textLocalH = lines.size() * LINE_H + (transparentText ? 0 : 4);
+
+      context.method_51448().pushMatrix();
+      context.method_51448().translate((float)x, (float)y);
+      context.method_51448().scale(scale, scale);
+      context.method_51448().translate((float)(-x), (float)(-y));
+      if (transparentText) {
+         int ly = y;
+         for (int i = 0; i < lines.size(); i++) {
+            CustomThemeRenderer.renderBracketedText(context, font, lines.get(i), x, ly, colors.get(i), config);
+            ly += LINE_H;
+         }
+      } else {
+         CustomThemeRenderer.renderThemedBox(context, x, y, boxW, textLocalH, config);
+         int ly = y + 2;
+         for (int i = 0; i < lines.size(); i++) {
+            CustomThemeRenderer.drawHudLabel(context, font, lines.get(i).toUpperCase(), x + 6, ly, colors.get(i), config);
+            ly += LINE_H;
+         }
+      }
+      context.method_51448().popMatrix();
    }
 
-   public static boolean isToggleSprintActive() {
-      return toggleSprintActive;
+   /** True when the player's controls use toggle-sprint (vanilla "toggleSprint" option). */
+   private static boolean isToggleSprintEnabled(class_310 client) {
+      try {
+         Boolean v = ((GameOptionsAccessor)(Object)client.field_1690).turtmod$getToggleSprint().method_41753();
+         return v != null && v;
+      } catch (Throwable t) {
+         return false;
+      }
    }
 
    public static int getScaledWidth(TurtModConfig config) {

@@ -29,7 +29,7 @@ public final class ClientUiTheme {
          context.method_25294(0, y, width, y + 1, line);
       }
 
-      float wave = (class_3532.method_15374((double)(tick * 0.015F)) + 1.0F) * 0.5F;
+      float wave = (class_3532.method_15374(tick * 0.015F) + 1.0F) * 0.5F;
       int glow = (int)(70.0F + wave * 40.0F) << 24 | 15658737;
       context.method_25294(0, height - 2, width, height, glow);
    }

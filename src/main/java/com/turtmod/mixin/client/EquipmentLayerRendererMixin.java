@@ -7,7 +7,9 @@ import com.turtmod.TurtModClient;
 import com.turtmod.config.TurtModConfig;
 import com.turtmod.extension.minecraft.OverlayRendered;
 import net.minecraft.class_10197;
+//? if >=1.21.11 {
 import net.minecraft.class_12249;
+//?}
 import net.minecraft.class_1921;
 import net.minecraft.class_2960;
 import org.objectweb.asm.Opcodes;
@@ -90,7 +92,11 @@ public abstract class EquipmentLayerRendererMixin implements OverlayRendered {
       if (c == null || !c.misc.enabled || !c.visual.armorDamageTint) return original;
       if (trim && !c.visual.armorDamageTintTrim) return original;
       if (this.turtmod$overlayCoords == TURTMOD_NO_OVERLAY) return original;
+      //? if >=1.21.11 {
       return class_12249.method_75994(id);
+      //?} else {
+      /*return class_1921.method_23578(id);
+      *///?}
    }
 
    @Override

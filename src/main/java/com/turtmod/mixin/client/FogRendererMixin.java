@@ -21,16 +21,10 @@ public abstract class FogRendererMixin {
    )
    private int turtmod$adjustFogDistanceChunks(int viewDistanceChunks) {
       TurtModConfig config = TurtModClient.getConfig();
-      if (config != null && config.misc.enabled) {
-         if (config.visual.disableAllFog) {
-            return Math.max(viewDistanceChunks, 64);
-         } else {
-            int targetChunks = Math.max(2, config.visual.fogDistance / 16);
-            return Math.min(viewDistanceChunks, targetChunks);
-         }
-      } else {
-         return viewDistanceChunks;
+      if (config != null && config.misc.enabled && config.visual.disableAllFog) {
+         return Math.max(viewDistanceChunks, 64);
       }
+      return viewDistanceChunks;
    }
 
    @Inject(

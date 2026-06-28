@@ -15,6 +15,16 @@ public final class HudEditorFeature {
    private static int dragOffsetY;
    private static final int CLOSE_SIZE = 10;
 
+   // Snap feedback state (read by HudEditorScreen for the pulse + guides).
+   private static boolean snappedX;
+   private static boolean snappedY;
+   public static long snapPulseNs;
+
+   /** The anchor currently being dragged, or null. Lets the editor screen draw guides/chip for it. */
+   public static Anchor getDragging() {
+      return dragging;
+   }
+
    private HudEditorFeature() {
    }
 
@@ -46,6 +56,7 @@ public final class HudEditorFeature {
       drawAnchor(context, client, config, HudEditorFeature.Anchor.CPS_COUNTER, "CPS Counter", config.hud.cpsCounterHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.COORDINATES, "Coordinates", config.hud.coordinatesHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.HEALTH, "Health", config.combat.showExactHealthNumber);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.SCOREBOARD, "Scoreboard", !config.visual.hideScoreboard);
       context.method_25303(client.field_1772, "Left drag: move | Click [x]: disable | Mouse wheel: scale | [+/-]: scale | [R]: reset", 6, sh - 20, -7487905);
       if (selected != null) {
          int x = getX(selected, client, config);
@@ -108,6 +119,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = "Inventory HUD";
          case 11 -> var10000 = "Coordinates";
          case 12 -> var10000 = "Health";
+         case 13 -> var10000 = "Scoreboard";
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -170,6 +182,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = config.hud.inventoryHudEnabled;
          case 11 -> var10000 = config.hud.coordinatesHud;
          case 12 -> var10000 = config.combat.showExactHealthNumber;
+         case 13 -> var10000 = !config.visual.hideScoreboard;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -192,6 +205,7 @@ public final class HudEditorFeature {
          case 10 -> config.hud.inventoryHudEnabled = enabled;
          case 11 -> config.hud.coordinatesHud = enabled;
          case 12 -> config.combat.showExactHealthNumber = enabled;
+         case 13 -> config.visual.hideScoreboard = !enabled;
       }
    }
 
@@ -201,6 +215,8 @@ public final class HudEditorFeature {
       dragging = null;
       dragOffsetX = 0;
       dragOffsetY = 0;
+      snappedX = false;
+      snappedY = false;
    }
 
    public static void mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, class_310 client, TurtModConfig config) {
@@ -212,17 +228,28 @@ public final class HudEditorFeature {
             newY = newY / config.hud.gridSize * config.hud.gridSize;
          }
 
+         boolean sx = false;
+         boolean sy = false;
          if (config.hud.snapToCenter) {
             int cx = client.method_22683().method_4486() / 2;
             int cy = client.method_22683().method_4502() / 2;
             if (Math.abs(newX - cx) < config.hud.centerSnapRange) {
                newX = cx;
+               sx = true;
             }
 
             if (Math.abs(newY - cy) < config.hud.centerSnapRange) {
                newY = cy;
+               sy = true;
             }
          }
+         // Pulse + tick only when a snap is freshly entered (not every dragged frame).
+         if ((sx && !snappedX) || (sy && !snappedY)) {
+            snapPulseNs = System.nanoTime();
+            com.turtmod.ui.TurtSounds.tick();
+         }
+         snappedX = sx;
+         snappedY = sy;
 
          int maxX = client.method_22683().method_4486() - getWidth(dragging, client, config);
          int maxY = client.method_22683().method_4502() - getHeight(dragging, client, config);
@@ -284,6 +311,9 @@ public final class HudEditorFeature {
             break;
          case 12:
             HealthNumberFeature.setPosition(client, config, x, y);
+            break;
+         case 13:
+            HudPanelsFeature.scoreboardApplyMove(client, config, x, y);
       }
 
    }
@@ -355,6 +385,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = config.hud.inventoryHudX;
          case 11 -> var10000 = config.hud.coordinatesHudX;
          case 12 -> var10000 = HealthNumberFeature.getX(client, config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -377,6 +408,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = config.hud.inventoryHudY;
          case 11 -> var10000 = config.hud.coordinatesHudY;
          case 12 -> var10000 = HealthNumberFeature.getY(client, config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -390,7 +422,7 @@ public final class HudEditorFeature {
          case 1 -> var10000 = HudPanelsFeature.getPotionHudScaledWidth(config);
          case 2 -> var10000 = TotemCounterFeature.getScaledWidth(config);
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledWidth(config);
-         case 4 -> var10000 = Math.round(160.0F * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
+         case 4 -> var10000 = Math.round(Math.max(80, CleanF3Feature.boxWidth(client, CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
          case 5 -> var10000 = ReachDisplayFeature.getScaledWidth(config);
          case 6 -> var10000 = ToggleSprintFeature.getScaledWidth(config);
          case 7 -> var10000 = KeystrokesFeature.getScaledWidth(config);
@@ -399,6 +431,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = InventoryHudFeature.getScaledWidth(config);
          case 11 -> var10000 = CoordinatesHudFeature.getScaledWidth(config);
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -412,7 +445,7 @@ public final class HudEditorFeature {
          case 1 -> var10000 = HudPanelsFeature.getPotionHudScaledHeight(config);
          case 2 -> var10000 = TotemCounterFeature.getScaledHeight(config);
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledHeight(config);
-         case 4 -> var10000 = Math.round(52.0F * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
+         case 4 -> var10000 = Math.round(Math.max(20, CleanF3Feature.boxHeight(CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
          case 5 -> var10000 = ReachDisplayFeature.getScaledHeight(config);
          case 6 -> var10000 = ToggleSprintFeature.getScaledHeight(config);
          case 7 -> var10000 = KeystrokesFeature.getScaledHeight(config);
@@ -421,6 +454,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = InventoryHudFeature.getScaledHeight(config);
          case 11 -> var10000 = CoordinatesHudFeature.getScaledHeight(config);
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -495,6 +529,7 @@ public final class HudEditorFeature {
          case 10 -> var10000 = config.hud.inventoryHudScalePercent;
          case 11 -> var10000 = config.hud.coordinatesHudScalePercent;
          case 12 -> var10000 = config.combat.healthScalePercent;
+         case 13 -> var10000 = config.visual.scoreboardScalePercent <= 0 ? 100 : config.visual.scoreboardScalePercent;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -518,6 +553,7 @@ public final class HudEditorFeature {
          case 10 -> config.hud.inventoryHudScalePercent = next;
          case 11 -> config.hud.coordinatesHudScalePercent = next;
          case 12 -> config.combat.healthScalePercent = next;
+         case 13 -> config.visual.scoreboardScalePercent = next;
       }
 
    }
@@ -571,11 +607,12 @@ public final class HudEditorFeature {
       ZOOM,
       INVENTORY,
       COORDINATES,
-      HEALTH;
+      HEALTH,
+      SCOREBOARD;
 
       // $FF: synthetic method
       private static Anchor[] $values() {
-         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH};
+         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD};
       }
    }
 }
