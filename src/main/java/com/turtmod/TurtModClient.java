@@ -252,6 +252,12 @@ public final class TurtModClient implements ClientModInitializer {
                })))
             .then(ClientCommandManager.literal("list").executes((ctx) -> { sendCommandKeyFeedback("Kits: " + listOrNone(com.turtmod.kit.KitIO.listKits())); return 1; })));
 
+         // Death-screen actions, also exposed as clickable chat links in the death message.
+         root.then(ClientCommandManager.literal("death")
+            .then(ClientCommandManager.literal("copy").executes((ctx) -> { DeathCoordsFeature.copyCoordsAction(); return 1; }))
+            .then(ClientCommandManager.literal("tp").executes((ctx) -> { DeathCoordsFeature.respawnAndTpAction(); return 1; }))
+            .then(ClientCommandManager.literal("items").executes((ctx) -> { DeathCoordsFeature.viewItemsAction(); return 1; })));
+
          dispatcher.register(root);
       });
    }

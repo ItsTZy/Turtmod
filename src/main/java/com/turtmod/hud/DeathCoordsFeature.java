@@ -112,6 +112,29 @@ public final class DeathCoordsFeature {
          .method_10852(clickable)
          .method_10852(class_2561.method_43470(" in " + dimName()).method_27692(class_124.field_1080));
       client.field_1724.method_7353(msg, false);
+
+      // Second line: the same actions as the death-screen buttons, as clickable chat links. These
+      // run our client commands (/turtmod death …) so they work even after the death screen closes.
+      class_2561 actions = TurtChat.prefix()
+         .method_10852(chatButton("Copy", "/turtmod death copy", "Copy death coordinates", class_124.field_1075))
+         .method_10852(class_2561.method_43470("  ").method_27692(class_124.field_1063))
+         .method_10852(chatButton("Respawn + TP", "/turtmod death tp", "Respawn and teleport back to where you died", class_124.field_1060))
+         .method_10852(class_2561.method_43470("  ").method_27692(class_124.field_1063))
+         .method_10852(chatButton("View Items", "/turtmod death items", "Preview the items you had at death", class_124.field_1054));
+      client.field_1724.method_7353(actions, false);
+   }
+
+   /** A bracketed, clickable "[Label]" chat link that runs a client command when clicked. */
+   private static class_2561 chatButton(String label, String command, String hover, class_124 color) {
+      return class_2561.method_43470("[" + label + "]").method_27694(s -> s
+         .method_10977(color)
+         .method_10958(new class_2558.class_10609(command))
+         .method_10949(new net.minecraft.class_2568.class_10613(class_2561.method_43470(hover))));
+   }
+
+   /** True once a death has been recorded this session — guards the /turtmod death chat commands. */
+   public static boolean hasDeath() {
+      return haveDeath;
    }
 
    // ── Death-screen overlay (compact panel, between the score and the Respawn button) ───────────
@@ -150,6 +173,39 @@ public final class DeathCoordsFeature {
       buttons.add(class_4185.method_46430(class_2561.method_43470("View Items"), b -> {
          client.method_1507(new KitPreviewScreen(screen, "Items at Death", deathInvData, null));
       }).method_46434(x + (w + gap) * 2, y, w, 20).method_46431());
+   }
+
+   // ── Public actions, shared by the death-screen buttons and the /turtmod death chat commands ──
+
+   /** Copy the death coordinates to the clipboard (chat-command entry point). */
+   public static void copyCoordsAction() {
+      class_310 client = class_310.method_1551();
+      if (haveDeath && client != null) {
+         copyCoords(client);
+         feedback(client, "Copied death coordinates.");
+      }
+   }
+
+   /** Respawn and teleport back to the death location (chat-command entry point). */
+   public static void respawnAndTpAction() {
+      class_310 client = class_310.method_1551();
+      if (haveDeath && client != null) {
+         respawnAndTp(client);
+      }
+   }
+
+   /** Open the "items at death" preview screen (chat-command entry point). */
+   public static void viewItemsAction() {
+      class_310 client = class_310.method_1551();
+      if (haveDeath && client != null) {
+         client.method_1507(new KitPreviewScreen(null, "Items at Death", deathInvData, null));
+      }
+   }
+
+   private static void feedback(class_310 client, String msg) {
+      if (client.field_1724 != null) {
+         client.field_1724.method_7353(TurtChat.prefix().method_10852(class_2561.method_43470(msg).method_27692(class_124.field_1080)), false);
+      }
    }
 
    private static void copyCoords(class_310 client) {

@@ -450,12 +450,16 @@ public final class HudPanelsFeature {
          PanelSize size = getPotionHudSize(config, visibleEffects.size());
          int scaledWidth = client.method_22683().method_4486();
          int scaledHeight = client.method_22683().method_4502();
-         int hudWidth = Math.round((float)size.width * scale);
-         int hudHeight = Math.round((float)size.height * scale);
          int x = config.hud.potionHudX;
          int y = config.hud.potionHudY;
-         x = Math.max(0, Math.min(x, scaledWidth - hudWidth));
-         y = Math.max(0, Math.min(y, scaledHeight - hudHeight));
+         // Fixed anchor: clamp only enough to keep the top-left corner on-screen, using a CONSTANT
+         // single-cell reference (not the live panel size). This stops the whole HUD drifting
+         // sideways as potions are added/removed — the panel grows/shrinks away from this pinned
+         // corner, so when a potion ends the rest re-pack from the same spot, matching the HUD editor.
+         int anchorCellW = Math.round((float)POTION_CELL_WIDTH * scale);
+         int anchorCellH = Math.round((float)POTION_CELL_HEIGHT * scale);
+         x = Math.max(0, Math.min(x, scaledWidth - anchorCellW));
+         y = Math.max(0, Math.min(y, scaledHeight - anchorCellH));
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
