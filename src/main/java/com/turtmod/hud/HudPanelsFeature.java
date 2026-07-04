@@ -452,14 +452,15 @@ public final class HudPanelsFeature {
          int scaledHeight = client.method_22683().method_4502();
          int x = config.hud.potionHudX;
          int y = config.hud.potionHudY;
-         // Fixed anchor: clamp only enough to keep the top-left corner on-screen, using a CONSTANT
-         // single-cell reference (not the live panel size). This stops the whole HUD drifting
-         // sideways as potions are added/removed — the panel grows/shrinks away from this pinned
-         // corner, so when a potion ends the rest re-pack from the same spot, matching the HUD editor.
-         int anchorCellW = Math.round((float)POTION_CELL_WIDTH * scale);
-         int anchorCellH = Math.round((float)POTION_CELL_HEIGHT * scale);
-         x = Math.max(0, Math.min(x, scaledWidth - anchorCellW));
-         y = Math.max(0, Math.min(y, scaledHeight - anchorCellH));
+         // Clamp against the MAXIMUM panel footprint (a full 8 effects), not the live size. Because
+         // that bound is constant, the anchor never drifts as potions are added/removed AND the panel
+         // is guaranteed to stay fully on-screen even when full — the two together were the bug: a
+         // live-size clamp drifted, a single-cell clamp let a big panel spill off the edge.
+         PanelSize maxSize = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
+         int maxW = Math.round((float)maxSize.width * scale);
+         int maxH = Math.round((float)maxSize.height * scale);
+         x = Math.max(0, Math.min(x, Math.max(0, scaledWidth - maxW)));
+         y = Math.max(0, Math.min(y, Math.max(0, scaledHeight - maxH)));
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
@@ -486,12 +487,14 @@ public final class HudPanelsFeature {
    }
 
    public static int getPotionHudScaledWidth(TurtModConfig config) {
-      PanelSize size = getPotionHudSize(config, getPotionHudEditorEffectCount(config));
+      // Reserve the full (8-effect) footprint so the editor box shows exactly the area the live HUD
+      // clamps to — placing it via the editor then guarantees it stays on-screen and never drifts.
+      PanelSize size = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
       return Math.round((float)size.width * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
    }
 
    public static int getPotionHudScaledHeight(TurtModConfig config) {
-      PanelSize size = getPotionHudSize(config, getPotionHudEditorEffectCount(config));
+      PanelSize size = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
       return Math.round((float)size.height * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
    }
 
