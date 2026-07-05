@@ -448,19 +448,12 @@ public final class HudPanelsFeature {
          List<class_1293> visibleEffects = new ArrayList(effects.subList(0, visibleCount));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent);
          PanelSize size = getPotionHudSize(config, visibleEffects.size());
-         int scaledWidth = client.method_22683().method_4486();
-         int scaledHeight = client.method_22683().method_4502();
-         int x = config.hud.potionHudX;
-         int y = config.hud.potionHudY;
-         // Clamp against the MAXIMUM panel footprint (a full 8 effects), not the live size. Because
-         // that bound is constant, the anchor never drifts as potions are added/removed AND the panel
-         // is guaranteed to stay fully on-screen even when full — the two together were the bug: a
-         // live-size clamp drifted, a single-cell clamp let a big panel spill off the edge.
-         PanelSize maxSize = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
-         int maxW = Math.round((float)maxSize.width * scale);
-         int maxH = Math.round((float)maxSize.height * scale);
-         x = Math.max(0, Math.min(x, Math.max(0, scaledWidth - maxW)));
-         y = Math.max(0, Math.min(y, Math.max(0, scaledHeight - maxH)));
+         // Anchor-aware placement: potionEditorX/Y pin whichever edge the panel was dropped near and
+         // grow the panel INWARD as effects are added/removed — so the anchored edge never drifts and
+         // a full panel can never spill off-screen, while a small panel can still be dropped anywhere
+         // (no dead zone). The HUD editor draws this exact same rect, so what you place is what you get.
+         int x = potionEditorX(client, config);
+         int y = potionEditorY(client, config);
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
@@ -486,22 +479,61 @@ public final class HudPanelsFeature {
       return Math.max(1, Math.min(c, count));
    }
 
-   public static int getPotionHudScaledWidth(TurtModConfig config) {
-      // Reserve the full (8-effect) footprint so the editor box shows exactly the area the live HUD
-      // clamps to — placing it via the editor then guarantees it stays on-screen and never drifts.
-      PanelSize size = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
-      return Math.round((float)size.width * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
-   }
+   // ── Potion HUD editor / anchor sync ────────────────────────────────────────────────────────────
+   //  The stored (potionHudX/Y) is an ANCHOR corner, not a fixed top-left. Whichever screen half the
+   //  panel sits in, that edge is pinned and the panel grows inward as effects are added/removed — so
+   //  the anchored edge never drifts, a full panel never spills off-screen, AND a small panel can be
+   //  dropped anywhere (no more max-footprint dead zone / oversized editor box). The editor box and the
+   //  live HUD both go through these helpers, so they line up exactly. Mirrors the scoreboard sync above.
 
-   public static int getPotionHudScaledHeight(TurtModConfig config) {
-      PanelSize size = getPotionHudSize(config, POTION_MAX_SIMPLE_EFFECTS);
-      return Math.round((float)size.height * CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent));
-   }
-
-   private static int getPotionHudEditorEffectCount(TurtModConfig config) {
+   /** Number of effect cells to size the panel for right now (min 1 so the editor box is never empty). */
+   private static int potionLiveEffectCount() {
       class_310 client = class_310.method_1551();
       int count = client != null && client.field_1724 != null ? client.field_1724.method_6026().size() : 1;
       return Math.max(1, Math.min(count, POTION_MAX_SIMPLE_EFFECTS));
+   }
+
+   /** Current on-screen footprint of the potion panel (live effect count, scaled). */
+   private static PanelSize potionScaledLiveSize(TurtModConfig config) {
+      PanelSize s = getPotionHudSize(config, potionLiveEffectCount());
+      float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent);
+      return new PanelSize(Math.round((float)s.width * scale), Math.round((float)s.height * scale));
+   }
+
+   public static int getPotionHudScaledWidth(TurtModConfig config) { return potionScaledLiveSize(config).width; }
+
+   public static int getPotionHudScaledHeight(TurtModConfig config) { return potionScaledLiveSize(config).height; }
+
+   public static int potionEditorWidth(TurtModConfig config) { return potionScaledLiveSize(config).width; }
+
+   public static int potionEditorHeight(TurtModConfig config) { return potionScaledLiveSize(config).height; }
+
+   /** Screen-space top-left of the panel, derived from the anchored edge + the live size. */
+   public static int potionEditorX(class_310 mc, TurtModConfig config) {
+      int sw = mc.method_22683().method_4486();
+      int w = potionScaledLiveSize(config).width;
+      int ax = config.hud.potionHudX;
+      int left = ax > sw / 2 ? ax - w : ax; // right-anchored → ax is the right edge; else the left edge
+      return Math.max(0, Math.min(left, Math.max(0, sw - w)));
+   }
+
+   public static int potionEditorY(class_310 mc, TurtModConfig config) {
+      int sh = mc.method_22683().method_4502();
+      int h = potionScaledLiveSize(config).height;
+      int ay = config.hud.potionHudY;
+      int top = ay > sh / 2 ? ay - h : ay; // bottom-anchored → ay is the bottom edge; else the top edge
+      return Math.max(0, Math.min(top, Math.max(0, sh - h)));
+   }
+
+   /** Convert a dragged top-left back into the anchored corner, picking the edge nearest to it. */
+   public static void potionApplyMove(class_310 mc, TurtModConfig config, int x, int y) {
+      int sw = mc.method_22683().method_4486();
+      int sh = mc.method_22683().method_4502();
+      PanelSize sz = potionScaledLiveSize(config);
+      int cx = x + sz.width / 2;
+      int cy = y + sz.height / 2;
+      config.hud.potionHudX = cx > sw / 2 ? x + sz.width : x;
+      config.hud.potionHudY = cy > sh / 2 ? y + sz.height : y;
    }
 
    private static PanelSize getPotionHudSize(TurtModConfig config, int effectCount) {

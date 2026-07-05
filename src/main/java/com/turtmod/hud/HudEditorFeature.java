@@ -268,8 +268,7 @@ public final class HudEditorFeature {
             config.hud.armorHudY = y;
             break;
          case 1:
-            config.hud.potionHudX = x;
-            config.hud.potionHudY = y;
+            HudPanelsFeature.potionApplyMove(client, config, x, y);
             break;
          case 2:
             config.hud.totemHudX = x;
@@ -373,7 +372,7 @@ public final class HudEditorFeature {
       int var10000;
       switch (anchor.ordinal()) {
          case 0 -> var10000 = config.hud.armorHudX;
-         case 1 -> var10000 = config.hud.potionHudX;
+         case 1 -> var10000 = HudPanelsFeature.potionEditorX(client, config);
          case 2 -> var10000 = config.hud.totemHudX;
          case 3 -> var10000 = config.hud.minimalOverlayX;
          case 4 -> var10000 = config.hud.cleanF3X;
@@ -396,7 +395,7 @@ public final class HudEditorFeature {
       int var10000;
       switch (anchor.ordinal()) {
          case 0 -> var10000 = config.hud.armorHudY;
-         case 1 -> var10000 = config.hud.potionHudY;
+         case 1 -> var10000 = HudPanelsFeature.potionEditorY(client, config);
          case 2 -> var10000 = config.hud.totemHudY;
          case 3 -> var10000 = config.hud.minimalOverlayY;
          case 4 -> var10000 = config.hud.cleanF3Y;
@@ -419,7 +418,7 @@ public final class HudEditorFeature {
       int var10000;
       switch (anchor.ordinal()) {
          case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledWidth(config);
-         case 1 -> var10000 = HudPanelsFeature.getPotionHudScaledWidth(config);
+         case 1 -> var10000 = HudPanelsFeature.potionEditorWidth(config);
          case 2 -> var10000 = TotemCounterFeature.getScaledWidth(config);
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledWidth(config);
          case 4 -> var10000 = Math.round(Math.max(80, CleanF3Feature.boxWidth(client, CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
@@ -442,7 +441,7 @@ public final class HudEditorFeature {
       int var10000;
       switch (anchor.ordinal()) {
          case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledHeight(config);
-         case 1 -> var10000 = HudPanelsFeature.getPotionHudScaledHeight(config);
+         case 1 -> var10000 = HudPanelsFeature.potionEditorHeight(config);
          case 2 -> var10000 = TotemCounterFeature.getScaledHeight(config);
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledHeight(config);
          case 4 -> var10000 = Math.round(Math.max(20, CleanF3Feature.boxHeight(CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
