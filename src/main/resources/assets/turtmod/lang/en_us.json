@@ -7,6 +7,7 @@
   "key.turtmod.health_offset_up": "Health Indicator Up",
   "key.turtmod.health_offset_down": "Health Indicator Down",
   "key.turtmod.health_offset_reset": "Reset Health Indicator Offset",
+  "key.turtmod.reset_totem_counter": "Reset Totem Pop Counter",
 
   "key.turtmod.command_key_1": "Command Key 1",
   "key.turtmod.command_key_2": "Command Key 2",

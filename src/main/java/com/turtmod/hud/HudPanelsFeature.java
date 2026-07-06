@@ -53,6 +53,10 @@ public final class HudPanelsFeature {
             renderPotionHud(context, client, config);
          }
 
+         if (config.combat.totemCounterHud) {
+            com.turtmod.combat.TotemCounterFeature.render(context, client, config);
+         }
+
          if (config.combat.compactHeartsMode) {
             renderCompactHearts(context, client, config);
          }
