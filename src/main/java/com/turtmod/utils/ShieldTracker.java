@@ -231,7 +231,11 @@ public final class ShieldTracker {
    }
 
    private static boolean isHoldingAnimationItemMainHand(class_1657 entity) {
-      return entity.method_6047().method_7935(entity) != 0 && !entity.method_6079().method_31574(class_1802.field_8255);
+      // Reference checks the MAIN hand's item on BOTH clauses: "is the main hand holding a non-shield
+      // item that has a use animation (food, bow, …)?" If so the player is using THAT (e.g. eating),
+      // not raising the offhand shield — so it is NOT a usable shield. (Was mis-ported to the offhand,
+      // which made eating with a shield in the offhand show the block pose. — MC-238293 companion fix.)
+      return entity.method_6047().method_7935(entity) != 0 && !entity.method_6047().method_31574(class_1802.field_8255);
    }
 
    public static boolean disablesShield(class_1657 player) {
