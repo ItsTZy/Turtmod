@@ -49,6 +49,7 @@
 		"TotemPopRoundEndMixin",
 		"TotemPopXpBarMixin",
 		"PlayerEntityMixin",
+		"PlayerNameTagCounterMixin",
 		"PlayerTabOverlayMixin",
 		"TextDisplayRendererMixin",
 		"PotionThrowEntityDataMixin",

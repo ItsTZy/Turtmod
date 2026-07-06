@@ -50,9 +50,15 @@ public final class TotemCounterFeature {
          ? (config.combat.totemShowPopCounter ? TotemPopTracker.popColor(count) : colorForCount(count))
          : CustomThemeRenderer.getTextColor(config);
 
-      int x = config.hud.totemHudX;
-      int y = config.hud.totemHudY;
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.totemHudScalePercent);
+      // Clamp on-screen so a stale/large saved position can't hide it off an edge (the "HUD doesn't
+      // show" bug at high GUI scale).
+      int sw = client.method_22683().method_4486();
+      int sh = client.method_22683().method_4502();
+      int cw = getScaledWidth(config);
+      int ch = getScaledHeight(config);
+      int x = Math.max(0, Math.min(config.hud.totemHudX, sw - cw));
+      int y = Math.max(0, Math.min(config.hud.totemHudY, sh - ch));
 
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)x, (float)y);

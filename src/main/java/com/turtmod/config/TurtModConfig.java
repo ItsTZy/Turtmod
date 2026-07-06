@@ -269,7 +269,7 @@ public static final class Combat {
        public TotemLabelStyle totemLabelStyle;
        public boolean totemColorByCount = true;
        public boolean totemNametagPops = true;
-       public boolean totemShowPopCounter = true;
+       public boolean totemShowPopCounter = false;
        public boolean totemColoredXpBar = false;
        public boolean totemAlwaysShowXpBar = false;
        public boolean totemShowInTab = false;

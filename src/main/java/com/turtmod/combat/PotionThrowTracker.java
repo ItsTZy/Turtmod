@@ -142,9 +142,14 @@ public final class PotionThrowTracker {
          ? (config.combat.potionThrowShowPotCounter ? potsColor(count) : potionColor(count))
          : CustomThemeRenderer.getTextColor(config);
 
-      int x = config.hud.potionThrowHudX;
-      int y = config.hud.potionThrowHudY;
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionThrowHudScalePercent);
+      // Clamp on-screen so a stale/large saved position can't hide it off an edge.
+      int sw = client.method_22683().method_4486();
+      int sh = client.method_22683().method_4502();
+      int cw = getScaledWidth(config);
+      int ch = getScaledHeight(config);
+      int x = Math.max(0, Math.min(config.hud.potionThrowHudX, sw - cw));
+      int y = Math.max(0, Math.min(config.hud.potionThrowHudY, sh - ch));
 
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)x, (float)y);
