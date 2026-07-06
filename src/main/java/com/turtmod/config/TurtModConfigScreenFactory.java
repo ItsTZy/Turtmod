@@ -840,7 +840,10 @@ public final class TurtModConfigScreenFactory {
          .addOption(bool("Self Only", () -> cfg.visual.shieldSelfOnly, v -> cfg.visual.shieldSelfOnly = v))
          .addOption(bool("Custom Shield Size", () -> cfg.visual.customShieldSize, v -> cfg.visual.customShieldSize = v))
          .addOption(numOpt("Self Shield Scale", () -> cfg.visual.selfShieldScale, v -> cfg.visual.selfShieldScale = v, 0.5F, 2.0F, 0.1F))
-         .addOption(numOpt("Others Shield Scale", () -> cfg.visual.othersShieldScale, v -> cfg.visual.othersShieldScale = v, 0.5F, 2.0F, 0.1F));
+         .addOption(numOpt("Others Shield Scale", () -> cfg.visual.othersShieldScale, v -> cfg.visual.othersShieldScale = v, 0.5F, 2.0F, 0.1F))
+         .addOption(bool("Fix Blocking Animation", () -> cfg.visual.shieldFixBlockingAnim, v -> cfg.visual.shieldFixBlockingAnim = v))
+         .addOption(bool("Shield Sounds", () -> cfg.visual.shieldFixSounds, v -> cfg.visual.shieldFixSounds = v))
+         .addOption(bool("Factor 5-Tick Delay", () -> cfg.visual.shieldFix5TickDelay, v -> cfg.visual.shieldFix5TickDelay = v));
    }
 
    /** Open a {@link RegistryPickerScreen} backed by the given config list, returning to the current

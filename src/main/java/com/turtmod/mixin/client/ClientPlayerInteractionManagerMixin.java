@@ -20,6 +20,7 @@ public class ClientPlayerInteractionManagerMixin {
    private void turtmod$onAttackEntity(class_1657 player, class_1297 target, CallbackInfo ci) {
       if (target instanceof class_1657 targetPlayer) {
          ShieldTracker.handlePlayerAttack(targetPlayer);
+         com.turtmod.combat.ShieldFixFeature.onAttack(targetPlayer);
       }
 
       // Feed the reach display (its own PlayerEntityAttackMixin was never registered, so the

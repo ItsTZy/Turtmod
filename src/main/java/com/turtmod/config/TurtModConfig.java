@@ -60,6 +60,9 @@ public final class TurtModConfig {
       public float othersShieldScale = 1.0F;
       public boolean showEatingInThirdPerson = false;
       public boolean onlyShowShieldWhenBlocking = false;
+      public boolean shieldFixBlockingAnim = true;
+      public boolean shieldFixSounds = true;
+      public boolean shieldFix5TickDelay = false;
       public boolean hideFishingBobber = true;
       public int heldItemScalePercent = 100;
       public int totemPopScalePercent = 36;

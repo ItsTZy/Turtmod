@@ -40,6 +40,7 @@ public class ClientPlayNetworkHandlerMixin {
          if (status == 30 && entity instanceof class_1657) {
             class_1657 player = (class_1657)entity;
             ShieldTracker.handleEntityStatus(player, status);
+            com.turtmod.combat.ShieldFixFeature.onDisable(player);
          }
 
          if (status == 35 && entity instanceof class_1657) {
