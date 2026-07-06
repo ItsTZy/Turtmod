@@ -279,6 +279,8 @@ public static final class Combat {
        public boolean potionThrowAlwaysShowXpBar = true;
        public boolean potionThrowSeparator = false;
        public boolean potionThrowCounterColors = false;
+       public boolean potionThrowShowPotCounter = false;
+       public boolean potionThrowColorByCount = true;
        public boolean playerHealthIndicator;
        public boolean playerHealthIndicatorInvisible;
        public boolean playerHealthIndicatorArmorOnly = false;
@@ -437,6 +439,9 @@ public static final class Combat {
       public int totemHudX;
       public int totemHudY;
       public int totemHudScalePercent;
+      public int potionThrowHudX;
+      public int potionThrowHudY;
+      public int potionThrowHudScalePercent;
       public boolean reachDisplay;
       public int reachHudX;
       public int reachHudY;
@@ -531,6 +536,9 @@ public static final class Combat {
          this.totemHudX = 505;
          this.totemHudY = 162;
          this.totemHudScalePercent = 50;
+         this.potionThrowHudX = 505;
+         this.potionThrowHudY = 190;
+         this.potionThrowHudScalePercent = 50;
          this.reachDisplay = false;
          this.reachHudX = 0;
          this.reachHudY = 180;

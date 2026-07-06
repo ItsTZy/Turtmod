@@ -64,6 +64,7 @@ public final class TurtModClient implements ClientModInitializer {
    private static class_304 healthOffsetDownKey;
    private static class_304 resetHealthOffsetKey;
    private static class_304 resetTotemCounterKey;
+   private static class_304 resetPotCounterKey;
    private static final class_304[] commandKeyBinds = new class_304[CommandKeysFeature.SLOTS];
    private static final java.util.Map<ModuleKind, class_304> moduleToggleKeys = new java.util.EnumMap<>(ModuleKind.class);
    /** Modules that get a (default-unbound) toggle keybind, editable in their config page or MC Controls. */
@@ -119,6 +120,7 @@ public final class TurtModClient implements ClientModInitializer {
       healthOffsetDownKey = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.health_offset_down", class_307.field_1668, -1, hudCat));
       resetHealthOffsetKey = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.health_offset_reset", class_307.field_1668, -1, hudCat));
       resetTotemCounterKey = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.reset_totem_counter", class_307.field_1668, 299, generalCat));
+      resetPotCounterKey = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.reset_pot_counter", class_307.field_1668, -1, generalCat));
       KeyBindingHelper.registerKeyBinding(ZoomFeature.getZoomKey());
       for (int i = 0; i < commandKeyBinds.length; i++) {
          commandKeyBinds[i] = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.command_key_" + (i + 1), class_307.field_1668, -1, generalCat));
@@ -281,6 +283,25 @@ public final class TurtModClient implements ClientModInitializer {
             .then(ClientCommandManager.argument("player", StringArgumentType.word())
                .suggests((c, b) -> class_2172.method_9265(onlinePlayerNames(), b))
                .executes((ctx) -> { showPlayerPops(StringArgumentType.getString(ctx, "player")); return 1; })));
+
+         // Potion-throw counter equivalents (repos/potcounter-1.21.11).
+         dispatcher.register(ClientCommandManager.literal("resetpots")
+            .executes((ctx) -> { com.turtmod.combat.PotionThrowTracker.reset(); sendCommandKeyFeedback("Potion throw counter reset."); return 1; })
+            .then(ClientCommandManager.argument("player", StringArgumentType.word())
+               .suggests((c, b) -> class_2172.method_9265(onlinePlayerNames(), b))
+               .executes((ctx) -> {
+                  String name = StringArgumentType.getString(ctx, "player");
+                  java.util.UUID id = playerIdByName(name);
+                  if (id != null) { com.turtmod.combat.PotionThrowTracker.remove(id); sendCommandKeyFeedback("Reset pots for " + name + "."); }
+                  else { sendCommandKeyFeedback("No player named '" + name + "'."); }
+                  return 1;
+               })));
+
+         dispatcher.register(ClientCommandManager.literal("showpots")
+            .executes((ctx) -> { showAllPots(); return 1; })
+            .then(ClientCommandManager.argument("player", StringArgumentType.word())
+               .suggests((c, b) -> class_2172.method_9265(onlinePlayerNames(), b))
+               .executes((ctx) -> { showPlayerPots(StringArgumentType.getString(ctx, "player")); return 1; })));
       });
    }
 
@@ -326,6 +347,27 @@ public final class TurtModClient implements ClientModInitializer {
       java.util.UUID id = playerIdByName(name);
       int count = id != null ? com.turtmod.combat.TotemPopTracker.get(id) : 0;
       sendCommandKeyFeedback(count == 0 ? name + " has no pops." : name + " has popped " + count + " totems.");
+   }
+
+   private static void showAllPots() {
+      java.util.Map<java.util.UUID, Integer> pots = com.turtmod.combat.PotionThrowTracker.getPots();
+      if (pots.isEmpty()) { sendCommandKeyFeedback("No potion throws recorded yet."); return; }
+      sendCommandKeyFeedback("===== Potion Throws =====");
+      class_310 mc = class_310.method_1551();
+      pots.forEach((id, count) -> {
+         String name = id.toString();
+         if (mc != null && mc.field_1687 != null) {
+            class_1657 p = mc.field_1687.method_18470(id);
+            if (p != null) { name = p.method_7334().name(); }
+         }
+         sendCommandKeyFeedback(name + ": -" + count);
+      });
+   }
+
+   private static void showPlayerPots(String name) {
+      java.util.UUID id = playerIdByName(name);
+      int count = id != null ? com.turtmod.combat.PotionThrowTracker.get(id) : 0;
+      sendCommandKeyFeedback(count == 0 ? name + " has no pots." : name + " has thrown " + count + " pots.");
    }
 
    private static java.util.List<String> registryIds(net.minecraft.class_2378<?> registry) {
@@ -394,6 +436,11 @@ public final class TurtModClient implements ClientModInitializer {
       while(resetTotemCounterKey.method_1436()) {
          com.turtmod.combat.TotemPopTracker.reset();
          sendCommandKeyFeedback("Totem pop counter reset.");
+      }
+
+      while(resetPotCounterKey.method_1436()) {
+         com.turtmod.combat.PotionThrowTracker.reset();
+         sendCommandKeyFeedback("Potion throw counter reset.");
       }
 
       for (java.util.Map.Entry<ModuleKind, class_304> entry : moduleToggleKeys.entrySet()) {
