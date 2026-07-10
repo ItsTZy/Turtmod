@@ -19,11 +19,13 @@ import net.minecraft.class_2960;
 import net.minecraft.class_310;
 import net.minecraft.class_4587;
 import net.minecraft.class_4588;
+import net.minecraft.class_4597;
 import net.minecraft.class_4722;
 import net.minecraft.class_4730;
 import net.minecraft.class_600;
 import net.minecraft.class_630;
 import net.minecraft.class_811;
+import net.minecraft.class_918;
 import net.minecraft.class_9307;
 import net.minecraft.class_9323;
 import net.minecraft.class_9334;
@@ -107,56 +109,52 @@ public abstract class ShieldModelRendererMixin {
       *///?}
       final int fLight = light;
       final int fOverlay = overlay;
+      final boolean fGlint = glint;
+      final boolean fHasPatterns = hasPatterns;
       final class_600 model = this.field_55441;
+      final class_1767 canvasBase = baseColor == null ? class_1767.field_7952 : baseColor;
+      final class_9307 canvasPatterns = patterns;
+      //? if >=1.21.11 {
+      final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_12249::method_76000);
+      //?} else {
+      /*final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_1921::method_23580);
+      *///?}
 
-      // Handle (always rendered) — submit through the queue so depth ordering is correct.
-      queue.method_73483(matrices, layer, (entry, vc) -> {
+      // Draw the recoloured shield through the immediate buffer's FOIL buffer so an ENCHANTED shield
+      // still shows its glint (class_918.method_23181 = getFoilBuffer unions the enchant-glint layer
+      // over the base render type when glint is true — the previous queue-only render dropped it,
+      // leaving enchanted shields flat). We still wrap the draw in the submit queue (method_73483) so
+      // it lands at the right point in the deferred order, then flush the immediate buffer (endBatch)
+      // inside the callback. Mirrors Walksy ShieldStatus's ShieldSpecialSubmitter (repos/ShieldStatus-26.1).
+      queue.method_73483(matrices, layer, (entry, vcIgnored) -> {
+         class_4597.class_4598 buffers = client.method_22940().method_23000();
+         class_4588 foil = class_918.method_23181(buffers, layer, false, fGlint);
          class_4587 stack = new class_4587();
          stack.method_23760().method_66521(entry);
+
+         // Handle (slight z nudge so it doesn't z-fight the plate).
          stack.method_22903();
          stack.method_46416(0.0F, 0.0F, 1.0E-4F);
-         model.method_23775().method_22699(stack, vc, fLight, fOverlay, color);
+         model.method_23775().method_22699(stack, foil, fLight, fOverlay, color);
          stack.method_22909();
-      });
 
-      if (hasPatterns) {
-         final class_1767 canvasBase = baseColor == null ? class_1767.field_7952 : baseColor;
-         final class_9307 canvasPatterns = patterns;
+         // Plate base (recoloured, + glint from the foil buffer).
+         model.method_23774().method_22699(stack, foil, fLight, fOverlay, color);
 
-         // 1) Plate base (nopattern texture) — recoloured, through the deferred queue.
-         queue.method_73483(matrices, layer, (entry, vc) -> {
-            class_4587 stack = new class_4587();
-            stack.method_23760().method_66521(entry);
-            model.method_23774().method_22699(stack, vc, fLight, fOverlay, color);
-         });
-
-         // 2) Banner layers (shield-pattern base + each pattern) on the shield-pattern atlas, ALSO
-         //    through the deferred queue. The previous code drew these into the immediate world
-         //    buffer (method_23000) and never flushed it, so in the GUI/held pipeline they rendered
-         //    with stale state and ignored the status colour — only the base appeared recoloured.
-         //? if >=1.21.11 {
-         final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_12249::method_76000);
-         //?} else {
-         /*final class_1921 bannerLayer = class_4722.field_49770.method_24146(class_1921::method_23580);
-         *///?}
-         queue.method_73483(matrices, bannerLayer, (entry, vc) -> {
-            class_4587 stack = new class_4587();
-            stack.method_23760().method_66521(entry);
+         // Banner layers (shield-pattern base + each pattern) on the shared shield-pattern atlas.
+         if (fHasPatterns) {
             class_630 plate = model.method_23774();
-            this.renderBannerLayer(stack, fLight, fOverlay, plate, vc, class_4722.field_49770, canvasBase, color);
+            class_4588 bannerVc = buffers.method_73477(bannerLayer);
+            this.renderBannerLayer(stack, fLight, fOverlay, plate, bannerVc, class_4722.field_49770, canvasBase, color);
             for (int i = 0; i < 16 && i < canvasPatterns.comp_2428().size(); ++i) {
                class_9307.class_9308 pl = (class_9307.class_9308) canvasPatterns.comp_2428().get(i);
                class_4730 mat = class_4722.method_33083(pl.comp_2429());
-               this.renderBannerLayer(stack, fLight, fOverlay, plate, vc, mat, pl.comp_2430(), color);
+               this.renderBannerLayer(stack, fLight, fOverlay, plate, bannerVc, mat, pl.comp_2430(), color);
             }
-         });
-      } else {
-         queue.method_73483(matrices, layer, (entry, vc) -> {
-            class_4587 stack = new class_4587();
-            stack.method_23760().method_66521(entry);
-            model.method_23774().method_22699(stack, vc, fLight, fOverlay, color);
-         });
-      }
+         }
+
+         buffers.method_22993();
+      });
 
       matrices.method_22909();
       ci.cancel();
