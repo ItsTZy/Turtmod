@@ -48,8 +48,6 @@ public final class HudEditorFeature {
       context.method_25294(0, cy, sw, cy + 1, 1150139999);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.ARMOR, "Armor", config.hud.movableArmorHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.POTION, "Potions", config.hud.movablePotionHud);
-      drawAnchor(context, client, config, HudEditorFeature.Anchor.TOTEM, "Totems", config.combat.totemCounterHud);
-      drawAnchor(context, client, config, HudEditorFeature.Anchor.POTS, "Pots", config.combat.potionThrowCounterHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.OVERLAY, "FPS/Ping", config.hud.minimalFpsPingOverlay);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.DEBUG, "Clean F3", config.hud.cleanF3Mode);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.REACH, "Reach", config.hud.reachDisplay);
@@ -175,7 +173,7 @@ public final class HudEditorFeature {
       switch (anchor.ordinal()) {
          case 0 -> var10000 = config.hud.movableArmorHud;
          case 1 -> var10000 = config.hud.movablePotionHud;
-         case 2 -> var10000 = config.combat.totemCounterHud;
+         case 2 -> var10000 = false;
          case 3 -> var10000 = config.hud.minimalFpsPingOverlay;
          case 4 -> var10000 = config.hud.cleanF3Mode;
          case 5 -> var10000 = config.hud.reachDisplay;
@@ -187,7 +185,7 @@ public final class HudEditorFeature {
          case 11 -> var10000 = config.hud.coordinatesHud;
          case 12 -> var10000 = config.combat.showExactHealthNumber;
          case 13 -> var10000 = !config.visual.hideScoreboard;
-         case 14 -> var10000 = config.combat.potionThrowCounterHud;
+         case 14 -> var10000 = false;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 

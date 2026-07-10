@@ -90,8 +90,6 @@ public final class TurtModConfigScreenFactory {
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
-         case TOTEM_COUNTER -> "Totem Counter";
-         case POTION_COUNTER -> "Potion Counter";
       };
    }
 
@@ -456,35 +454,6 @@ public final class TurtModConfigScreenFactory {
             cfg.misc.commandKeysEnabled = dm.commandKeysEnabled;
             cfg.misc.commandKeys = new String[]{"", "", "", "", ""};
          }
-         case TOTEM_COUNTER -> {
-            cfg.combat.totemCounterHud = dc.totemCounterHud;
-            cfg.combat.totemLabelStyle = dc.totemLabelStyle;
-            cfg.combat.totemShowPopCounter = dc.totemShowPopCounter;
-            cfg.combat.totemColorByCount = dc.totemColorByCount;
-            cfg.combat.totemNametagPops = dc.totemNametagPops;
-            cfg.combat.totemShowInTab = dc.totemShowInTab;
-            cfg.combat.totemSeparator = dc.totemSeparator;
-            cfg.combat.totemCounterColors = dc.totemCounterColors;
-            cfg.combat.totemColoredXpBar = dc.totemColoredXpBar;
-            cfg.combat.totemAlwaysShowXpBar = dc.totemAlwaysShowXpBar;
-            cfg.hud.totemHudX = dh.totemHudX;
-            cfg.hud.totemHudY = dh.totemHudY;
-            cfg.hud.totemHudScalePercent = dh.totemHudScalePercent;
-         }
-         case POTION_COUNTER -> {
-            cfg.combat.potionThrowCounterHud = dc.potionThrowCounterHud;
-            cfg.combat.potionThrowShowPotCounter = dc.potionThrowShowPotCounter;
-            cfg.combat.potionThrowColorByCount = dc.potionThrowColorByCount;
-            cfg.combat.potionThrowNametagPots = dc.potionThrowNametagPots;
-            cfg.combat.potionThrowShowInTab = dc.potionThrowShowInTab;
-            cfg.combat.potionThrowSeparator = dc.potionThrowSeparator;
-            cfg.combat.potionThrowCounterColors = dc.potionThrowCounterColors;
-            cfg.combat.potionThrowColoredXpBar = dc.potionThrowColoredXpBar;
-            cfg.combat.potionThrowAlwaysShowXpBar = dc.potionThrowAlwaysShowXpBar;
-            cfg.hud.potionThrowHudX = dh.potionThrowHudX;
-            cfg.hud.potionThrowHudY = dh.potionThrowHudY;
-            cfg.hud.potionThrowHudScalePercent = dh.potionThrowHudScalePercent;
-         }
       }
       ConfigManager.save(cfg);
    }
@@ -799,29 +768,6 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.misc.noOpGamemodeSwitcher, v -> cfg.misc.noOpGamemodeSwitcher = v))
             .addOption(button("F3+F4 opens the switcher even without local op.", () -> {}))
             .addOption(button("Applies via /gamemode — you still need server permission.", () -> {}));
-         case TOTEM_COUNTER -> group
-            .addOption(bool("HUD Counter", () -> cfg.combat.totemCounterHud, v -> cfg.combat.totemCounterHud = v))
-            .addOption(enumOpt("Label Style", () -> cfg.combat.totemLabelStyle, v -> cfg.combat.totemLabelStyle = v, TurtModConfig.TotemLabelStyle.class))
-            .addOption(bool("Count Pops (else inventory)", () -> cfg.combat.totemShowPopCounter, v -> cfg.combat.totemShowPopCounter = v))
-            .addOption(bool("Color By Count", () -> cfg.combat.totemColorByCount, v -> cfg.combat.totemColorByCount = v))
-            .addOption(intOpt("HUD Scale %", () -> cfg.hud.totemHudScalePercent, v -> cfg.hud.totemHudScalePercent = v, 50, 300, 5))
-            .addOption(bool("Pops On Nametags", () -> cfg.combat.totemNametagPops, v -> cfg.combat.totemNametagPops = v))
-            .addOption(bool("Pops In Tab List", () -> cfg.combat.totemShowInTab, v -> cfg.combat.totemShowInTab = v))
-            .addOption(bool("Nametag Separator", () -> cfg.combat.totemSeparator, v -> cfg.combat.totemSeparator = v))
-            .addOption(bool("Nametag Counter Colors", () -> cfg.combat.totemCounterColors, v -> cfg.combat.totemCounterColors = v))
-            .addOption(bool("Colored XP Bar", () -> cfg.combat.totemColoredXpBar, v -> cfg.combat.totemColoredXpBar = v))
-            .addOption(bool("Always Show XP Bar", () -> cfg.combat.totemAlwaysShowXpBar, v -> cfg.combat.totemAlwaysShowXpBar = v));
-         case POTION_COUNTER -> group
-            .addOption(bool("HUD Counter", () -> cfg.combat.potionThrowCounterHud, v -> cfg.combat.potionThrowCounterHud = v))
-            .addOption(bool("Count Throws (else inventory)", () -> cfg.combat.potionThrowShowPotCounter, v -> cfg.combat.potionThrowShowPotCounter = v))
-            .addOption(bool("Color By Count", () -> cfg.combat.potionThrowColorByCount, v -> cfg.combat.potionThrowColorByCount = v))
-            .addOption(intOpt("HUD Scale %", () -> cfg.hud.potionThrowHudScalePercent, v -> cfg.hud.potionThrowHudScalePercent = v, 50, 300, 5))
-            .addOption(bool("Pots On Nametags", () -> cfg.combat.potionThrowNametagPots, v -> cfg.combat.potionThrowNametagPots = v))
-            .addOption(bool("Pots In Tab List", () -> cfg.combat.potionThrowShowInTab, v -> cfg.combat.potionThrowShowInTab = v))
-            .addOption(bool("Nametag Separator", () -> cfg.combat.potionThrowSeparator, v -> cfg.combat.potionThrowSeparator = v))
-            .addOption(bool("Nametag Counter Colors", () -> cfg.combat.potionThrowCounterColors, v -> cfg.combat.potionThrowCounterColors = v))
-            .addOption(bool("Colored XP Bar", () -> cfg.combat.potionThrowColoredXpBar, v -> cfg.combat.potionThrowColoredXpBar = v))
-            .addOption(bool("Always Show XP Bar", () -> cfg.combat.potionThrowAlwaysShowXpBar, v -> cfg.combat.potionThrowAlwaysShowXpBar = v));
       }
 
       // Modules that have a keybind get an in-config rebind button (also listed in MC Controls).
@@ -1143,8 +1089,6 @@ public final class TurtModConfigScreenFactory {
       HIDE_PARTICLES,
       COMMAND_KEYS,
       KIT_LOADER,
-      GAMEMODE_SWITCHER,
-      TOTEM_COUNTER,
-      POTION_COUNTER
+      GAMEMODE_SWITCHER
    }
 }
