@@ -13,7 +13,7 @@
 | **Mod id** | `turtmod` |
 | **Name** | TurtMod |
 | **Environment** | Client only |
-| **MC version** | 1.21.11 (multi-version 1.21.9/1.21.10 in progress via Stonecutter) |
+| **MC version** | **1.21.11** — this `legacy/1.21.11` branch (Stonecutter, intermediary mappings). Sibling branches carry the 26.x line: `master` = 26.2, `26.1` = the 26.1 line (both Mojang-unobfuscated). Old 1.21.9/1.21.10 nodes were dropped. |
 | **Loader** | Fabric (loader ≥ 0.18.4, loom 1.16) |
 | **Language** | Java 21 (+ Fabric Language Kotlin runtime) |
 | **Entry point** | `com.turtmod.TurtModClient` (`ClientModInitializer`) |
@@ -36,7 +36,7 @@ com.turtmod
 │  └─ config/               native config model + the native settings screen (replaces WalksyLib)
 ├─ hud/                     all HUD render features + the HUD editor
 ├─ visual/                  fullbright, freelook, zoom, hurtcam, screen effects, tinting
-├─ combat/                  health indicator, totem counter/pop, potion-throw tracking
+├─ combat/                  player health indicator, hit color / armor tint
 ├─ chat/                    better chat, screenshot tools/upload
 ├─ cosmetics/              skin changer (3D preview) + cosmetic profiles
 ├─ gallery/                 screenshot gallery + viewer
@@ -86,13 +86,11 @@ com.turtmod
 ### Combat (`combat/`)
 - **Player health indicator** — shows other players' health (hotbar-style hearts or number), works on invisible/armor-only, configurable hearts, scale, Y-offset, exact number.
 - **Hit color** — flash entities on hit (color, alpha, rainbow); armor damage tint + armor trim tint.
-- **Totem counter HUD** + **totem pop tracker**.
-- **Potion-throw tracker** (splash/lingering prediction data).
 
 ### HUD (`hud/`) — all movable via the HUD editor
 - **Armor HUD** (styles, durability, warnings, side, offhand/mainhand).
 - **Potion HUD** (styles ICONS/COMPACT/FULL, columns, max rows, sort modes, anchored so it doesn't drift).
-- **FPS/Ping overlay**, **Reach display**, **Keystrokes**, **CPS counter**, **Sprint/sneak display**, **Inventory HUD**, **Coordinates HUD**, **Elytra pitch HUD**, **Totem HUD**.
+- **FPS/Ping overlay**, **Reach display**, **Keystrokes**, **CPS counter**, **Sprint/sneak display**, **Inventory HUD**, **Coordinates HUD**, **Elytra pitch HUD**.
 - **Clean F3** — BetterF3-style replacement: per-line `name: value` two-tone shadowed text on per-line translucent backgrounds; reorderable lines; toggles for FPS(+min/max)/ping, XYZ, block, chunk, light, facing, speed, biome, dimension, day/time, held item, memory, looking-at.
 - **Custom hitboxes** — recolor, target/hurt colors, max distance, reveal invisible (players / armor-only / other entities), hide fireworks; debug-hitbox cleanup.
 - **HUD editor** (`HudEditorScreen`/`HudEditorFeature`) — drag every panel, snap-to-grid/center, per-anchor scale, reset.
@@ -159,19 +157,23 @@ Each module can be toggled from the grid, has a settings page, an optional **tog
 ---
 
 ## 8. Notable design decisions & limitations
-- **Pure intermediary mappings** in mixins (`class_/method_/field_`) — every name verified against the decompiled 1.21.11 jar.
+- **Pure intermediary mappings** in mixins (`class_/method_/field_`) on this `legacy/1.21.11` branch — every name verified against the decompiled 1.21.11 jar. The 26.x branches (`master` = 26.2, `26.1`) use Mojang-unobfuscated names instead.
 - **Gamemode switcher** can bypass the *client* gate but still needs real server `/gamemode` permission (a hard limit, same as the source mod).
 - **Kit/skin preview** needs world registries for full fidelity (enchants/potions); a cold main menu falls back to base item icons (it caches registries after you join any world).
 - **Particle preview** reads each particle's texture JSON (no clean sprite API in 1.21.11); particles without a static texture can't show a thumbnail.
 - **Native config:** the settings UI no longer depends on WalksyLib/ukulib — it's a self-contained model + screen, which also unblocked the multi-version port (WalksyLib's per-version availability was the #1 blocker).
-- **Multi-version:** 1.21.9/1.21.10 builds are blocked only by the new permission API (`class_12090/12096`) used by the gamemode switcher; needs a Stonecutter guard.
+- **Three supported versions, three branches:** this `legacy/1.21.11` = 1.21.11 (Stonecutter, intermediary), `master` = 26.2, `26.1` = the 26.1 line (both Mojang-unobfuscated, no-remap loom). The old Stonecutter multi-node effort (1.21.9/1.21.10) was dropped.
+- **Removed feature:** the Totem/Potion counter modules were removed from all branches after they never worked reliably.
 
 ---
 
 ## 9. Build
 ```bash
-./gradlew.bat :1.21.11:build      # single version
-./gradlew.bat chiseledBuild        # all Stonecutter version nodes
+# this branch (legacy/1.21.11) — Stonecutter, intermediary
+./gradlew.bat :1.21.11:build
+
+# the 26.x branches (master = 26.2, 26.1) — Mojang-unobfuscated, JDK 25 daemon
+./gradlew.bat build
 ```
-Pre-existing harmless `Cannot remap …` warnings (class_759/918/1921/742) are expected.
+On this branch, a pre-existing harmless `Cannot remap …` warning (class_742) is expected.
 Testing is manual in-game (no automated client run).

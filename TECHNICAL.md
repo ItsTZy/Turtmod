@@ -13,7 +13,7 @@ All Minecraft names are **intermediary** (`class_/method_/field_`); friendly nam
 - **Defaults resource:** `turtmod.default.json`; lang `assets/turtmod/lang/en_us.json`; sprites under `assets/turtmod/textures/gui/sprites/modules/`.
 - **Bundled jar:** `META-INF/jars/DiscordIPC-0.11.3.jar`.
 - **Deps:** fabricloader ≥0.18.4, fabric-api, fabric-language-kotlin, cloth-config, modmenu. (**WalksyLib + ukulib removed** — config UI is fully native; see §4 `ui/config/`.)
-- **Build:** `./gradlew.bat :1.21.11:build` or `chiseledBuild`. Expected harmless `Cannot remap` warnings for `class_759/918/1921/742` members.
+- **Build:** this `legacy/1.21.11` branch → `./gradlew.bat :1.21.11:build` (Stonecutter; expected harmless `Cannot remap` warning for a `class_742` member). The 26.x branches (`master` = 26.2, `26.1`) build with `./gradlew.bat build` (Mojang-unobfuscated, JDK 25 daemon, no remap step).
 
 ### TurtModClient lifecycle
 - `onInitializeClient()`: builds keybind categories, registers all keybinds, registers `/turtmod` command tree, registers `ClientTickEvents` tick handler, `HudRenderCallback`/screen events, `KitIO.init()`, Discord RPC, resource-reload listener.
@@ -46,8 +46,6 @@ Persisted as `config/turtmod.json` via `ConfigManager` (GSON, pretty). `load()` 
 
 ### `Combat`
 - Attack cooldown: `customAttackCooldownIndicator=true`, `chargedSound=true`, `chargedColor=true`, `chargedColorArgb=-12326533`, `unchargedColorArgb=-5195837`, `cooldownOffset{X=-14,Y=14}`, `cooldownWidth=28`, `cooldownHeight=2`, `cooldownScalePercent=100`, `cooldownVertical=false`, `cooldownOutline=true`, `cooldownOnlyWeapon=false`.
-- Totem counter: `totemCounterHud=false`, `totemLabelStyle (enum)`, `totemColorByCount=true`, `totemNametagPops=true`, `totemShowPopCounter=true`, `totemColoredXpBar=false`, `totemAlwaysShowXpBar=false`, `totemShowInTab=false`, `totemSeparator=false`, `totemCounterColors=false`.
-- Potion-throw counter: `potionThrowCounterHud=false`, `potionThrowNametagPots=true`, `potionThrowShowInTab=true`, `potionThrowColoredXpBar=false`, `potionThrowAlwaysShowXpBar=true`, `potionThrowSeparator=false`, `potionThrowCounterColors=false`.
 - Health indicator: `playerHealthIndicator`, `playerHealthIndicatorInvisible`, `playerHealthIndicatorArmorOnly=false`, `playerHealthIndicatorStyle (enum)`, `playerHealthIndicatorMaxHearts`, `showExactHealthNumber`, `healthOffset{X,Y}`, `healthScalePercent`.
 
 ### `Hud`
@@ -90,7 +88,6 @@ Persisted as `config/turtmod.json` via `ConfigManager` (GSON, pretty). `load()` 
 | ChatInputSuggestorMixin | class_4717 | method_23934 | @Inject HEAD | chat input suggestor tweak |
 | ChatScreenMixin | class_408 | method_44056 | @ModifyVariable STORE | chat text handling |
 | ChatTimestampMixin | class_338 (ChatHud) | method_44811 | @ModifyVariable HEAD | prepend chat timestamps |
-| ClientPlayNetworkHandlerMixin | class_634 | method_11146, method_11148 | @Inject HEAD | session/scoreboard hooks |
 | ClientPlayerEntityBlockBreakMixin | class_746 | method_5773 (tick) | @Inject HEAD | block-break related tracking |
 | ClientPlayerInteractionManagerMixin | class_636 | method_2918 | @Inject HEAD | interaction hook |
 | ClientWorldMixin | class_638 | method_43207 | @Inject HEAD | world add-entity / trails / pearl hook |
@@ -126,24 +123,17 @@ Persisted as `config/turtmod.json` via `ConfigManager` (GSON, pretty). `load()` 
 | MouseMixin | class_312 | method_1601/1598/1606 | @Inject + @WrapOperation ×3 | zoom scroll, freelook sens |
 | MuteSoundsMixin | class_638 | method_8486, method_8465 | @Inject HEAD cancellable | mute all / per-id sounds |
 | PlayerEntityAttackMixin | class_1657 | method_7324 | @Inject | attack/cooldown feedback |
-| PlayerEntityMixin | class_1657 | method_5476 (displayName) | @ModifyReturnValue | nametag tweaks |
 | PlayerEntityRenderStateMixin | class_10055 | — (fields) | state holder | health/render-state extension |
 | PlayerHeldItemFeatureRendererMixin | class_5697 | method_62594 ×2 | @Inject | third-person held item tweaks |
 | PlayerListPingInvoker | class_355 | @Invoker method_1923 | invoker | tab ping access |
 | PlayerListPingMixin | class_355 | method_1919 | @ModifyConstant + @Redirect | tab ping number/width |
-| PlayerTabOverlayMixin | class_355 | method_1918 | @Inject | tab list ping/render |
 | PotionHudMixin | class_329 | method_1765 | @Inject HEAD cancellable | hide vanilla potion HUD |
-| PotionThrowEntityDataMixin | class_634 | method_11093 | @Inject TAIL | splash-potion tracking data |
 | ScreenshotChatActionsMixin | class_338 | method_44811 | @Inject | screenshot toast chat actions |
 | ShieldModelRendererMixin | class_10509 | method_65707 | @Inject | shield recolor/size |
 | SplashScreenMixin | class_425 | method_25394 | @Inject TAIL | branded loading overlay |
-| TextDisplayRendererMixin | class_8138$class_8141 | method_49057 | @ModifyVariable | text-display render tweak |
 | TitleScreenMixin | class_442 | method_25426 | @Inject | add TurtMod logo button |
 | TitleScreenVisualsMixin | class_442 | method_25394 | @Inject TAIL | title screen branding |
-| TotemPopGameRendererMixin | class_759 | method_3198 | @Inject HEAD | totem pop scale |
-| TotemPopRoundEndMixin | class_338 | method_44811 | @Inject HEAD | reset pop counters on round end |
 | TotemPopScaleMixin | class_4603 | method_70939 | @WrapOperation + @ModifyArgs ×2 | totem pop overlay scale |
-| TotemPopXpBarMixin | class_11224 | method_70865 | @Inject RETURN | totem count on XP bar |
 | WorldRendererMixin | class_761 | method_22712 | @ModifyVariable + @ModifyArg | block outline recolor |
 
 Non-`mixin/client` accessors: `mixin/OverlayTextureAccessor`, `mixin/SimpleOptionDuck`, `mixin/client/SimpleOptionAccessor`, `mixin/client/ScreenMixinAccessor`.
@@ -164,7 +154,7 @@ Non-`mixin/client` accessors: `mixin/OverlayTextureAccessor`, `mixin/SimpleOptio
 
 **visual/** — `FullbrightFeature`, `FreeLookFeature`, `ZoomFeature`, `HurtCamFeature`, `ScreenEffectsFeature`, `HitColorConfig`.
 
-**combat/** — `HealthNumberFeature`, `PlayerHeartSpriteRenderer`, `TotemCounterFeature`, `TotemPopTracker`, `PotionThrowTracker`.
+**combat/** — `HealthNumberFeature`, `PlayerHeartSpriteRenderer`.
 
 **chat/** — `BetterChatFeature`, `BetterScreenshotFeature`, `ScreenshotUploadFeature`.
 
