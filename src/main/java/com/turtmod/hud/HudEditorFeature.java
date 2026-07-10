@@ -1,8 +1,6 @@
 package com.turtmod.hud;
 
 import com.turtmod.combat.HealthNumberFeature;
-import com.turtmod.combat.PotionThrowTracker;
-import com.turtmod.combat.TotemCounterFeature;
 import com.turtmod.config.ConfigManager;
 import com.turtmod.config.TurtModConfig;
 import net.minecraft.class_11908;
@@ -429,7 +427,7 @@ public final class HudEditorFeature {
       switch (anchor.ordinal()) {
          case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledWidth(config);
          case 1 -> var10000 = HudPanelsFeature.potionEditorWidth(config);
-         case 2 -> var10000 = TotemCounterFeature.getScaledWidth(config);
+         case 2 -> var10000 = 0; // TOTEM — counter module removed; anchor kept only to preserve ordinals
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledWidth(config);
          case 4 -> var10000 = Math.round(Math.max(80, CleanF3Feature.boxWidth(client, CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
          case 5 -> var10000 = ReachDisplayFeature.getScaledWidth(config);
@@ -441,7 +439,7 @@ public final class HudEditorFeature {
          case 11 -> var10000 = CoordinatesHudFeature.getScaledWidth(config);
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
-         case 14 -> var10000 = PotionThrowTracker.getScaledWidth(config);
+         case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -453,7 +451,7 @@ public final class HudEditorFeature {
       switch (anchor.ordinal()) {
          case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledHeight(config);
          case 1 -> var10000 = HudPanelsFeature.potionEditorHeight(config);
-         case 2 -> var10000 = TotemCounterFeature.getScaledHeight(config);
+         case 2 -> var10000 = 0; // TOTEM — see getWidth
          case 3 -> var10000 = FpsPingOverlayFeature.getScaledHeight(config);
          case 4 -> var10000 = Math.round(Math.max(20, CleanF3Feature.boxHeight(CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
          case 5 -> var10000 = ReachDisplayFeature.getScaledHeight(config);
@@ -465,7 +463,7 @@ public final class HudEditorFeature {
          case 11 -> var10000 = CoordinatesHudFeature.getScaledHeight(config);
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
-         case 14 -> var10000 = PotionThrowTracker.getScaledHeight(config);
+         case 14 -> var10000 = 0; // POTS — see getWidth
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
