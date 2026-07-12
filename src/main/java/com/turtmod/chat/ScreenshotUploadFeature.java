@@ -42,6 +42,18 @@ public final class ScreenshotUploadFeature {
       }
    }
 
+   /** Upload a specific screenshot file (used by the gallery's inline action buttons). */
+   public static void uploadFile(class_310 client, File file) {
+      if (file == null || !file.exists() || !file.isFile()) {
+         send(client, class_2561.method_43470("Screenshot file not found.").method_27692(class_124.field_1061));
+         return;
+      }
+      send(client, class_2561.method_43470("Uploading screenshot...").method_27692(class_124.field_1080));
+      Thread thread = new Thread(() -> doUpload(client, file.toPath()), "turtmod-screenshot-upload");
+      thread.setDaemon(true);
+      thread.start();
+   }
+
    public static void openLastScreenshot(class_310 client) {
       String path = BetterScreenshotFeature.getLastAbsoluteScreenshotPath();
       if (path == null) {

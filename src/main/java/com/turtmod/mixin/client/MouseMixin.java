@@ -22,6 +22,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MouseMixin {
    @Inject(
       method = {"method_1601"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void turtmod$screenshotPreviewClick(long window, class_11910 mouseInput, int action, CallbackInfo ci) {
+      // Left-press on a screenshot-preview action chip is consumed here so it doesn't also swing/attack.
+      if (action == 1 && mouseInput.comp_4801() == 0 && com.turtmod.chat.ScreenshotPreview.onClick()) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(
+      method = {"method_1601"},
       at = {@At("HEAD")}
    )
    private void turtmod$trackMouseClicks(long window, class_11910 mouseInput, int action, CallbackInfo ci) {

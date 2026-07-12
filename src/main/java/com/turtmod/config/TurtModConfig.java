@@ -322,6 +322,11 @@ public static final class Combat {
       public int compactChatDistance = 1;
       public boolean compactChatCheckStyle = true;
       public boolean betterScreenshotActions = true;
+      // Animated corner preview shown after taking a screenshot (F2), with inline view/copy/upload/delete.
+      public boolean screenshotPreview = true;
+      public ScreenshotCorner screenshotPreviewCorner = ScreenshotCorner.BOTTOM_RIGHT;
+      public int screenshotPreviewSeconds = 4;
+      public boolean screenshotShutterSound = true;
       public boolean inventoryHudEnabled = false;
       public int inventoryHudX = 0;
       public int inventoryHudY = 203;
@@ -711,6 +716,14 @@ public static final class Combat {
       DEFAULT,
       COMPACT,
       LINE;
+   }
+
+   /** Which screen corner the post-screenshot preview animates into. */
+   public static enum ScreenshotCorner {
+      BOTTOM_RIGHT,
+      BOTTOM_LEFT,
+      TOP_RIGHT,
+      TOP_LEFT;
    }
 
    // Sprint-display text style (ported from toggle-sprint-display). VERBOSE = "Sprint Held/Toggled",

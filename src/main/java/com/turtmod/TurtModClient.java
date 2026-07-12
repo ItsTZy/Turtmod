@@ -418,6 +418,7 @@ public final class TurtModClient implements ClientModInitializer {
          safeRender("inventory", () -> InventoryHudFeature.render(context, client, config));
          safeRender("elytra", () -> ElytraPitchFeature.render(context, client, config));
          safeRender("coords", () -> com.turtmod.hud.CoordinatesHudFeature.render(context, client, config));
+         safeRender("screenshotPreview", () -> com.turtmod.chat.ScreenshotPreview.render(context, client, config));
       }
    }
 

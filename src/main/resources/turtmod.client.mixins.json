@@ -40,6 +40,7 @@
 		"RenderedItemAccessor",
 		"ScreenMixinAccessor",
 		"ScreenshotChatActionsMixin",
+		"ScreenshotGrabMixin",
 		"ShieldGuiAnimateMixin",
 		"ShieldModelRendererMixin",
 		"SplashScreenMixin",
