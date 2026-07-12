@@ -58,6 +58,7 @@ public class ScreenshotViewScreen extends class_437 {
    private int imageAreaHeight;
    private boolean pendingViewReset = true;
    private float openFade = 0.0F;
+   private float imgFade = 1.0F;   // quick fade over the image area when navigating prev/next
    private long lastFrameNs = System.nanoTime();
 
    public ScreenshotViewScreen(class_437 parent, File initialFile) {
@@ -225,6 +226,7 @@ public class ScreenshotViewScreen extends class_437 {
    private void previousScreenshot() {
       if (!this.screenshots.isEmpty()) {
          this.currentIndex = (this.currentIndex - 1 + this.screenshots.size()) % this.screenshots.size();
+         this.imgFade = 0.0F;
          this.loadCurrentTexture(true);
       }
 
@@ -233,6 +235,7 @@ public class ScreenshotViewScreen extends class_437 {
    private void nextScreenshot() {
       if (!this.screenshots.isEmpty()) {
          this.currentIndex = (this.currentIndex + 1) % this.screenshots.size();
+         this.imgFade = 0.0F;
          this.loadCurrentTexture(true);
       }
 
@@ -415,6 +418,7 @@ public class ScreenshotViewScreen extends class_437 {
       float dt = Math.min((float)(nowNs - this.lastFrameNs) / 1.0E9F, 0.1F);
       this.lastFrameNs = nowNs;
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1.0F, dt, 12.0F);
+      this.imgFade = TurtUIUtils.lerp01(this.imgFade, 1.0F, dt, 16.0F);
 
       TurtUIUtils.drawMenuBackdrop(context, this.field_22789, this.field_22790);
       context.method_25294(0, 0, this.field_22789, this.field_22790, -435221750);
@@ -450,6 +454,10 @@ public class ScreenshotViewScreen extends class_437 {
          drawY = this.imageAreaY + this.imageAreaHeight / 2 - drawHeight / 2 + (int)Math.round(this.panY);
          context.method_44379(this.imageAreaX, this.imageAreaY, this.imageAreaX + this.imageAreaWidth, this.imageAreaY + this.imageAreaHeight);
          context.method_25302(class_10799.field_56883, this.textureId, drawX, drawY, 0.0F, 0.0F, drawWidth, drawHeight, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
+         if (this.imgFade < 0.99F) {
+            int veil = ((int)((1.0F - this.imgFade) * 255.0F) << 24) | (PANEL_BG.getRGB() & 0xFFFFFF);
+            context.method_25294(this.imageAreaX, this.imageAreaY, this.imageAreaX + this.imageAreaWidth, this.imageAreaY + this.imageAreaHeight, veil);
+         }
          context.method_44380();
          int var10000 = this.currentIndex + 1;
          String meta = var10000 + "/" + this.screenshots.size() + "  " + this.imageWidth + "x" + this.imageHeight + "  " + Math.round(scale / this.fitScale * 100.0F) + "%";

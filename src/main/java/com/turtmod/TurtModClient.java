@@ -140,6 +140,15 @@ public final class TurtModClient implements ClientModInitializer {
             ScreenEvents.afterRender(screen).register((scr, ctx, mx, my, delta) ->
                DeathCoordsFeature.render(ctx, client, scr.field_22789, scr.field_22790));
          }
+         // A "Gallery" button in the top-right of the pause menu, opening the screenshot gallery.
+         if (screen instanceof net.minecraft.class_433
+               && config != null && config.misc.enabled && config.hud.screenshotMenuButton) {
+            net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(
+               net.minecraft.class_4185.method_46430(
+                     net.minecraft.class_2561.method_43470("📷 Gallery"),
+                     b -> client.method_1507(new com.turtmod.gallery.ScreenshotGalleryScreen(screen)))
+                  .method_46434(w - 92, 6, 86, 20).method_46431());
+         }
       });
    }
 
@@ -157,7 +166,13 @@ public final class TurtModClient implements ClientModInitializer {
             .then(ClientCommandManager.literal("view").executes((ctx) -> { ScreenshotUploadFeature.viewLastScreenshot(class_310.method_1551()); return 1; }))
             .then(ClientCommandManager.literal("folder").executes((ctx) -> { ScreenshotUploadFeature.openScreenshotFolder(class_310.method_1551()); return 1; }))
             .then(ClientCommandManager.literal("copy").executes((ctx) -> { ScreenshotUploadFeature.copyLastScreenshotPath(class_310.method_1551()); return 1; }))
-            .then(ClientCommandManager.literal("upload").executes((ctx) -> { ScreenshotUploadFeature.uploadLastScreenshot(class_310.method_1551()); return 1; })));
+            .then(ClientCommandManager.literal("upload").executes((ctx) -> { ScreenshotUploadFeature.uploadLastScreenshot(class_310.method_1551()); return 1; }))
+            .then(ClientCommandManager.literal("uploadurl").then(ClientCommandManager.argument("url", StringArgumentType.greedyString()).executes((ctx) -> {
+               config.hud.screenshotUploadCustomUrl = StringArgumentType.getString(ctx, "url").trim();
+               ConfigManager.save(config);
+               sendCommandKeyFeedback("Custom upload URL set. Set 'Upload To' -> CUSTOM to use it.");
+               return 1;
+            }))));
 
          root.then(ClientCommandManager.literal("cmdkey")
             .then(ClientCommandManager.literal("set")

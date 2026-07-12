@@ -121,10 +121,31 @@ public final class ScreenshotUploadFeature {
    }
 
    private static void doUpload(class_310 client, Path filePath) {
+      com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
+      com.turtmod.config.TurtModConfig.UploadProvider provider = cfg != null ? cfg.hud.screenshotUploadProvider
+         : com.turtmod.config.TurtModConfig.UploadProvider.ZERO_X_ZERO;
+      String url;
+      String fileField = "file";
+      java.util.Map<String, String> textFields = new java.util.LinkedHashMap<>();
+      switch (provider) {
+         case CATBOX -> {
+            url = "https://catbox.moe/user/api.php";
+            fileField = "fileToUpload";
+            textFields.put("reqtype", "fileupload");
+         }
+         case CUSTOM -> {
+            url = cfg != null ? cfg.hud.screenshotUploadCustomUrl : "";
+            if (url == null || url.isBlank()) {
+               send(client, class_2561.method_43470("Set a custom upload URL first: /turtmod screenshot uploadurl <url>").method_27692(class_124.field_1061));
+               return;
+            }
+         }
+         default -> url = "https://0x0.st";
+      }
       try {
          String boundary = "----TurtModBoundary" + String.valueOf(UUID.randomUUID());
-         byte[] body = multipart(boundary, filePath);
-         HttpRequest request = HttpRequest.newBuilder(URI.create("https://0x0.st")).header("Content-Type", "multipart/form-data; boundary=" + boundary).POST(BodyPublishers.ofByteArray(body)).build();
+         byte[] body = multipart(boundary, filePath, fileField, textFields);
+         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "multipart/form-data; boundary=" + boundary).header("User-Agent", "TurtMod-Screenshots").POST(BodyPublishers.ofByteArray(body)).build();
          HttpClient http = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
          HttpResponse<String> response = http.send(request, BodyHandlers.ofString());
          String link = response.body() == null ? "" : ((String)response.body()).trim();
@@ -162,18 +183,16 @@ public final class ScreenshotUploadFeature {
       }
    }
 
-   private static byte[] multipart(String boundary, Path filePath) throws IOException {
+   private static byte[] multipart(String boundary, Path filePath, String fileField, java.util.Map<String, String> textFields) throws IOException {
+      java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+      for (java.util.Map.Entry<String, String> e : textFields.entrySet()) {
+         out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + e.getKey() + "\"\r\n\r\n" + e.getValue() + "\r\n").getBytes());
+      }
       String fileName = filePath.getFileName().toString();
-      byte[] fileBytes = Files.readAllBytes(filePath);
-      String head = "--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"\r\nContent-Type: image/png\r\n\r\n";
-      String tail = "\r\n--" + boundary + "--\r\n";
-      byte[] headBytes = head.getBytes();
-      byte[] tailBytes = tail.getBytes();
-      byte[] out = new byte[headBytes.length + fileBytes.length + tailBytes.length];
-      System.arraycopy(headBytes, 0, out, 0, headBytes.length);
-      System.arraycopy(fileBytes, 0, out, headBytes.length, fileBytes.length);
-      System.arraycopy(tailBytes, 0, out, headBytes.length + fileBytes.length, tailBytes.length);
-      return out;
+      out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + fileField + "\"; filename=\"" + fileName + "\"\r\nContent-Type: image/png\r\n\r\n").getBytes());
+      out.write(Files.readAllBytes(filePath));
+      out.write(("\r\n--" + boundary + "--\r\n").getBytes());
+      return out.toByteArray();
    }
 
    private static void send(class_310 client, class_2561 text) {
