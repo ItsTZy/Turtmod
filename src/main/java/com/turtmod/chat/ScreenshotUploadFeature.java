@@ -3,55 +3,14 @@ package com.turtmod.chat;
 import com.turtmod.gallery.ScreenshotViewScreen;
 import com.turtmod.utils.ImageClipboardUtils;
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpClient.Redirect;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.UUID;
 import net.minecraft.class_124;
 import net.minecraft.class_156;
-import net.minecraft.class_2558;
 import net.minecraft.class_2561;
-import net.minecraft.class_2583;
 import net.minecraft.class_310;
 
+/** Local screenshot actions used by the corner preview + gallery: view, open, copy-to-clipboard. */
 public final class ScreenshotUploadFeature {
    private ScreenshotUploadFeature() {
-   }
-
-   public static void uploadLastScreenshot(class_310 client) {
-      String path = BetterScreenshotFeature.getLastAbsoluteScreenshotPath();
-      if (path == null) {
-         send(client, class_2561.method_43470("No recent screenshot found. Take one first.").method_27692(class_124.field_1061));
-      } else {
-         File file = new File(path);
-         if (file.exists() && file.isFile()) {
-            send(client, class_2561.method_43470("Uploading screenshot...").method_27692(class_124.field_1080));
-            Thread thread = new Thread(() -> doUpload(client, file.toPath()), "turtmod-screenshot-upload");
-            thread.setDaemon(true);
-            thread.start();
-         } else {
-            send(client, class_2561.method_43470("Screenshot file not found: " + path).method_27692(class_124.field_1061));
-         }
-      }
-   }
-
-   /** Upload a specific screenshot file (used by the gallery's inline action buttons). */
-   public static void uploadFile(class_310 client, File file) {
-      if (file == null || !file.exists() || !file.isFile()) {
-         send(client, class_2561.method_43470("Screenshot file not found.").method_27692(class_124.field_1061));
-         return;
-      }
-      send(client, class_2561.method_43470("Uploading screenshot...").method_27692(class_124.field_1080));
-      Thread thread = new Thread(() -> doUpload(client, file.toPath()), "turtmod-screenshot-upload");
-      thread.setDaemon(true);
-      thread.start();
    }
 
    public static void openLastScreenshot(class_310 client) {
@@ -120,51 +79,6 @@ public final class ScreenshotUploadFeature {
       }
    }
 
-   private static void doUpload(class_310 client, Path filePath) {
-      com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
-      com.turtmod.config.TurtModConfig.UploadProvider provider = cfg != null ? cfg.hud.screenshotUploadProvider
-         : com.turtmod.config.TurtModConfig.UploadProvider.ZERO_X_ZERO;
-      String url;
-      String fileField = "file";
-      java.util.Map<String, String> textFields = new java.util.LinkedHashMap<>();
-      switch (provider) {
-         case CATBOX -> {
-            url = "https://catbox.moe/user/api.php";
-            fileField = "fileToUpload";
-            textFields.put("reqtype", "fileupload");
-         }
-         case CUSTOM -> {
-            url = cfg != null ? cfg.hud.screenshotUploadCustomUrl : "";
-            if (url == null || url.isBlank()) {
-               send(client, class_2561.method_43470("Set a custom upload URL first: /turtmod screenshot uploadurl <url>").method_27692(class_124.field_1061));
-               return;
-            }
-         }
-         default -> url = "https://0x0.st";
-      }
-      try {
-         String boundary = "----TurtModBoundary" + String.valueOf(UUID.randomUUID());
-         byte[] body = multipart(boundary, filePath, fileField, textFields);
-         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "multipart/form-data; boundary=" + boundary).header("User-Agent", "TurtMod-Screenshots").POST(BodyPublishers.ofByteArray(body)).build();
-         HttpClient http = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
-         HttpResponse<String> response = http.send(request, BodyHandlers.ofString());
-         String link = response.body() == null ? "" : ((String)response.body()).trim();
-         if (response.statusCode() / 100 != 2 || !link.startsWith("http")) {
-            send(client, class_2561.method_43470("Upload failed (" + response.statusCode() + ").").method_27692(class_124.field_1061));
-            return;
-         }
-
-         client.execute(() -> {
-            client.field_1774.method_1455(link);
-            class_2561 clickable = class_2561.method_43470("[Open Link]").method_10862(class_2583.field_24360.method_10977(class_124.field_1075).method_30938(true).method_10958(new class_2558.class_10608(URI.create(link))));
-            send(client, class_2561.method_43470("Uploaded: ").method_27692(class_124.field_1060).method_10852(clickable).method_10852(class_2561.method_43470(" (copied)")));
-         });
-      } catch (Exception e) {
-         send(client, class_2561.method_43470("Upload error: " + e.getMessage()).method_27692(class_124.field_1061));
-      }
-
-   }
-
    private static void openFile(class_310 client, File target) {
       try {
          class_156.method_668().method_672(target);
@@ -181,18 +95,6 @@ public final class ScreenshotUploadFeature {
             send(client, class_2561.method_43470("Could not open file/folder.").method_27692(class_124.field_1061));
          }
       }
-   }
-
-   private static byte[] multipart(String boundary, Path filePath, String fileField, java.util.Map<String, String> textFields) throws IOException {
-      java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-      for (java.util.Map.Entry<String, String> e : textFields.entrySet()) {
-         out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + e.getKey() + "\"\r\n\r\n" + e.getValue() + "\r\n").getBytes());
-      }
-      String fileName = filePath.getFileName().toString();
-      out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + fileField + "\"; filename=\"" + fileName + "\"\r\nContent-Type: image/png\r\n\r\n").getBytes());
-      out.write(Files.readAllBytes(filePath));
-      out.write(("\r\n--" + boundary + "--\r\n").getBytes());
-      return out.toByteArray();
    }
 
    private static void send(class_310 client, class_2561 text) {

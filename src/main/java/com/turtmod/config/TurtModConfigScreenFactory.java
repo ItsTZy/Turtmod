@@ -403,8 +403,7 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.screenshotPreviewCorner = dh.screenshotPreviewCorner;
             cfg.hud.screenshotPreviewSeconds = dh.screenshotPreviewSeconds;
             cfg.hud.screenshotShutterSound = dh.screenshotShutterSound;
-            cfg.hud.screenshotUploadProvider = dh.screenshotUploadProvider;
-            cfg.hud.screenshotUploadCustomUrl = dh.screenshotUploadCustomUrl;
+            cfg.hud.screenshotFlash = dh.screenshotFlash;
             cfg.hud.screenshotMenuButton = dh.screenshotMenuButton;
          }
          case CLEAN_F3 -> resetCleanF3Defaults(cfg);
@@ -667,7 +666,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(enumOpt("Preview Corner", () -> cfg.hud.screenshotPreviewCorner, v -> cfg.hud.screenshotPreviewCorner = v, TurtModConfig.ScreenshotCorner.class))
             .addOption(intOpt("Preview Seconds", () -> cfg.hud.screenshotPreviewSeconds, v -> cfg.hud.screenshotPreviewSeconds = v, 1, 15, 1))
             .addOption(bool("Shutter Sound", () -> cfg.hud.screenshotShutterSound, v -> cfg.hud.screenshotShutterSound = v))
-            .addOption(enumOpt("Upload To", () -> cfg.hud.screenshotUploadProvider, v -> cfg.hud.screenshotUploadProvider = v, TurtModConfig.UploadProvider.class))
+            .addOption(bool("Camera Flash", () -> cfg.hud.screenshotFlash, v -> cfg.hud.screenshotFlash = v))
             .addOption(bool("Pause-Menu Gallery Button", () -> cfg.hud.screenshotMenuButton, v -> cfg.hud.screenshotMenuButton = v));
          case CLEAN_F3 -> group
             .addOption(bool("Enabled", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))

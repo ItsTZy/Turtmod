@@ -19,7 +19,7 @@ import net.minecraft.class_3417;
 /**
  * Animated corner preview shown after taking a screenshot (F2): the shot scales + fades into the
  * configured corner, holds for a few seconds, then drops away — with inline TurtMod-styled action
- * chips (view / copy / upload / delete). Original implementation; the actions reuse
+ * chips (view / copy / delete). Original implementation; the actions reuse
  * {@link ScreenshotUploadFeature}. Fed a framebuffer image by {@code ScreenshotGrabMixin}, drawn each
  * HUD frame from {@code TurtModClient.onHudRender}, clicked via {@code MouseMixin}.
  */
@@ -32,6 +32,7 @@ public final class ScreenshotPreview {
    private static long closeAt = -1;
    private static long flashAt = -1;
    private static long copyAt = -1;
+   private static long screenFlashAt = -1;   // whole-screen camera flash, independent of the corner card
    private static int hovered = -1;
    private static volatile boolean interactiveNow = false;
 
@@ -40,6 +41,7 @@ public final class ScreenshotPreview {
    private static final int CHIP = 13, CHIP_GAP = 3;
 
    private static final long ENTER_MS = 240, EXIT_MS = 380, CLOSE_MS = 240, FLASH_MS = 320, COPY_MS = 340;
+   private static final long SCREEN_FLASH_MS = 260;
 
    private ScreenshotPreview() {
    }
@@ -65,6 +67,7 @@ public final class ScreenshotPreview {
          closeAt = -1;
          copyAt = -1;
          flashAt = now;
+         screenFlashAt = cfg.hud.screenshotFlash ? now : -1;
          hovered = -1;
          if (cfg.hud.screenshotShutterSound) {
             mc.method_1483().method_4870(class_1109.method_4758(class_3417.field_15015.comp_349(), 1.7F));
@@ -78,6 +81,7 @@ public final class ScreenshotPreview {
       closeAt = -1;
       flashAt = -1;
       copyAt = -1;
+      screenFlashAt = -1;
       hovered = -1;
       Arrays.fill(bx, -1000);
       Arrays.fill(by, -1000);
@@ -106,6 +110,18 @@ public final class ScreenshotPreview {
       long now = System.currentTimeMillis();
       int sw = ctx.method_51421();
       int sh = ctx.method_51443();
+
+      // Whole-screen camera flash: a quick white veil that fades right after the shutter fires.
+      if (screenFlashAt > 0) {
+         long fe = now - screenFlashAt;
+         if (fe < SCREEN_FLASH_MS) {
+            int fa = Math.round((1f - (float) fe / SCREEN_FLASH_MS) * 150);
+            ctx.method_25294(0, 0, sw, sh, (Math.max(0, fa) << 24) | 0xFFFFFF);
+         } else {
+            screenFlashAt = -1;
+         }
+      }
+
       int w = Math.max(96, sw / 5);
       int h = imgW > 0 ? w * imgH / imgW : w * 9 / 16;
       int margin = 10;
@@ -176,10 +192,10 @@ public final class ScreenshotPreview {
       interactiveNow = interactive;
       if (interactive) {
          updateHover(mc, ctx);
-         int total = 4 * CHIP + 3 * CHIP_GAP;
+         int total = 3 * CHIP + 2 * CHIP_GAP;
          int rowX = drawX + drawW - total - 4;
          int rowY = drawY + drawH - CHIP - 4;
-         for (int i = 0; i < 4; i++) {
+         for (int i = 0; i < 3; i++) {
             int cx = rowX + i * (CHIP + CHIP_GAP);
             bx[i] = cx;
             by[i] = rowY;
@@ -201,7 +217,7 @@ public final class ScreenshotPreview {
       double mx = mc.field_1729.method_1603() * ctx.method_51421() / sx;
       double my = mc.field_1729.method_1604() * ctx.method_51443() / sy;
       hovered = -1;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 3; i++) {
          if (mx >= bx[i] && mx <= bx[i] + CHIP && my >= by[i] && my <= by[i] + CHIP) {
             hovered = i;
          }
@@ -218,7 +234,7 @@ public final class ScreenshotPreview {
       double sy = Math.max(1, mc.method_22683().method_4506());
       double mx = mc.field_1729.method_1603() * mc.method_22683().method_4486() / sx;
       double my = mc.field_1729.method_1604() * mc.method_22683().method_4502() / sy;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 3; i++) {
          if (mx >= bx[i] && mx <= bx[i] + CHIP && my >= by[i] && my <= by[i] + CHIP) {
             doAction(i, mc);
             return true;
@@ -231,8 +247,7 @@ public final class ScreenshotPreview {
       switch (i) {
          case 0 -> { ScreenshotUploadFeature.viewLastScreenshot(mc); closeAt = System.currentTimeMillis(); }
          case 1 -> { ScreenshotUploadFeature.copyLastScreenshotPath(mc); copyAt = System.currentTimeMillis(); }
-         case 2 -> ScreenshotUploadFeature.uploadLastScreenshot(mc);
-         case 3 -> { deleteNewest(mc); dismissNow(); }
+         case 2 -> { deleteNewest(mc); dismissNow(); }
          default -> { }
       }
    }
@@ -273,13 +288,6 @@ public final class ScreenshotPreview {
             drawBorder(ctx, x, y + 2, 5, 5, c, 1);
          }
          case 2 -> {
-            ctx.method_25294(x + 3, y + 1, x + 4, y + 7, c);
-            ctx.method_25294(x + 1, y + 3, x + 2, y + 4, c);
-            ctx.method_25294(x + 2, y + 2, x + 3, y + 3, c);
-            ctx.method_25294(x + 4, y + 2, x + 5, y + 3, c);
-            ctx.method_25294(x + 5, y + 3, x + 6, y + 4, c);
-         }
-         case 3 -> {
             ctx.method_25294(x, y + 1, x + 7, y + 2, c);
             ctx.method_25294(x + 2, y, x + 5, y + 1, c);
             drawBorder(ctx, x + 1, y + 2, 5, 5, c, 1);

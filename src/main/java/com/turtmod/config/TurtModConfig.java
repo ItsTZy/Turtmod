@@ -327,9 +327,7 @@ public static final class Combat {
       public ScreenshotCorner screenshotPreviewCorner = ScreenshotCorner.BOTTOM_RIGHT;
       public int screenshotPreviewSeconds = 4;
       public boolean screenshotShutterSound = true;
-      // Where the upload action sends screenshots. CUSTOM uses screenshotUploadCustomUrl.
-      public UploadProvider screenshotUploadProvider = UploadProvider.ZERO_X_ZERO;
-      public String screenshotUploadCustomUrl = "";
+      public boolean screenshotFlash = true;
       public boolean screenshotMenuButton = true;
       public boolean inventoryHudEnabled = false;
       public int inventoryHudX = 0;
@@ -728,13 +726,6 @@ public static final class Combat {
       BOTTOM_LEFT,
       TOP_RIGHT,
       TOP_LEFT;
-   }
-
-   /** Screenshot upload host. 0x0.st and Catbox need no key; CUSTOM POSTs to a user-set URL. */
-   public static enum UploadProvider {
-      ZERO_X_ZERO,
-      CATBOX,
-      CUSTOM;
    }
 
    // Sprint-display text style (ported from toggle-sprint-display). VERBOSE = "Sprint Held/Toggled",

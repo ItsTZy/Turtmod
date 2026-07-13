@@ -255,7 +255,7 @@ public final class TurtModClientConfigScreen extends class_437 {
       m.put("Held Item Tweaks", "Custom held-item size, position & rotation.");
       m.put("Zoom", "Hold a key to zoom in (Optifine-style).");
       m.put("Clean F3", "Cleaner, minimal debug screen.");
-      m.put("Screenshot Tools", "Copy / upload / open actions after a screenshot.");
+      m.put("Screenshot Tools", "View / copy / open actions after a screenshot.");
       m.put("Death Coords", "Save the coordinates where you last died.");
       m.put("Mute Sounds", "Mute selected in-game sounds.");
       m.put("Hide Particles", "Hide selected particle types.");

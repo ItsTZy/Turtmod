@@ -85,7 +85,7 @@ public class ScreenshotGalleryScreen extends class_437 {
       TurtUITheme btnTheme = new TurtUITheme(BTN_BG, PANEL_BORDER, TEXT_MAIN, BTN_HOVER, ACCENT_PINK);
       this.buttons.clear();
 
-      // Actions now live inline on each thumbnail (hover → view/copy/upload/delete chips), so the
+      // Actions now live inline on each thumbnail (hover → view/copy/delete chips), so the
       // sidebar only carries the two screen-level actions.
       int sx = this.panelX + 6;
       int sw = com.turtmod.ui.TurtLauncher.SIDEBAR_W - 12;
@@ -229,7 +229,7 @@ public class ScreenshotGalleryScreen extends class_437 {
    private static final Color CHIP_BG = new Color(0xD8121A16, true);
 
    private int chipX(int tx, int tw, int i) {
-      int total = 4 * CHIP + 3 * CHIP_GAP;
+      int total = 3 * CHIP + 2 * CHIP_GAP;
       return tx + tw - total - 4 + i * (CHIP + CHIP_GAP);
    }
 
@@ -241,8 +241,7 @@ public class ScreenshotGalleryScreen extends class_437 {
       switch (i) {
          case 0 -> { if (this.field_22787 != null) this.field_22787.method_1507(new ScreenshotViewScreen(this, file)); }
          case 1 -> setStatus(ImageClipboardUtils.copyImageToClipboard(file) ? "Copied to clipboard!" : "Failed to copy.");
-         case 2 -> { com.turtmod.chat.ScreenshotUploadFeature.uploadFile(this.field_22787, file); setStatus("Uploading..."); }
-         case 3 -> {
+         case 2 -> {
             try { Files.delete(file.toPath()); loadScreenshots(); setStatus("Deleted."); }
             catch (java.io.IOException e) { setStatus("Failed to delete."); }
          }
@@ -271,13 +270,6 @@ public class ScreenshotGalleryScreen extends class_437 {
             drawBorder(ctx, x, y + 2, 5, 5, c, 1);
          }
          case 2 -> {
-            ctx.method_25294(x + 3, y + 1, x + 4, y + 7, c);
-            ctx.method_25294(x + 1, y + 3, x + 2, y + 4, c);
-            ctx.method_25294(x + 2, y + 2, x + 3, y + 3, c);
-            ctx.method_25294(x + 4, y + 2, x + 5, y + 3, c);
-            ctx.method_25294(x + 5, y + 3, x + 6, y + 4, c);
-         }
-         case 3 -> {
             ctx.method_25294(x, y + 1, x + 7, y + 2, c);
             ctx.method_25294(x + 2, y, x + 5, y + 1, c);
             drawBorder(ctx, x + 1, y + 2, 5, 5, c, 1);
@@ -448,9 +440,9 @@ public class ScreenshotGalleryScreen extends class_437 {
             new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), a));
       }
 
-      // Inline action chips (view / copy / upload / delete) — appear on hover, top-right of the image.
+      // Inline action chips (view / copy / delete) — appear on hover, top-right of the image.
       if (hov) {
-         for (int i = 0; i < 4; i++) {
+         for (int i = 0; i < 3; i++) {
             int cxp = chipX(tx, tw, i);
             int cyp = chipY(ty);
             boolean chov = mx >= cxp && mx <= cxp + CHIP && my >= cyp && my <= cyp + CHIP;
@@ -493,7 +485,7 @@ public class ScreenshotGalleryScreen extends class_437 {
                   int tx = this.gridX + col * (cellW + CELL_GAP);
                   int ty = this.gridY + row * stride - this.scrollOffset;
                   // Inline action chip?
-                  for (int i = 0; i < 4; i++) {
+                  for (int i = 0; i < 3; i++) {
                      int cxp = chipX(tx, cellW, i);
                      int cyp = chipY(ty);
                      if (mouseX >= cxp && mouseX <= cxp + CHIP && mouseY >= cyp && mouseY <= cyp + CHIP) {
