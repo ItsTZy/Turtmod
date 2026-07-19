@@ -90,6 +90,7 @@ public final class TurtModConfigScreenFactory {
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
+         case MODULE_TOASTS -> "Module Notifications";
       };
    }
 
@@ -406,6 +407,11 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.screenshotFlash = dh.screenshotFlash;
             cfg.hud.screenshotMenuButton = dh.screenshotMenuButton;
          }
+         case MODULE_TOASTS -> {
+            cfg.hud.moduleToasts = dh.moduleToasts;
+            cfg.hud.moduleToastCorner = dh.moduleToastCorner;
+            cfg.hud.moduleToastSeconds = dh.moduleToastSeconds;
+         }
          case CLEAN_F3 -> resetCleanF3Defaults(cfg);
          case HEALTH_INDICATOR -> resetHealthIndicatorDefaults(cfg);
          case ZOOM -> resetZoomDefaults(cfg);
@@ -668,6 +674,10 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Shutter Sound", () -> cfg.hud.screenshotShutterSound, v -> cfg.hud.screenshotShutterSound = v))
             .addOption(bool("Camera Flash", () -> cfg.hud.screenshotFlash, v -> cfg.hud.screenshotFlash = v))
             .addOption(bool("Pause-Menu Gallery Button", () -> cfg.hud.screenshotMenuButton, v -> cfg.hud.screenshotMenuButton = v));
+         case MODULE_TOASTS -> group
+            .addOption(bool("Enabled", () -> cfg.hud.moduleToasts, v -> cfg.hud.moduleToasts = v))
+            .addOption(enumOpt("Corner", () -> cfg.hud.moduleToastCorner, v -> cfg.hud.moduleToastCorner = v, TurtModConfig.ScreenshotCorner.class))
+            .addOption(intOpt("Duration (seconds)", () -> cfg.hud.moduleToastSeconds, v -> cfg.hud.moduleToastSeconds = v, 1, 10, 1));
          case CLEAN_F3 -> group
             .addOption(bool("Enabled", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))
             .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))
@@ -1103,6 +1113,7 @@ public final class TurtModConfigScreenFactory {
       HIDE_PARTICLES,
       COMMAND_KEYS,
       KIT_LOADER,
-      GAMEMODE_SWITCHER
+      GAMEMODE_SWITCHER,
+      MODULE_TOASTS
    }
 }

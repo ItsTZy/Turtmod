@@ -303,6 +303,7 @@ public final class TurtModClient implements ClientModInitializer {
       while(toggleHealthIndicatorKey.method_1436()) {
          config.combat.playerHealthIndicator = !config.combat.playerHealthIndicator;
          ConfigManager.save(config);
+         com.turtmod.hud.ModuleToastFeature.notify("Health Indicator", config.combat.playerHealthIndicator);
       }
 
       while(healthOffsetUpKey.method_1436()) {
@@ -372,6 +373,7 @@ public final class TurtModClient implements ClientModInitializer {
          }
       }
       ConfigManager.save(config);
+      com.turtmod.hud.ModuleToastFeature.notify(TurtModConfigScreenFactory.getModuleDisplayName(kind), this.isModuleEnabled(kind));
    }
 
    /** Current enable state backing a module's toggle keybind (for action-bar feedback). */
@@ -413,6 +415,7 @@ public final class TurtModClient implements ClientModInitializer {
          safeRender("elytra", () -> ElytraPitchFeature.render(context, client, config));
          safeRender("coords", () -> com.turtmod.hud.CoordinatesHudFeature.render(context, client, config));
          safeRender("screenshotPreview", () -> com.turtmod.chat.ScreenshotPreview.render(context, client, config));
+         safeRender("moduleToasts", () -> com.turtmod.hud.ModuleToastFeature.render(context, client, config));
       }
    }
 
@@ -432,10 +435,16 @@ public final class TurtModClient implements ClientModInitializer {
       }
    }
 
+   private static boolean freelookWasActive = false;
+
    private void updateFreelook(class_310 client) {
       if (client.field_1690 != null && config != null) {
          boolean shouldFreelook = config.visual.freelookEnabled && freelookKey.method_1434();
          FreeLookFeature.updateActive(client, config, shouldFreelook);
+         if (shouldFreelook != freelookWasActive) {
+            com.turtmod.hud.ModuleToastFeature.notify("Freelook", shouldFreelook);
+            freelookWasActive = shouldFreelook;
+         }
       }
    }
 }

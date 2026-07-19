@@ -69,6 +69,9 @@ public class ZoomFeature {
          if (config.visual.zoomToggleMode) {
             while(zoomKey.method_1436()) {
                toggleZoomActive = !toggleZoomActive;
+               if (config.visual.zoomEnabled) {
+                  com.turtmod.hud.ModuleToastFeature.notify("Zoom", toggleZoomActive);
+               }
             }
          } else {
             toggleZoomActive = false;
