@@ -78,17 +78,18 @@ public class ScreenshotViewScreen extends class_437 {
    private void rebuildButtons() {
       this.buttons.clear();
       TurtUITheme btnTheme = new TurtUITheme(BTN_BG, PANEL_BORDER, TEXT_MAIN, BTN_HOVER, ACCENT_PINK);
-      int btnW = 74;
-      int btnGap = 8;
+      int btnW = 70;
+      int btnGap = 7;
       int rowY = this.field_22790 - 28;
-      int totalW = btnW * 6 + btnGap * 5;
+      int totalW = btnW * 7 + btnGap * 6;
       int startX = this.field_22789 / 2 - totalW / 2;
       this.buttons.add(new TurtUIButton(startX, rowY, btnW, 20, "Prev", btnTheme, this::previousScreenshot));
       this.buttons.add(new TurtUIButton(startX + btnW + btnGap, rowY, btnW, 20, "Next", btnTheme, this::nextScreenshot));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 2, rowY, btnW, 20, "Copy", btnTheme, this::copyCurrent));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 3, rowY, btnW, 20, "Open", btnTheme, this::openCurrent));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 4, rowY, btnW, 20, "Folder", btnTheme, this::openFolder));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 5, rowY, btnW, 20, "Delete", btnTheme, this::deleteCurrent));
+      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 2, rowY, btnW, 20, "Edit", btnTheme, this::editCurrent));
+      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 3, rowY, btnW, 20, "Copy", btnTheme, this::copyCurrent));
+      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 4, rowY, btnW, 20, "Open", btnTheme, this::openCurrent));
+      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 5, rowY, btnW, 20, "Folder", btnTheme, this::openFolder));
+      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 6, rowY, btnW, 20, "Delete", btnTheme, this::deleteCurrent));
       this.buttons.add(new TurtUIButton(this.field_22789 - 68, 10, 58, 20, "Back", btnTheme, this::method_25419));
       this.buttons.add(new TurtUIButton(10, this.field_22790 / 2 - 10, 28, 20, "<", btnTheme, this::previousScreenshot));
       this.buttons.add(new TurtUIButton(this.field_22789 - 38, this.field_22790 / 2 - 10, 28, 20, ">", btnTheme, this::nextScreenshot));
@@ -239,6 +240,15 @@ public class ScreenshotViewScreen extends class_437 {
          this.loadCurrentTexture(true);
       }
 
+   }
+
+   private void editCurrent() {
+      File f = this.getCurrentFile();
+      if (f == null) {
+         this.setStatus("No screenshot selected.");
+      } else if (this.field_22787 != null) {
+         this.field_22787.method_1507(new ScreenshotEditorScreen(this, f));
+      }
    }
 
    private void copyCurrent() {

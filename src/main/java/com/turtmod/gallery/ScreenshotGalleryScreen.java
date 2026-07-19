@@ -229,7 +229,7 @@ public class ScreenshotGalleryScreen extends class_437 {
    private static final Color CHIP_BG = new Color(0xD8121A16, true);
 
    private int chipX(int tx, int tw, int i) {
-      int total = 3 * CHIP + 2 * CHIP_GAP;
+      int total = 4 * CHIP + 3 * CHIP_GAP;
       return tx + tw - total - 4 + i * (CHIP + CHIP_GAP);
    }
 
@@ -240,8 +240,9 @@ public class ScreenshotGalleryScreen extends class_437 {
    private void chipAction(int i, File file) {
       switch (i) {
          case 0 -> { if (this.field_22787 != null) this.field_22787.method_1507(new ScreenshotViewScreen(this, file)); }
-         case 1 -> setStatus(ImageClipboardUtils.copyImageToClipboard(file) ? "Copied to clipboard!" : "Failed to copy.");
-         case 2 -> {
+         case 1 -> { if (this.field_22787 != null) this.field_22787.method_1507(new ScreenshotEditorScreen(this, file)); }
+         case 2 -> setStatus(ImageClipboardUtils.copyImageToClipboard(file) ? "Copied to clipboard!" : "Failed to copy.");
+         case 3 -> {
             try { Files.delete(file.toPath()); loadScreenshots(); setStatus("Deleted."); }
             catch (java.io.IOException e) { setStatus("Failed to delete."); }
          }
@@ -265,11 +266,17 @@ public class ScreenshotGalleryScreen extends class_437 {
             ctx.method_25294(x + 2, y + 2, x + 5, y + 5, hole);
             ctx.method_25294(x + 3, y + 3, x + 4, y + 4, c);
          }
-         case 1 -> {
+         case 1 -> { // edit — pencil
+            for (int k = 0; k < 6; k++) {
+               ctx.method_25294(x + k, y + 6 - k, x + k + 2, y + 8 - k, c);
+            }
+            ctx.method_25294(x, y + 6, x + 2, y + 8, c);
+         }
+         case 2 -> {
             drawBorder(ctx, x + 2, y, 5, 5, c, 1);
             drawBorder(ctx, x, y + 2, 5, 5, c, 1);
          }
-         case 2 -> {
+         case 3 -> {
             ctx.method_25294(x, y + 1, x + 7, y + 2, c);
             ctx.method_25294(x + 2, y, x + 5, y + 1, c);
             drawBorder(ctx, x + 1, y + 2, 5, 5, c, 1);
@@ -440,9 +447,9 @@ public class ScreenshotGalleryScreen extends class_437 {
             new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), a));
       }
 
-      // Inline action chips (view / copy / delete) — appear on hover, top-right of the image.
+      // Inline action chips (view / edit / copy / delete) — appear on hover, top-right of the image.
       if (hov) {
-         for (int i = 0; i < 3; i++) {
+         for (int i = 0; i < 4; i++) {
             int cxp = chipX(tx, tw, i);
             int cyp = chipY(ty);
             boolean chov = mx >= cxp && mx <= cxp + CHIP && my >= cyp && my <= cyp + CHIP;
@@ -485,7 +492,7 @@ public class ScreenshotGalleryScreen extends class_437 {
                   int tx = this.gridX + col * (cellW + CELL_GAP);
                   int ty = this.gridY + row * stride - this.scrollOffset;
                   // Inline action chip?
-                  for (int i = 0; i < 3; i++) {
+                  for (int i = 0; i < 4; i++) {
                      int cxp = chipX(tx, cellW, i);
                      int cyp = chipY(ty);
                      if (mouseX >= cxp && mouseX <= cxp + CHIP && mouseY >= cyp && mouseY <= cyp + CHIP) {

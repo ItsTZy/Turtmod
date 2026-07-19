@@ -1,0 +1,809 @@
+package com.turtmod.gallery;
+
+import com.turtmod.ui.Palette;
+import com.turtmod.ui.TurtUIButton;
+import com.turtmod.ui.TurtUITheme;
+import com.turtmod.ui.TurtUIUtils;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import net.minecraft.class_1011;
+import net.minecraft.class_1043;
+import net.minecraft.class_10799;
+import net.minecraft.class_11905;
+import net.minecraft.class_11908;
+import net.minecraft.class_11909;
+import net.minecraft.class_2561;
+import net.minecraft.class_2960;
+import net.minecraft.class_310;
+import net.minecraft.class_332;
+import net.minecraft.class_437;
+
+/**
+ * In-game screenshot editor (Snipping-Tool style): crop + draw pen/highlighter/line/arrow/rect/ellipse/text
+ * on a screenshot, then Save / Save Copy / Copy. Edits are lightweight vector annotations drawn live over
+ * the base texture (instant undo, no re-upload); crop is just a blit source sub-rect. Only on save are the
+ * annotations rasterized into a PNG via {@link EditorRasterizer} (AWT).
+ */
+public class ScreenshotEditorScreen extends class_437 {
+   public enum Tool { PAN, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT }
+
+   /** One committed (or in-progress) vector edit, in image-pixel coordinates. */
+   public static final class Annotation {
+      public Tool type;
+      public int argb;
+      public float size;
+      public final List<double[]> pts = new ArrayList<>();
+      public String text = "";
+
+      Annotation(Tool type, int argb, float size) {
+         this.type = type;
+         this.argb = argb;
+         this.size = size;
+      }
+   }
+
+   private static final class State {
+      final List<Annotation> anns;
+      final int[] crop;
+
+      State(List<Annotation> anns, int[] crop) {
+         this.anns = anns;
+         this.crop = crop;
+      }
+   }
+
+   private static final int[] SWATCHES = {
+      0xFFF23B3B, 0xFFF08A24, 0xFFF5D523, 0xFF57E08A, 0xFF4AA3FF, 0xFFB07BFF,
+      0xFFFF9DAE, 0xFFFFFFFF, 0xFF202225, 0xFF9AA0A6
+   };
+   private static final float[] SIZES = {2f, 5f, 9f, 14f};
+   private static final String[] SIZE_LABELS = {"S", "M", "L", "XL"};
+
+   private final class_437 parent;
+   private final File file;
+   private final List<TurtUIButton> buttons = new ArrayList<>();
+
+   private class_2960 textureId;
+   private int imageWidth, imageHeight;
+   private String errorMessage;
+   private String status = "";
+   private int statusTicks;
+
+   private int[] crop = {0, 0, 0, 0};
+   private final List<Annotation> annotations = new ArrayList<>();
+   private final Deque<State> undo = new ArrayDeque<>();
+   private final Deque<State> redo = new ArrayDeque<>();
+
+   private Tool tool = Tool.PEN;
+   private int colorIdx = 0;
+   private int sizeIdx = 1;
+
+   private Annotation draft;            // shape/pen currently being dragged
+   private Annotation editingText;      // text annotation being typed
+   private boolean panning;
+   private double lastMx, lastMy;
+
+   // View transform (recomputed each frame).
+   private float zoom = 1f, fitScale = 1f;
+   private double panX, panY;
+   private boolean pendingFit = true;
+   private int canvasX, canvasY, canvasW, canvasH;
+   private double drawX, drawY, sp = 1.0; // sp = screen px per image px
+   private float openFade;
+   private long lastFrameNs = System.nanoTime();
+
+   // Tool-rail / bottom-bar hit rects, filled during render.
+   private final int[] railX = new int[Tool.values().length];
+   private final int[] railY = new int[Tool.values().length];
+   private final int[] swX = new int[SWATCHES.length];
+   private int swY, sizeBarX, sizeBarY, undoX, redoX, barY;
+
+   private static final int RAIL_W = 26, RAIL_BTN = 22, RAIL_GAP = 4;
+   private static final int SW = 16, SWG = 5;
+
+   public ScreenshotEditorScreen(class_437 parent, File file) {
+      super(class_2561.method_43470("Screenshot Editor"));
+      this.parent = parent;
+      this.file = file;
+   }
+
+   protected void method_25426() {
+      if (this.textureId == null && this.errorMessage == null) {
+         this.loadTexture();
+      }
+      this.rebuildButtons();
+   }
+
+   private void rebuildButtons() {
+      this.buttons.clear();
+      TurtUITheme t = new TurtUITheme(Palette.BTN_BG, Palette.PANEL_BORDER, Palette.TEXT, Palette.BTN_HOVER, Palette.GREEN);
+      int bw = 78, bh = 20, gap = 6, y = 10;
+      int x = this.field_22789 - 12 - bw;
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Cancel", t, this::onCancel));
+      x -= bw + gap;
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Copy", t, this::onCopy));
+      x -= bw + gap;
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save Copy", t, this::onSaveCopy));
+      x -= bw + gap;
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save", t, this::onSave));
+   }
+
+   private void loadTexture() {
+      try (FileInputStream in = new FileInputStream(this.file)) {
+         class_1011 image = class_1011.method_4309(in);
+         if (image == null) {
+            this.errorMessage = "Could not load screenshot.";
+            return;
+         }
+         this.imageWidth = image.method_4307();
+         this.imageHeight = image.method_4323();
+         this.crop = new int[]{0, 0, this.imageWidth, this.imageHeight};
+         String key = "editor/" + Math.abs(this.file.getAbsolutePath().hashCode()) + "_" + this.file.lastModified();
+         this.textureId = class_2960.method_60655("turtmod", key);
+         class_310.method_1551().method_1531().method_4616(this.textureId, new class_1043(() -> "turtmod:" + key, image));
+      } catch (Exception e) {
+         this.errorMessage = "Could not load screenshot.";
+      }
+   }
+
+   // ── Undo / redo ──
+   private void pushUndo() {
+      this.undo.push(new State(new ArrayList<>(this.annotations), this.crop.clone()));
+      if (this.undo.size() > 60) {
+         this.undo.removeLast();
+      }
+      this.redo.clear();
+   }
+
+   private void doUndo() {
+      if (this.undo.isEmpty()) {
+         return;
+      }
+      this.redo.push(new State(new ArrayList<>(this.annotations), this.crop.clone()));
+      State s = this.undo.pop();
+      this.applyState(s);
+   }
+
+   private void doRedo() {
+      if (this.redo.isEmpty()) {
+         return;
+      }
+      this.undo.push(new State(new ArrayList<>(this.annotations), this.crop.clone()));
+      State s = this.redo.pop();
+      this.applyState(s);
+   }
+
+   private void applyState(State s) {
+      this.annotations.clear();
+      this.annotations.addAll(s.anns);
+      boolean cropChanged = this.crop[0] != s.crop[0] || this.crop[1] != s.crop[1]
+         || this.crop[2] != s.crop[2] || this.crop[3] != s.crop[3];
+      this.crop = s.crop.clone();
+      this.editingText = null;
+      if (cropChanged) {
+         this.pendingFit = true;
+      }
+   }
+
+   // ── Coordinate transform ──
+   private double sx(double ix) {
+      return this.drawX + (ix - this.crop[0]) * this.sp;
+   }
+
+   private double sy(double iy) {
+      return this.drawY + (iy - this.crop[1]) * this.sp;
+   }
+
+   private double toImageX(double screenX) {
+      return this.crop[0] + (screenX - this.drawX) / this.sp;
+   }
+
+   private double toImageY(double screenY) {
+      return this.crop[1] + (screenY - this.drawY) / this.sp;
+   }
+
+   private boolean inCanvas(double mx, double my) {
+      return mx >= this.canvasX && mx <= this.canvasX + this.canvasW && my >= this.canvasY && my <= this.canvasY + this.canvasH;
+   }
+
+   private double clampIX(double ix) {
+      return Math.max(0, Math.min(this.imageWidth, ix));
+   }
+
+   private double clampIY(double iy) {
+      return Math.max(0, Math.min(this.imageHeight, iy));
+   }
+
+   private void setStatus(String s) {
+      this.status = s;
+      this.statusTicks = 80;
+   }
+
+   // ── Actions ──
+   private void onCancel() {
+      if (this.field_22787 != null) {
+         this.field_22787.method_1507(this.parent);
+      }
+   }
+
+   private void commitEditingText() {
+      if (this.editingText != null) {
+         if (!this.editingText.text.isEmpty()) {
+            this.pushUndo();
+            this.annotations.add(this.editingText);
+         }
+         this.editingText = null;
+      }
+   }
+
+   private BufferedImage bakeOrStatus() {
+      this.commitEditingText();
+      try {
+         return EditorRasterizer.bake(this.file, this.crop, this.annotations);
+      } catch (Exception e) {
+         this.setStatus("Bake failed: " + e.getMessage());
+         return null;
+      }
+   }
+
+   private void onSave() {
+      BufferedImage img = this.bakeOrStatus();
+      if (img == null) {
+         return;
+      }
+      try {
+         EditorRasterizer.save(img, this.file);
+         this.setStatus("Saved.");
+      } catch (Exception e) {
+         this.setStatus("Save failed: " + e.getMessage());
+      }
+   }
+
+   private void onSaveCopy() {
+      BufferedImage img = this.bakeOrStatus();
+      if (img == null) {
+         return;
+      }
+      try {
+         String name = this.file.getName();
+         int dot = name.lastIndexOf('.');
+         String base = dot > 0 ? name.substring(0, dot) : name;
+         File out = new File(this.file.getParentFile(), base + "-edited.png");
+         int n = 2;
+         while (out.exists()) {
+            out = new File(this.file.getParentFile(), base + "-edited-" + n++ + ".png");
+         }
+         EditorRasterizer.save(img, out);
+         this.setStatus("Saved " + out.getName());
+      } catch (Exception e) {
+         this.setStatus("Save failed: " + e.getMessage());
+      }
+   }
+
+   private void onCopy() {
+      BufferedImage img = this.bakeOrStatus();
+      if (img == null) {
+         return;
+      }
+      this.setStatus(EditorRasterizer.copyToClipboard(img) ? "Copied to clipboard." : "Copy failed.");
+   }
+
+   // ── Input ──
+   public boolean method_25402(class_11909 click, boolean bl) {
+      double mx = click.comp_4798(), my = click.comp_4799();
+      int button = click.method_74245();
+      for (TurtUIButton b : this.buttons) {
+         if (b.mouseClicked(mx, my, button)) {
+            return true;
+         }
+      }
+      if (button == 0) {
+         // Tool rail.
+         for (Tool tv : Tool.values()) {
+            int i = tv.ordinal();
+            if (mx >= this.railX[i] && mx <= this.railX[i] + RAIL_BTN && my >= this.railY[i] && my <= this.railY[i] + RAIL_BTN) {
+               this.commitEditingText();
+               this.tool = tv;
+               return true;
+            }
+         }
+         // Swatches.
+         for (int i = 0; i < SWATCHES.length; i++) {
+            if (mx >= this.swX[i] && mx <= this.swX[i] + SW && my >= this.swY && my <= this.swY + SW) {
+               this.colorIdx = i;
+               if (this.editingText != null) {
+                  this.editingText.argb = SWATCHES[i];
+               }
+               return true;
+            }
+         }
+         // Sizes.
+         for (int i = 0; i < SIZES.length; i++) {
+            int bx = this.sizeBarX + i * (18 + 3);
+            if (mx >= bx && mx <= bx + 18 && my >= this.sizeBarY && my <= this.sizeBarY + SW) {
+               this.sizeIdx = i;
+               if (this.editingText != null) {
+                  this.editingText.size = SIZES[i];
+               }
+               return true;
+            }
+         }
+         // Undo / Redo.
+         if (mx >= this.undoX && mx <= this.undoX + 26 && my >= this.barY && my <= this.barY + 18) {
+            this.commitEditingText();
+            this.doUndo();
+            return true;
+         }
+         if (mx >= this.redoX && mx <= this.redoX + 26 && my >= this.barY && my <= this.barY + 18) {
+            this.commitEditingText();
+            this.doRedo();
+            return true;
+         }
+      }
+
+      if (this.inCanvas(mx, my) && this.textureId != null) {
+         if (button == 1 || this.tool == Tool.PAN) {
+            this.panning = true;
+            this.lastMx = mx;
+            this.lastMy = my;
+            return true;
+         }
+         if (button == 0) {
+            double ix = this.clampIX(this.toImageX(mx)), iy = this.clampIY(this.toImageY(my));
+            if (this.tool == Tool.TEXT) {
+               this.commitEditingText();
+               this.editingText = new Annotation(Tool.TEXT, SWATCHES[this.colorIdx], SIZES[this.sizeIdx]);
+               this.editingText.pts.add(new double[]{ix, iy});
+               return true;
+            }
+            this.draft = new Annotation(this.tool, SWATCHES[this.colorIdx], SIZES[this.sizeIdx]);
+            this.draft.pts.add(new double[]{ix, iy});
+            if (this.tool != Tool.PEN && this.tool != Tool.HIGHLIGHTER) {
+               this.draft.pts.add(new double[]{ix, iy}); // second point for shapes
+            }
+            return true;
+         }
+      }
+      return super.method_25402(click, bl);
+   }
+
+   public boolean method_25403(class_11909 click, double dx, double dy) {
+      double mx = click.comp_4798(), my = click.comp_4799();
+      if (this.panning) {
+         this.panX += mx - this.lastMx;
+         this.panY += my - this.lastMy;
+         this.lastMx = mx;
+         this.lastMy = my;
+         return true;
+      }
+      if (this.draft != null) {
+         double ix = this.clampIX(this.toImageX(mx)), iy = this.clampIY(this.toImageY(my));
+         if (this.draft.type == Tool.PEN || this.draft.type == Tool.HIGHLIGHTER) {
+            this.draft.pts.add(new double[]{ix, iy});
+         } else {
+            this.draft.pts.set(1, new double[]{ix, iy});
+         }
+         return true;
+      }
+      return super.method_25403(click, dx, dy);
+   }
+
+   public boolean method_25406(class_11909 click) {
+      if (this.panning) {
+         this.panning = false;
+         return true;
+      }
+      if (this.draft != null) {
+         Annotation d = this.draft;
+         this.draft = null;
+         if (d.type == Tool.CROP) {
+            this.applyCrop(d);
+         } else if (this.validDraft(d)) {
+            this.pushUndo();
+            this.annotations.add(d);
+         }
+         return true;
+      }
+      return super.method_25406(click);
+   }
+
+   private boolean validDraft(Annotation d) {
+      if (d.type == Tool.PEN || d.type == Tool.HIGHLIGHTER) {
+         return d.pts.size() >= 2 || (d.pts.size() == 1);
+      }
+      double[] a = d.pts.get(0), b = d.pts.get(1);
+      return Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2.0;
+   }
+
+   private void applyCrop(Annotation d) {
+      double[] a = d.pts.get(0), b = d.pts.get(1);
+      int x = (int) Math.round(Math.min(a[0], b[0]));
+      int y = (int) Math.round(Math.min(a[1], b[1]));
+      int w = (int) Math.round(Math.abs(b[0] - a[0]));
+      int h = (int) Math.round(Math.abs(b[1] - a[1]));
+      if (w < 8 || h < 8) {
+         return;
+      }
+      this.pushUndo();
+      this.crop = new int[]{x, y, w, h};
+      this.pendingFit = true;
+   }
+
+   public boolean method_25401(double mx, double my, double horizontal, double vertical) {
+      if (this.textureId != null && this.inCanvas(mx, my)) {
+         if (vertical > 0) {
+            this.zoom *= 1.12f;
+         } else if (vertical < 0) {
+            this.zoom /= 1.12f;
+         }
+         this.zoom = Math.max(this.fitScale * 0.5f, Math.min(12f, this.zoom));
+         return true;
+      }
+      return super.method_25401(mx, my, horizontal, vertical);
+   }
+
+   public boolean method_25400(class_11905 event) {
+      if (this.editingText != null) {
+         String s = event.method_74226();
+         if (s != null && !s.isEmpty()) {
+            this.editingText.text += s;
+            return true;
+         }
+      }
+      return super.method_25400(event);
+   }
+
+   public boolean method_25404(class_11908 input) {
+      int key = input.comp_4795();
+      if (this.editingText != null) {
+         switch (key) {
+            case 256 -> this.editingText = null;              // esc: discard
+            case 257, 335 -> this.commitEditingText();        // enter: commit
+            case 259 -> {                                     // backspace
+               String tx = this.editingText.text;
+               if (!tx.isEmpty()) {
+                  this.editingText.text = tx.substring(0, tx.length() - 1);
+               }
+            }
+            default -> {
+            }
+         }
+         return true;
+      }
+      if (key == 256) {
+         this.onCancel();
+         return true;
+      }
+      return super.method_25404(input);
+   }
+
+   public void method_25419() {
+      this.onCancel();
+   }
+
+   // ── Render ──
+   public void method_25394(class_332 ctx, int mouseX, int mouseY, float delta) {
+      long nowNs = System.nanoTime();
+      float dt = Math.min((float) (nowNs - this.lastFrameNs) / 1.0E9F, 0.1F);
+      this.lastFrameNs = nowNs;
+      this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, dt, 12f);
+
+      TurtUIUtils.drawMenuBackdrop(ctx, this.field_22789, this.field_22790);
+      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0xE6121316);
+      ctx.method_25300(this.field_22793, "SCREENSHOT EDITOR", 46, 14, Palette.GREEN.getRGB());
+
+      this.canvasX = 46;
+      this.canvasY = 40;
+      this.canvasW = this.field_22789 - this.canvasX - 12;
+      this.canvasH = this.field_22790 - this.canvasY - 46;
+
+      if (this.errorMessage != null || this.textureId == null) {
+         ctx.method_25300(this.field_22793, this.errorMessage == null ? "Loading…" : this.errorMessage,
+            this.field_22789 / 2, this.field_22790 / 2, 0xFFFF8080);
+      } else {
+         this.renderCanvas(ctx, mouseX, mouseY);
+      }
+
+      this.renderToolRail(ctx, mouseX, mouseY);
+      this.renderBottomBar(ctx, mouseX, mouseY);
+
+      for (TurtUIButton b : this.buttons) {
+         b.render(ctx, mouseX, mouseY, this.field_22793);
+      }
+      if (this.statusTicks > 0) {
+         ctx.method_25300(this.field_22793, this.status, this.field_22789 / 2, this.field_22790 - 14, 0xFFB9F5C4);
+         this.statusTicks--;
+      }
+      if (this.openFade < 0.99F) {
+         int a = (int) ((1f - this.openFade) * 255f) & 255;
+         ctx.method_25294(0, 0, this.field_22789, this.field_22790, a << 24);
+      }
+      super.method_25394(ctx, mouseX, mouseY, delta);
+   }
+
+   private void renderCanvas(class_332 ctx, int mouseX, int mouseY) {
+      TurtUIUtils.drawRoundedRect(ctx, this.canvasX - 4, this.canvasY - 4, this.canvasW + 8, this.canvasH + 8, 5, Palette.alpha(Palette.PANEL_BG, 235));
+      ctx.method_73198(this.canvasX - 4, this.canvasY - 4, this.canvasW + 8, this.canvasH + 8, Palette.PANEL_BORDER.getRGB());
+
+      double guiScale = class_310.method_1551().method_22683().method_4495();
+      double scaledW = this.crop[2] / guiScale, scaledH = this.crop[3] / guiScale;
+      if (this.pendingFit) {
+         this.fitScale = (float) Math.min(1.0, Math.min((this.canvasW - 20) / scaledW, (this.canvasH - 20) / scaledH));
+         if (this.fitScale <= 0f) {
+            this.fitScale = 0.05f;
+         }
+         this.zoom = this.fitScale;
+         this.panX = 0;
+         this.panY = 0;
+         this.pendingFit = false;
+      }
+      int drawW = Math.max(1, (int) Math.round(scaledW * this.zoom));
+      int drawH = Math.max(1, (int) Math.round(scaledH * this.zoom));
+      this.drawX = this.canvasX + this.canvasW / 2.0 - drawW / 2.0 + this.panX;
+      this.drawY = this.canvasY + this.canvasH / 2.0 - drawH / 2.0 + this.panY;
+      this.sp = drawW / (double) this.crop[2];
+
+      ctx.method_44379(this.canvasX, this.canvasY, this.canvasX + this.canvasW, this.canvasY + this.canvasH);
+      ctx.method_25302(class_10799.field_56883, this.textureId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
+         (float) this.crop[0], (float) this.crop[1], drawW, drawH, this.crop[2], this.crop[3], this.imageWidth, this.imageHeight);
+
+      for (Annotation a : this.annotations) {
+         this.drawAnnotation(ctx, a);
+      }
+      if (this.draft != null) {
+         if (this.draft.type == Tool.CROP) {
+            this.drawCropOverlay(ctx, this.draft);
+         } else {
+            this.drawAnnotation(ctx, this.draft);
+         }
+      }
+      if (this.editingText != null) {
+         this.drawAnnotation(ctx, this.editingText);
+         double cx = this.sx(this.editingText.pts.get(0)[0]);
+         double cy = this.sy(this.editingText.pts.get(0)[1]);
+         if ((System.currentTimeMillis() / 500) % 2 == 0) {
+            int th = Math.max(1, (int) Math.round(EditorRasterizer.fontPx(this.editingText.size) * this.sp));
+            int tw = this.field_22793.method_1727(lastLine(this.editingText.text));
+            double scpx = th / 8.0;
+            ctx.method_25294((int) (cx + tw * scpx) + 1, (int) cy, (int) (cx + tw * scpx) + 2, (int) (cy + th), this.editingText.argb);
+         }
+      }
+      ctx.method_44380();
+
+      // Info line.
+      String info = this.imageWidth + "×" + this.imageHeight
+         + (this.isCropped() ? "  ✂ " + this.crop[2] + "×" + this.crop[3] : "")
+         + "  " + Math.round(this.zoom / Math.max(0.001f, this.fitScale) * 100) + "%";
+      ctx.method_51433(this.field_22793, info, this.canvasX, this.canvasY + this.canvasH + 6, 0xFF8A9199, false);
+      ctx.method_51433(this.field_22793, "Right-drag pans · scroll zooms", this.canvasX + 220, this.canvasY + this.canvasH + 6, 0xFF6C7278, false);
+   }
+
+   private boolean isCropped() {
+      return this.crop[0] != 0 || this.crop[1] != 0 || this.crop[2] != this.imageWidth || this.crop[3] != this.imageHeight;
+   }
+
+   private static String lastLine(String s) {
+      int nl = s.lastIndexOf('\n');
+      return nl >= 0 ? s.substring(nl + 1) : s;
+   }
+
+   private void drawCropOverlay(class_332 ctx, Annotation d) {
+      double x1 = this.sx(d.pts.get(0)[0]), y1 = this.sy(d.pts.get(0)[1]);
+      double x2 = this.sx(d.pts.get(1)[0]), y2 = this.sy(d.pts.get(1)[1]);
+      int lx = (int) Math.min(x1, x2), ly = (int) Math.min(y1, y2), hx = (int) Math.max(x1, x2), hy = (int) Math.max(y1, y2);
+      // Dim everything outside the selection.
+      int dim = 0x99000000;
+      ctx.method_25294(this.canvasX, this.canvasY, this.canvasX + this.canvasW, ly, dim);
+      ctx.method_25294(this.canvasX, hy, this.canvasX + this.canvasW, this.canvasY + this.canvasH, dim);
+      ctx.method_25294(this.canvasX, ly, lx, hy, dim);
+      ctx.method_25294(hx, ly, this.canvasX + this.canvasW, hy, dim);
+      ctx.method_73198(lx, ly, hx - lx, hy - ly, Palette.GREEN.getRGB());
+   }
+
+   private void drawAnnotation(class_332 ctx, Annotation a) {
+      int th = Math.max(1, (int) Math.round(a.size * this.sp));
+      switch (a.type) {
+         case PEN -> this.drawPolyline(ctx, a, a.argb, th);
+         case HIGHLIGHTER -> this.drawPolyline(ctx, a, (a.argb & 0xFFFFFF) | 0x60000000, Math.max(2, (int) Math.round(a.size * 2.4 * this.sp)));
+         case LINE -> this.thickLine(ctx, this.sx(a.pts.get(0)[0]), this.sy(a.pts.get(0)[1]), this.sx(a.pts.get(1)[0]), this.sy(a.pts.get(1)[1]), a.argb, th);
+         case ARROW -> this.drawArrow(ctx, a, th);
+         case RECT -> this.drawRect(ctx, a, th);
+         case ELLIPSE -> this.drawEllipse(ctx, a, th);
+         case TEXT -> this.drawText(ctx, a);
+         default -> {
+         }
+      }
+   }
+
+   private void drawPolyline(class_332 ctx, Annotation a, int argb, int th) {
+      if (a.pts.size() == 1) {
+         double x = this.sx(a.pts.get(0)[0]), y = this.sy(a.pts.get(0)[1]);
+         this.dot(ctx, x, y, argb, th);
+         return;
+      }
+      for (int i = 1; i < a.pts.size(); i++) {
+         this.thickLine(ctx, this.sx(a.pts.get(i - 1)[0]), this.sy(a.pts.get(i - 1)[1]), this.sx(a.pts.get(i)[0]), this.sy(a.pts.get(i)[1]), argb, th);
+      }
+   }
+
+   private void drawArrow(class_332 ctx, Annotation a, int th) {
+      double x1 = this.sx(a.pts.get(0)[0]), y1 = this.sy(a.pts.get(0)[1]);
+      double x2 = this.sx(a.pts.get(1)[0]), y2 = this.sy(a.pts.get(1)[1]);
+      this.thickLine(ctx, x1, y1, x2, y2, a.argb, th);
+      double ang = Math.atan2(y2 - y1, x2 - x1);
+      double head = Math.max(8, th * 3.5);
+      this.thickLine(ctx, x2, y2, x2 + head * Math.cos(ang + Math.toRadians(160)), y2 + head * Math.sin(ang + Math.toRadians(160)), a.argb, th);
+      this.thickLine(ctx, x2, y2, x2 + head * Math.cos(ang - Math.toRadians(160)), y2 + head * Math.sin(ang - Math.toRadians(160)), a.argb, th);
+   }
+
+   private void drawRect(class_332 ctx, Annotation a, int th) {
+      double x1 = this.sx(Math.min(a.pts.get(0)[0], a.pts.get(1)[0])), y1 = this.sy(Math.min(a.pts.get(0)[1], a.pts.get(1)[1]));
+      double x2 = this.sx(Math.max(a.pts.get(0)[0], a.pts.get(1)[0])), y2 = this.sy(Math.max(a.pts.get(0)[1], a.pts.get(1)[1]));
+      this.thickLine(ctx, x1, y1, x2, y1, a.argb, th);
+      this.thickLine(ctx, x1, y2, x2, y2, a.argb, th);
+      this.thickLine(ctx, x1, y1, x1, y2, a.argb, th);
+      this.thickLine(ctx, x2, y1, x2, y2, a.argb, th);
+   }
+
+   private void drawEllipse(class_332 ctx, Annotation a, int th) {
+      double cx = this.sx((a.pts.get(0)[0] + a.pts.get(1)[0]) / 2), cy = this.sy((a.pts.get(0)[1] + a.pts.get(1)[1]) / 2);
+      double rxp = Math.abs(this.sx(a.pts.get(1)[0]) - this.sx(a.pts.get(0)[0])) / 2, ryp = Math.abs(this.sy(a.pts.get(1)[1]) - this.sy(a.pts.get(0)[1])) / 2;
+      int seg = 48;
+      double px = cx + rxp, py = cy;
+      for (int i = 1; i <= seg; i++) {
+         double ang = i / (double) seg * Math.PI * 2;
+         double nx = cx + rxp * Math.cos(ang), ny = cy + ryp * Math.sin(ang);
+         this.thickLine(ctx, px, py, nx, ny, a.argb, th);
+         px = nx;
+         py = ny;
+      }
+   }
+
+   private void drawText(class_332 ctx, Annotation a) {
+      double x = this.sx(a.pts.get(0)[0]), y = this.sy(a.pts.get(0)[1]);
+      double scale = EditorRasterizer.fontPx(a.size) * this.sp / 8.0;
+      if (scale <= 0) {
+         return;
+      }
+      ctx.method_51448().pushMatrix();
+      ctx.method_51448().translate((float) x, (float) y);
+      ctx.method_51448().scale((float) scale, (float) scale);
+      String[] lines = a.text.split("\n", -1);
+      int ly = 0;
+      for (String line : lines) {
+         ctx.method_51433(this.field_22793, line, 0, ly, a.argb | 0xFF000000, true);
+         ly += 10;
+      }
+      ctx.method_51448().popMatrix();
+   }
+
+   private void thickLine(class_332 ctx, double x1, double y1, double x2, double y2, int argb, int th) {
+      double dx = x2 - x1, dy = y2 - y1;
+      double dist = Math.max(1, Math.hypot(dx, dy));
+      int steps = (int) Math.ceil(dist);
+      for (int i = 0; i <= steps; i++) {
+         double t = i / (double) steps;
+         this.dot(ctx, x1 + dx * t, y1 + dy * t, argb, th);
+      }
+   }
+
+   private void dot(class_332 ctx, double cx, double cy, int argb, int th) {
+      int r = Math.max(1, th) / 2;
+      int x = (int) Math.round(cx) - r, y = (int) Math.round(cy) - r;
+      ctx.method_25294(x, y, x + Math.max(1, th), y + Math.max(1, th), argb);
+   }
+
+   private void renderToolRail(class_332 ctx, int mouseX, int mouseY) {
+      int x = 10;
+      int y = 40;
+      TurtUIUtils.drawRoundedRect(ctx, x - 2, y - 4, RAIL_W, Tool.values().length * (RAIL_BTN + RAIL_GAP) + 6, 5, Palette.alpha(Palette.PANEL_BG, 235));
+      for (Tool tv : Tool.values()) {
+         int i = tv.ordinal();
+         int by = y + i * (RAIL_BTN + RAIL_GAP);
+         this.railX[i] = x;
+         this.railY[i] = by;
+         boolean sel = this.tool == tv;
+         boolean hov = mouseX >= x && mouseX <= x + RAIL_BTN && mouseY >= by && mouseY <= by + RAIL_BTN;
+         ctx.method_25294(x, by, x + RAIL_BTN, by + RAIL_BTN, (sel ? Palette.GREEN : (hov ? Palette.BTN_HOVER : Palette.BTN_BG)).getRGB());
+         ctx.method_73198(x, by, RAIL_BTN, RAIL_BTN, (sel ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
+         this.drawToolIcon(ctx, tv, x, by, (sel ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+      }
+   }
+
+   private void renderBottomBar(class_332 ctx, int mouseX, int mouseY) {
+      int y = this.field_22790 - 30;
+      this.barY = y;
+      int x = this.canvasX;
+      this.swY = y;
+      for (int i = 0; i < SWATCHES.length; i++) {
+         this.swX[i] = x;
+         ctx.method_25294(x, y, x + SW, y + SW, 0xFF000000 | (SWATCHES[i] & 0xFFFFFF));
+         ctx.method_73198(x, y, SW, SW, (this.colorIdx == i ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
+         if (this.colorIdx == i) {
+            ctx.method_73198(x - 1, y - 1, SW + 2, SW + 2, Palette.GREEN.getRGB());
+         }
+         x += SW + SWG;
+      }
+      x += 8;
+      this.sizeBarX = x;
+      this.sizeBarY = y;
+      for (int i = 0; i < SIZES.length; i++) {
+         int bx = x + i * (18 + 3);
+         boolean sel = this.sizeIdx == i;
+         ctx.method_25294(bx, y, bx + 18, y + SW, (sel ? Palette.GREEN : Palette.BTN_BG).getRGB());
+         ctx.method_73198(bx, y, 18, SW, (sel ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
+         ctx.method_25300(this.field_22793, SIZE_LABELS[i], bx + 9, y + 4, (sel ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+      }
+      // Undo / redo at the right end of the bar.
+      this.redoX = this.field_22789 - 12 - 26;
+      this.undoX = this.redoX - 26 - 6;
+      this.drawIconButton(ctx, this.undoX, y, mouseX, mouseY, "↶", !this.undo.isEmpty());
+      this.drawIconButton(ctx, this.redoX, y, mouseX, mouseY, "↷", !this.redo.isEmpty());
+   }
+
+   private void drawIconButton(class_332 ctx, int x, int y, int mouseX, int mouseY, String glyph, boolean enabled) {
+      boolean hov = enabled && mouseX >= x && mouseX <= x + 26 && mouseY >= y && mouseY <= y + 18;
+      ctx.method_25294(x, y, x + 26, y + 18, (hov ? Palette.BTN_HOVER : Palette.BTN_BG).getRGB());
+      ctx.method_73198(x, y, 26, 18, Palette.PANEL_BORDER.getRGB());
+      ctx.method_25300(this.field_22793, glyph, x + 13, y + 5, (enabled ? Palette.TEXT : Palette.TEXT_MUTED).getRGB());
+   }
+
+   /** Small primitive glyphs for each tool, drawn inside a 22px button at (bx,by). */
+   private void drawToolIcon(class_332 ctx, Tool tv, int bx, int by, int c) {
+      int x = bx + 5, y = by + 5; // 12x12 icon field
+      switch (tv) {
+         case PAN -> {
+            ctx.method_25294(x + 5, y, x + 7, y + 12, c);
+            ctx.method_25294(x, y + 5, x + 12, y + 7, c);
+         }
+         case CROP -> {
+            ctx.method_25294(x + 2, y, x + 3, y + 12, c);
+            ctx.method_25294(x + 9, y, x + 10, y + 12, c);
+            ctx.method_25294(x, y + 2, x + 12, y + 3, c);
+            ctx.method_25294(x, y + 9, x + 12, y + 10, c);
+         }
+         case PEN -> {
+            for (int i = 0; i < 9; i++) {
+               ctx.method_25294(x + i, y + 9 - i, x + i + 2, y + 11 - i, c);
+            }
+            ctx.method_25294(x, y + 9, x + 3, y + 12, c);
+         }
+         case HIGHLIGHTER -> {
+            ctx.method_25294(x + 3, y, x + 9, y + 7, c);
+            ctx.method_25294(x + 2, y + 7, x + 10, y + 10, c);
+            ctx.method_25294(x + 2, y + 11, x + 10, y + 12, c);
+         }
+         case LINE -> {
+            for (int i = 0; i < 12; i++) {
+               ctx.method_25294(x + i, y + 11 - i, x + i + 1, y + 12 - i, c);
+            }
+         }
+         case ARROW -> {
+            for (int i = 0; i < 12; i++) {
+               ctx.method_25294(x + i, y + 11 - i, x + i + 1, y + 12 - i, c);
+            }
+            ctx.method_25294(x + 7, y, x + 12, y + 2, c);
+            ctx.method_25294(x + 10, y, x + 12, y + 5, c);
+         }
+         case RECT -> ctx.method_73198(x, y + 1, 12, 10, c);
+         case ELLIPSE -> {
+            ctx.method_25294(x + 3, y, x + 9, y + 1, c);
+            ctx.method_25294(x + 3, y + 11, x + 9, y + 12, c);
+            ctx.method_25294(x, y + 3, x + 1, y + 9, c);
+            ctx.method_25294(x + 11, y + 3, x + 12, y + 9, c);
+         }
+         case TEXT -> {
+            ctx.method_25294(x, y, x + 12, y + 2, c);
+            ctx.method_25294(x + 5, y, x + 7, y + 12, c);
+         }
+         default -> {
+         }
+      }
+   }
+}
