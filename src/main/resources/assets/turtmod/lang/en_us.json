@@ -17,26 +17,8 @@
   "key.turtmod.command_key_7": "Command Key 7",
   "key.turtmod.command_key_8": "Command Key 8",
 
-  "key.turtmod.toggle.fullbright": "Toggle Fullbright",
-  "key.turtmod.toggle.hit_color": "Toggle Hit Color",
-  "key.turtmod.toggle.scoreboard": "Toggle Hide Scoreboard",
-  "key.turtmod.toggle.block_outline": "Toggle Block Outline",
-  "key.turtmod.toggle.elytra_hud": "Toggle Elytra Pitch HUD",
-  "key.turtmod.toggle.own_nametag": "Toggle Own Nametag",
-  "key.turtmod.toggle.armor_hud": "Toggle Armor HUD",
-  "key.turtmod.toggle.potion_hud": "Toggle Potion HUD",
-  "key.turtmod.toggle.fps_ping": "Toggle FPS/Ping",
-  "key.turtmod.toggle.keystrokes": "Toggle Keystrokes",
-  "key.turtmod.toggle.cps_counter": "Toggle CPS Counter",
-  "key.turtmod.toggle.coordinates_hud": "Toggle Coordinates HUD",
-  "key.turtmod.toggle.clean_f3": "Toggle Clean F3",
-  "key.turtmod.toggle.inventory_hud": "Toggle Inventory HUD",
-  "key.turtmod.toggle.reach": "Toggle Reach Display",
-  "key.turtmod.toggle.custom_hitboxes": "Toggle Hitboxes",
-
   "key.category.turtmod.general": "TurtMod",
   "key.category.turtmod.visual": "TurtMod Visual",
   "key.category.turtmod.hud": "TurtMod HUD",
-  "key.category.turtmod.zoom": "TurtMod Zoom",
-  "key.category.turtmod.modules": "TurtMod Modules"
+  "key.category.turtmod.zoom": "TurtMod Zoom"
 }

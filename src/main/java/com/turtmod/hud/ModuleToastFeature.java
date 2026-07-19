@@ -29,11 +29,11 @@ public final class ModuleToastFeature {
       final String label;
       boolean on;
       long shownAt;
+      boolean started;   // timer starts on first render, so toggles made inside a menu show once it closes
 
-      Toast(String label, boolean on, long shownAt) {
+      Toast(String label, boolean on) {
          this.label = label;
          this.on = on;
-         this.shownAt = shownAt;
       }
    }
 
@@ -42,15 +42,14 @@ public final class ModuleToastFeature {
       if (label == null || label.isEmpty()) {
          return;
       }
-      long now = System.currentTimeMillis();
       for (Toast t : TOASTS) {
          if (t.label.equals(label)) {
             t.on = on;
-            t.shownAt = now;
+            t.started = false;   // restart its appear animation
             return;
          }
       }
-      TOASTS.add(new Toast(label, on, now));
+      TOASTS.add(new Toast(label, on));
       while (TOASTS.size() > MAX_TOASTS) {
          TOASTS.remove(0);
       }
@@ -83,12 +82,16 @@ public final class ModuleToastFeature {
 
       int sw = ctx.method_51421();
       int sh = ctx.method_51443();
-      final int margin = 8, gap = 5, h = 22;
+      final int margin = 8, gap = 6, h = 24;
 
       // Newest toast sits closest to the corner; older ones stack away from it.
       int slot = 0;
       for (int idx = TOASTS.size() - 1; idx >= 0; idx--) {
          Toast t = TOASTS.get(idx);
+         if (!t.started) {   // begin the timer the first frame this toast is actually drawn
+            t.started = true;
+            t.shownAt = now;
+         }
          long life = now - t.shownAt;
          if (life >= total) {
             TOASTS.remove(idx);
@@ -97,8 +100,8 @@ public final class ModuleToastFeature {
 
          String status = t.on ? "ON" : "OFF";
          int labelW = tr.method_1727(t.label);
-         int statusW = tr.method_1727(status);
-         int w = 14 + 8 + labelW + 10 + statusW + 12; // dot + gaps + label + status + pads
+         int pillW = tr.method_1727(status) + 14;
+         int w = 14 + labelW + 10 + pillW + 8; // bar+pad + label + gap + pill + pad
 
          float alpha = 1f, slideX = 0f;
          float slideSpan = w + margin + 20;
@@ -117,21 +120,24 @@ public final class ModuleToastFeature {
          int y = top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap);
 
          Color accent = t.on ? Palette.GREEN : Palette.TEXT_MUTED;
-         // Drop shadow, glass panel, accent-tinted border.
-         ctx.method_25294(x - 2, y + 2, x + w + 2, y + h + 4, argb(Color.BLACK, a * 55 / 255));
-         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 5, Palette.alpha(Palette.PANEL_BG, a));
-         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 5, Palette.alpha(accent, a));
-         // Status dot.
-         int dx = x + 9, dy = y + h / 2 - 3;
-         ctx.method_25294(dx, dy, dx + 6, dy + 6, argb(accent, a));
-         ctx.method_25294(dx + 1, dy - 1, dx + 5, dy, argb(accent, a));
-         ctx.method_25294(dx + 1, dy + 6, dx + 5, dy + 7, argb(accent, a));
-         ctx.method_25294(dx - 1, dy + 1, dx, dy + 5, argb(accent, a));
-         ctx.method_25294(dx + 6, dy + 1, dx + 7, dy + 5, argb(accent, a));
-         // Label + status text.
+         // Glass card + accent-tinted rounded border (mod-menu style, no drop shadow).
+         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 6, Palette.alpha(Palette.PANEL_BG, a * 240 / 255));
+         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 6, Palette.alpha(Palette.PANEL_BORDER, a));
+         // Left accent bar.
+         TurtUIUtils.drawRoundedRect(ctx, x + 5, y + 5, 3, h - 10, 1, Palette.alpha(accent, a));
+         // Module name.
          int ty = y + (h - 8) / 2;
-         ctx.method_51433(tr, t.label, x + 22, ty, argb(Palette.TEXT, a), false);
-         ctx.method_51433(tr, status, x + w - statusW - 12, ty, argb(accent, a), false);
+         ctx.method_51433(tr, t.label, x + 13, ty, argb(Palette.TEXT, a), false);
+         // ON/OFF pill on the right.
+         int px = x + w - 8 - pillW, py = y + (h - 12) / 2;
+         if (t.on) {
+            TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a));
+            ctx.method_25300(tr, status, px + pillW / 2, py + 2, argb(Palette.PANEL_BG, a));
+         } else {
+            TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a * 40 / 255));
+            TurtUIUtils.drawRoundedBorder(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a));
+            ctx.method_25300(tr, status, px + pillW / 2, py + 2, argb(accent, a));
+         }
 
          slot++;
       }

@@ -643,6 +643,10 @@ public final class TurtModClientConfigScreen extends class_437 {
                   return true;
                }
                if (button == 0 && cb.mouseClicked(mouseX, gy, 0)) {
+                  // Toast the module's new on/off state (skip rows that aren't real toggles).
+                  if (!"Theme Settings".equals(cb.label) && !"Kit Loader".equals(cb.label)) {
+                     com.turtmod.hud.ModuleToastFeature.notify(cb.label, cb.checked);
+                  }
                   return true;
                }
             }

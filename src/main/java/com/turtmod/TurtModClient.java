@@ -64,23 +64,15 @@ public final class TurtModClient implements ClientModInitializer {
    private static class_304 healthOffsetDownKey;
    private static class_304 resetHealthOffsetKey;
    private static final class_304[] commandKeyBinds = new class_304[CommandKeysFeature.SLOTS];
-   private static final java.util.Map<ModuleKind, class_304> moduleToggleKeys = new java.util.EnumMap<>(ModuleKind.class);
-   /** Modules that get a (default-unbound) toggle keybind, editable in their config page or MC Controls. */
-   private static final ModuleKind[] MODULE_TOGGLE_KINDS = new ModuleKind[]{
-      ModuleKind.FULLBRIGHT, ModuleKind.HIT_COLOR, ModuleKind.SCOREBOARD, ModuleKind.BLOCK_OUTLINE,
-      ModuleKind.ELYTRA_HUD, ModuleKind.OWN_NAMETAG, ModuleKind.ARMOR_HUD, ModuleKind.POTION_HUD,
-      ModuleKind.FPS_PING, ModuleKind.KEYSTROKES, ModuleKind.CPS_COUNTER, ModuleKind.COORDINATES_HUD,
-      ModuleKind.CLEAN_F3, ModuleKind.INVENTORY_HUD, ModuleKind.REACH, ModuleKind.CUSTOM_HITBOXES
-   };
 
-   /** The keybind that toggles/activates a module, or null if the module has none. Special-cased
-    *  modules reuse their existing dedicated bindings (Zoom/Freelook/Health). */
+   /** The keybind that activates a module, or null if the module has none. Only the daily-use modules
+    *  (Zoom / Freelook / Health) have a dedicated binding; the generic per-module toggle keys were removed. */
    public static class_304 getModuleToggleKey(ModuleKind kind) {
       return switch (kind) {
          case ZOOM -> ZoomFeature.getZoomKey();
          case FREELOOK -> freelookKey;
          case HEALTH_INDICATOR -> toggleHealthIndicatorKey;
-         default -> moduleToggleKeys.get(kind);
+         default -> null;
       };
    }
 
@@ -120,11 +112,6 @@ public final class TurtModClient implements ClientModInitializer {
       KeyBindingHelper.registerKeyBinding(ZoomFeature.getZoomKey());
       for (int i = 0; i < commandKeyBinds.length; i++) {
          commandKeyBinds[i] = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.command_key_" + (i + 1), class_307.field_1668, -1, generalCat));
-      }
-      class_304.class_11900 modulesCat = class_11900.method_74698(class_2960.method_60655("turtmod", "modules"));
-      for (ModuleKind kind : MODULE_TOGGLE_KINDS) {
-         class_304 k = KeyBindingHelper.registerKeyBinding(new class_304("key.turtmod.toggle." + kind.name().toLowerCase(java.util.Locale.ROOT), class_307.field_1668, -1, modulesCat));
-         moduleToggleKeys.put(kind, k);
       }
       this.registerClientCommands();
       com.turtmod.kit.KitIO.init();
@@ -321,12 +308,6 @@ public final class TurtModClient implements ClientModInitializer {
          ConfigManager.save(config);
       }
 
-      for (java.util.Map.Entry<ModuleKind, class_304> entry : moduleToggleKeys.entrySet()) {
-         while (entry.getValue().method_1436()) {
-            this.toggleModuleConfig(entry.getKey());
-         }
-      }
-
       for (int i = 0; i < commandKeyBinds.length; i++) {
          while (commandKeyBinds[i] != null && commandKeyBinds[i].method_1436()) {
             CommandKeysFeature.trigger(client, config, i);
@@ -348,55 +329,6 @@ public final class TurtModClient implements ClientModInitializer {
       safeRender("shield.tick", () -> ShieldTracker.tick());
       safeRender("discord.tick", () -> TurtDiscordRpcService.tick(client, config));
       safeRender("freelook.tick", () -> this.updateFreelook(client));
-   }
-
-   /** Flip the enable flag backing a module's toggle keybind, then persist. */
-   private void toggleModuleConfig(ModuleKind kind) {
-      switch (kind) {
-         case FULLBRIGHT -> config.visual.fullbright.enabled = !config.visual.fullbright.enabled;
-         case HIT_COLOR -> config.visual.hitColor.enabled = !config.visual.hitColor.enabled;
-         case SCOREBOARD -> config.visual.hideScoreboard = !config.visual.hideScoreboard;
-         case BLOCK_OUTLINE -> config.visual.recolorBlockOutline = !config.visual.recolorBlockOutline;
-         case ELYTRA_HUD -> config.visual.elytraPitchHud = !config.visual.elytraPitchHud;
-         case OWN_NAMETAG -> config.visual.showOwnNametag = !config.visual.showOwnNametag;
-         case ARMOR_HUD -> config.hud.movableArmorHud = !config.hud.movableArmorHud;
-         case POTION_HUD -> config.hud.movablePotionHud = !config.hud.movablePotionHud;
-         case FPS_PING -> config.hud.minimalFpsPingOverlay = !config.hud.minimalFpsPingOverlay;
-         case KEYSTROKES -> config.hud.keystrokesHud = !config.hud.keystrokesHud;
-         case CPS_COUNTER -> config.hud.cpsCounterHud = !config.hud.cpsCounterHud;
-         case COORDINATES_HUD -> config.hud.coordinatesHud = !config.hud.coordinatesHud;
-         case CLEAN_F3 -> config.hud.cleanF3Mode = !config.hud.cleanF3Mode;
-         case INVENTORY_HUD -> config.hud.inventoryHudEnabled = !config.hud.inventoryHudEnabled;
-         case REACH -> config.hud.reachDisplay = !config.hud.reachDisplay;
-         case CUSTOM_HITBOXES -> config.hud.customHitboxes = !config.hud.customHitboxes;
-         default -> {
-         }
-      }
-      ConfigManager.save(config);
-      com.turtmod.hud.ModuleToastFeature.notify(TurtModConfigScreenFactory.getModuleDisplayName(kind), this.isModuleEnabled(kind));
-   }
-
-   /** Current enable state backing a module's toggle keybind (for action-bar feedback). */
-   private boolean isModuleEnabled(ModuleKind kind) {
-      return switch (kind) {
-         case FULLBRIGHT -> config.visual.fullbright.enabled;
-         case HIT_COLOR -> config.visual.hitColor.enabled;
-         case SCOREBOARD -> config.visual.hideScoreboard;
-         case BLOCK_OUTLINE -> config.visual.recolorBlockOutline;
-         case ELYTRA_HUD -> config.visual.elytraPitchHud;
-         case OWN_NAMETAG -> config.visual.showOwnNametag;
-         case ARMOR_HUD -> config.hud.movableArmorHud;
-         case POTION_HUD -> config.hud.movablePotionHud;
-         case FPS_PING -> config.hud.minimalFpsPingOverlay;
-         case KEYSTROKES -> config.hud.keystrokesHud;
-         case CPS_COUNTER -> config.hud.cpsCounterHud;
-         case COORDINATES_HUD -> config.hud.coordinatesHud;
-         case CLEAN_F3 -> config.hud.cleanF3Mode;
-         case INVENTORY_HUD -> config.hud.inventoryHudEnabled;
-         case REACH -> config.hud.reachDisplay;
-         case CUSTOM_HITBOXES -> config.hud.customHitboxes;
-         default -> false;
-      };
    }
 
    private void onHudRender(class_332 context, class_9779 tickCounter) {
@@ -435,16 +367,10 @@ public final class TurtModClient implements ClientModInitializer {
       }
    }
 
-   private static boolean freelookWasActive = false;
-
    private void updateFreelook(class_310 client) {
       if (client.field_1690 != null && config != null) {
          boolean shouldFreelook = config.visual.freelookEnabled && freelookKey.method_1434();
          FreeLookFeature.updateActive(client, config, shouldFreelook);
-         if (shouldFreelook != freelookWasActive) {
-            com.turtmod.hud.ModuleToastFeature.notify("Freelook", shouldFreelook);
-            freelookWasActive = shouldFreelook;
-         }
       }
    }
 }
