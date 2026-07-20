@@ -11,11 +11,14 @@ import net.minecraft.class_327;
 import net.minecraft.class_332;
 
 /**
- * Animated toast notifications shown when a module toggles on/off in-game. Mirrors the
- * {@link com.turtmod.chat.ScreenshotPreview} animation style: a small rounded card slides in from the
- * configured corner, holds, then fades/slides out. Fed by {@code notify(label, on)} from the toggle sites.
- * Rendered each frame from {@code TurtModClient.onHudRender}. Tick + render both run on the client thread,
- * so the toast list needs no synchronization.
+ * Toast shown when a module toggles on/off in-game. Deliberately drawn as a copy of the mod menu's
+ * module card (rounded card, 2px accent bar, accent label, sliding pill toggle with knob — see
+ * {@code TurtUICheckbox}) so the in-game notification reads as the same UI. Slides in from the
+ * configured corner, holds, then fades out.
+ *
+ * <p>The hold timer starts on the toast's first rendered frame, not when {@code notify} is called —
+ * HUD rendering is suspended while a screen is open, so a module toggled inside the config menu still
+ * shows its toast once the menu closes. Tick + render are both on the client thread, so no locking.
  */
 public final class ModuleToastFeature {
    private static final long ENTER_MS = 220, EXIT_MS = 300;
@@ -29,7 +32,7 @@ public final class ModuleToastFeature {
       final String label;
       boolean on;
       long shownAt;
-      boolean started;   // timer starts on first render, so toggles made inside a menu show once it closes
+      boolean started;
 
       Toast(String label, boolean on) {
          this.label = label;
@@ -45,7 +48,7 @@ public final class ModuleToastFeature {
       for (Toast t : TOASTS) {
          if (t.label.equals(label)) {
             t.on = on;
-            t.started = false;   // restart its appear animation
+            t.started = false;   // replay the appear animation
             return;
          }
       }
@@ -57,6 +60,11 @@ public final class ModuleToastFeature {
 
    private static int argb(Color c, int a) {
       return (Math.max(0, Math.min(255, a)) << 24) | (c.getRGB() & 0xFFFFFF);
+   }
+
+   /** Same colour, its alpha scaled by the toast's current fade. */
+   private static Color fade(Color c, int a) {
+      return Palette.alpha(c, c.getAlpha() * Math.max(0, Math.min(255, a)) / 255);
    }
 
    private static float easeOut(float t) {
@@ -82,13 +90,13 @@ public final class ModuleToastFeature {
 
       int sw = ctx.method_51421();
       int sh = ctx.method_51443();
-      final int margin = 8, gap = 6, h = 24;
+      final int margin = 8, gap = 4, h = 22;
+      final int pillH = 12, pillW = pillH * 2;
 
-      // Newest toast sits closest to the corner; older ones stack away from it.
       int slot = 0;
       for (int idx = TOASTS.size() - 1; idx >= 0; idx--) {
          Toast t = TOASTS.get(idx);
-         if (!t.started) {   // begin the timer the first frame this toast is actually drawn
+         if (!t.started) {   // start the clock the first frame it's actually drawn
             t.started = true;
             t.shownAt = now;
          }
@@ -98,10 +106,8 @@ public final class ModuleToastFeature {
             continue;
          }
 
-         String status = t.on ? "ON" : "OFF";
          int labelW = tr.method_1727(t.label);
-         int pillW = tr.method_1727(status) + 14;
-         int w = 14 + labelW + 10 + pillW + 8; // bar+pad + label + gap + pill + pad
+         int w = 10 + labelW + 12 + pillW + 6;
 
          float alpha = 1f, slideX = 0f;
          float slideSpan = w + margin + 20;
@@ -119,25 +125,28 @@ public final class ModuleToastFeature {
          int x = (right ? sw - margin - w : margin) + Math.round(slideX);
          int y = top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap);
 
-         Color accent = t.on ? Palette.GREEN : Palette.TEXT_MUTED;
-         // Glass card + accent-tinted rounded border (mod-menu style, no drop shadow).
-         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 6, Palette.alpha(Palette.PANEL_BG, a * 240 / 255));
-         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 6, Palette.alpha(Palette.PANEL_BORDER, a));
-         // Left accent bar.
-         TurtUIUtils.drawRoundedRect(ctx, x + 5, y + 5, 3, h - 10, 1, Palette.alpha(accent, a));
-         // Module name.
-         int ty = y + (h - 8) / 2;
-         ctx.method_51433(tr, t.label, x + 13, ty, argb(Palette.TEXT, a), false);
-         // ON/OFF pill on the right.
-         int px = x + w - 8 - pillW, py = y + (h - 12) / 2;
+         Color accent = Palette.GREEN;
+         // Card + hairline border, exactly like a module row in the menu.
+         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, fade(Palette.CARD_BG, a));
+         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, fade(Palette.CARD_BORDER, a));
+         // 2px accent bar down the left edge (the menu's "enabled" marker).
          if (t.on) {
-            TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a));
-            ctx.method_25300(tr, status, px + pillW / 2, py + 2, argb(Palette.PANEL_BG, a));
-         } else {
-            TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a * 40 / 255));
-            TurtUIUtils.drawRoundedBorder(ctx, px, py, pillW, 12, 6, Palette.alpha(accent, a));
-            ctx.method_25300(tr, status, px + pillW / 2, py + 2, argb(accent, a));
+            ctx.method_25294(x + 2, y + 3, x + 4, y + h - 3, argb(accent, a));
          }
+         // Label: accent when on, muted when off — same rule the module rows use.
+         TurtUIUtils.drawText(ctx, tr, t.label, x + 10, y + (h - 8) / 2,
+            fade(t.on ? accent : Palette.TEXT_MUTED, a), false, false, false);
+         // Sliding pill toggle with knob.
+         int px = x + w - pillW - 6, py = y + (h - pillH) / 2, r = pillH / 2;
+         TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, pillH, r, fade(new Color(0x66262626, true), a));
+         TurtUIUtils.drawRoundedBorder(ctx, px, py, pillW, pillH, r, fade(new Color(255, 255, 255, 20), a));
+         if (t.on) {
+            TurtUIUtils.drawRoundedRect(ctx, px, py, pillW, pillH, r, fade(accent, a));
+         }
+         int knob = pillH - 4;
+         int travel = pillW - knob - 4;
+         int kx = px + 2 + (t.on ? travel : 0);
+         TurtUIUtils.drawRoundedRect(ctx, kx, py + 2, knob, knob, knob / 2, fade(new Color(250, 250, 250, 255), a));
 
          slot++;
       }
