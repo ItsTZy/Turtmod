@@ -196,10 +196,8 @@ public class ScreenshotEditorScreen extends class_437 {
          for (int y = 0; y < this.overlayH; y++) {
             img.getRGB(0, y, this.overlayW, 1, row, 0, this.overlayW);
             for (int x = 0; x < this.overlayW; x++) {
-               int argb = row[x];
-               // NativeImage stores ABGR; swap R and B.
-               int abgr = (argb & 0xFF00FF00) | ((argb >> 16) & 0xFF) | ((argb & 0xFF) << 16);
-               native_.method_61941(x, y, abgr);
+               // These accessors take ARGB straight from BufferedImage - no channel swap.
+               native_.method_61941(x, y, row[x]);
             }
          }
          String key = "editor_overlay/" + Math.abs(this.file.getAbsolutePath().hashCode());
