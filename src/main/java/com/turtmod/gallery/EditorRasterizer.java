@@ -23,6 +23,31 @@ public final class EditorRasterizer {
    private EditorRasterizer() {
    }
 
+   /** Apply the shared quality hints so preview and saved output rasterize identically. */
+   private static void applyHints(Graphics2D g) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+   }
+
+   /**
+    * Draw just the annotations onto a transparent image of the given size, scaled by {@code scale}
+    * (annotation coordinates are in full image pixels). This is what the editor blits as a live
+    * overlay, so the on-screen preview is produced by the very same code that writes the PNG.
+    */
+   public static BufferedImage renderOverlay(int w, int h, double scale, List<Annotation> anns) {
+      BufferedImage img = new BufferedImage(Math.max(1, w), Math.max(1, h), BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = img.createGraphics();
+      applyHints(g);
+      g.scale(scale, scale);
+      for (Annotation a : anns) {
+         draw(g, a);
+      }
+      g.dispose();
+      return img;
+   }
+
    /** Compose the base image + annotations, apply crop, and return the final RGB(A) image. */
    public static BufferedImage bake(File source, int[] crop, List<Annotation> anns) throws Exception {
       BufferedImage read = ImageIO.read(source);
@@ -32,9 +57,7 @@ public final class EditorRasterizer {
       BufferedImage full = new BufferedImage(read.getWidth(), read.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = full.createGraphics();
       g.drawImage(read, 0, 0, null);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      applyHints(g);
       for (Annotation a : anns) {
          draw(g, a);
       }
@@ -95,14 +118,22 @@ public final class EditorRasterizer {
             g.setStroke(new BasicStroke(t, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             int x = Math.min(ix(a, 0), ix(a, 1)), y = Math.min(iy(a, 0), iy(a, 1));
             int w = Math.abs(ix(a, 1) - ix(a, 0)), h = Math.abs(iy(a, 1) - iy(a, 0));
-            g.drawRect(x, y, w, h);
+            if (a.filled) {
+               g.fillRect(x, y, w, h);
+            } else {
+               g.drawRect(x, y, w, h);
+            }
          }
          case ELLIPSE -> {
             g.setColor(color);
             g.setStroke(new BasicStroke(t, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             int x = Math.min(ix(a, 0), ix(a, 1)), y = Math.min(iy(a, 0), iy(a, 1));
             int w = Math.abs(ix(a, 1) - ix(a, 0)), h = Math.abs(iy(a, 1) - iy(a, 0));
-            g.drawOval(x, y, w, h);
+            if (a.filled) {
+               g.fillOval(x, y, w, h);
+            } else {
+               g.drawOval(x, y, w, h);
+            }
          }
          case TEXT -> {
             if (a.text != null && !a.text.isEmpty()) {

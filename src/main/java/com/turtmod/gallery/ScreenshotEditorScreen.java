@@ -38,6 +38,7 @@ public class ScreenshotEditorScreen extends class_437 {
       public Tool type;
       public int argb;
       public float size;
+      public boolean filled;      // RECT / ELLIPSE: solid fill instead of outline
       public final List<double[]> pts = new ArrayList<>();
       public String text = "";
 
@@ -83,6 +84,18 @@ public class ScreenshotEditorScreen extends class_437 {
    private Tool tool = Tool.PEN;
    private int colorIdx = 0;
    private int sizeIdx = 1;
+   private int alphaPct = 100;      // opacity of the colour being drawn with
+   private boolean fillShapes;      // rect/ellipse solid instead of outline
+
+   // ── Live overlay ───────────────────────────────────────────────────────────
+   // Committed annotations are rasterized by EditorRasterizer (the same AWT code that writes the PNG)
+   // into an image-space texture that is simply blitted. That makes the preview match the saved file
+   // exactly, and costs one blit per frame instead of thousands of per-pixel fills.
+   private static final int OVERLAY_MAX = 1920;
+   private class_2960 overlayId;
+   private int overlayW, overlayH;
+   private double overlayScale = 1.0;
+   private int annVersion, overlayVersion = -1;
 
    private Annotation draft;            // shape/pen currently being dragged
    private Annotation editingText;      // text annotation being typed
@@ -102,7 +115,7 @@ public class ScreenshotEditorScreen extends class_437 {
    private final int[] railX = new int[Tool.values().length];
    private final int[] railY = new int[Tool.values().length];
    private final int[] swX = new int[SWATCHES.length];
-   private int swY, sizeBarX, sizeBarY, undoX, redoX, barY;
+   private int swY, sizeBarX, sizeBarY, undoX, redoX, barY, fillBtnX, opacityBtnX;
 
    private static final int RAIL_W = 26, RAIL_BTN = 22, RAIL_GAP = 4;
    private static final int SW = 16, SWG = 5;
@@ -152,6 +165,53 @@ public class ScreenshotEditorScreen extends class_437 {
       }
    }
 
+   /** The active swatch with the current opacity applied. */
+   private int currentColor() {
+      int a = Math.max(0, Math.min(255, Math.round(this.alphaPct * 2.55f)));
+      return (a << 24) | (SWATCHES[this.colorIdx] & 0xFFFFFF);
+   }
+
+   /** Mark the committed-annotation set dirty so the overlay is rebuilt next frame. */
+   private void invalidateOverlay() {
+      this.annVersion++;
+   }
+
+   /**
+    * Rebuild the overlay texture from the committed annotations, using the same rasterizer as save.
+    * Only runs when the annotation set actually changed — panning/zooming just re-blits.
+    */
+   private void ensureOverlay() {
+      if (this.overlayVersion == this.annVersion || this.imageWidth <= 0) {
+         return;
+      }
+      this.overlayVersion = this.annVersion;
+      try {
+         this.overlayScale = Math.min(1.0, (double) OVERLAY_MAX / Math.max(this.imageWidth, this.imageHeight));
+         this.overlayW = Math.max(1, (int) Math.round(this.imageWidth * this.overlayScale));
+         this.overlayH = Math.max(1, (int) Math.round(this.imageHeight * this.overlayScale));
+         BufferedImage img = EditorRasterizer.renderOverlay(this.overlayW, this.overlayH, this.overlayScale, this.annotations);
+
+         class_1011 native_ = new class_1011(this.overlayW, this.overlayH, false);
+         int[] row = new int[this.overlayW];
+         for (int y = 0; y < this.overlayH; y++) {
+            img.getRGB(0, y, this.overlayW, 1, row, 0, this.overlayW);
+            for (int x = 0; x < this.overlayW; x++) {
+               int argb = row[x];
+               // NativeImage stores ABGR; swap R and B.
+               int abgr = (argb & 0xFF00FF00) | ((argb >> 16) & 0xFF) | ((argb & 0xFF) << 16);
+               native_.method_61941(x, y, abgr);
+            }
+         }
+         String key = "editor_overlay/" + Math.abs(this.file.getAbsolutePath().hashCode());
+         this.overlayId = class_2960.method_60655("turtmod", key);
+         // Registering under the same id replaces (and disposes) the previous overlay texture,
+         // matching how the gallery/viewer manage their textures.
+         class_310.method_1551().method_1531().method_4616(this.overlayId, new class_1043(() -> "turtmod:" + key, native_));
+      } catch (Exception e) {
+         this.overlayId = null;
+      }
+   }
+
    // ── Undo / redo ──
    private void pushUndo() {
       this.undo.push(new State(new ArrayList<>(this.annotations), this.crop.clone()));
@@ -186,6 +246,7 @@ public class ScreenshotEditorScreen extends class_437 {
          || this.crop[2] != s.crop[2] || this.crop[3] != s.crop[3];
       this.crop = s.crop.clone();
       this.editingText = null;
+      this.invalidateOverlay();
       if (cropChanged) {
          this.pendingFit = true;
       }
@@ -237,6 +298,7 @@ public class ScreenshotEditorScreen extends class_437 {
          if (!this.editingText.text.isEmpty()) {
             this.pushUndo();
             this.annotations.add(this.editingText);
+            this.invalidateOverlay();
          }
          this.editingText = null;
       }
@@ -318,7 +380,7 @@ public class ScreenshotEditorScreen extends class_437 {
             if (mx >= this.swX[i] && mx <= this.swX[i] + SW && my >= this.swY && my <= this.swY + SW) {
                this.colorIdx = i;
                if (this.editingText != null) {
-                  this.editingText.argb = SWATCHES[i];
+                  this.editingText.argb = this.currentColor();
                }
                return true;
             }
@@ -333,6 +395,19 @@ public class ScreenshotEditorScreen extends class_437 {
                }
                return true;
             }
+         }
+         // Fill toggle.
+         if (mx >= this.fillBtnX && mx <= this.fillBtnX + 30 && my >= this.sizeBarY && my <= this.sizeBarY + SW) {
+            this.fillShapes = !this.fillShapes;
+            return true;
+         }
+         // Opacity cycle: 100 -> 75 -> 50 -> 25 -> 100.
+         if (mx >= this.opacityBtnX && mx <= this.opacityBtnX + 34 && my >= this.sizeBarY && my <= this.sizeBarY + SW) {
+            this.alphaPct = this.alphaPct <= 25 ? 100 : this.alphaPct - 25;
+            if (this.editingText != null) {
+               this.editingText.argb = this.currentColor();
+            }
+            return true;
          }
          // Undo / Redo.
          if (mx >= this.undoX && mx <= this.undoX + 26 && my >= this.barY && my <= this.barY + 18) {
@@ -358,11 +433,12 @@ public class ScreenshotEditorScreen extends class_437 {
             double ix = this.clampIX(this.toImageX(mx)), iy = this.clampIY(this.toImageY(my));
             if (this.tool == Tool.TEXT) {
                this.commitEditingText();
-               this.editingText = new Annotation(Tool.TEXT, SWATCHES[this.colorIdx], SIZES[this.sizeIdx]);
+               this.editingText = new Annotation(Tool.TEXT, this.currentColor(), SIZES[this.sizeIdx]);
                this.editingText.pts.add(new double[]{ix, iy});
                return true;
             }
-            this.draft = new Annotation(this.tool, SWATCHES[this.colorIdx], SIZES[this.sizeIdx]);
+            this.draft = new Annotation(this.tool, this.currentColor(), SIZES[this.sizeIdx]);
+            this.draft.filled = this.fillShapes && (this.tool == Tool.RECT || this.tool == Tool.ELLIPSE);
             this.draft.pts.add(new double[]{ix, iy});
             if (this.tool != Tool.PEN && this.tool != Tool.HIGHLIGHTER) {
                this.draft.pts.add(new double[]{ix, iy}); // second point for shapes
@@ -407,6 +483,7 @@ public class ScreenshotEditorScreen extends class_437 {
          } else if (this.validDraft(d)) {
             this.pushUndo();
             this.annotations.add(d);
+            this.invalidateOverlay();
          }
          return true;
       }
@@ -553,9 +630,17 @@ public class ScreenshotEditorScreen extends class_437 {
       ctx.method_25302(class_10799.field_56883, this.textureId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
          (float) this.crop[0], (float) this.crop[1], drawW, drawH, this.crop[2], this.crop[3], this.imageWidth, this.imageHeight);
 
-      for (Annotation a : this.annotations) {
-         this.drawAnnotation(ctx, a);
+      // Committed edits come from the shared AWT rasterizer, so what you see is what gets saved.
+      this.ensureOverlay();
+      if (this.overlayId != null) {
+         float ou = (float) (this.crop[0] * this.overlayScale);
+         float ov = (float) (this.crop[1] * this.overlayScale);
+         int orw = Math.max(1, (int) Math.round(this.crop[2] * this.overlayScale));
+         int orh = Math.max(1, (int) Math.round(this.crop[3] * this.overlayScale));
+         ctx.method_25302(class_10799.field_56883, this.overlayId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
+            ou, ov, drawW, drawH, orw, orh, this.overlayW, this.overlayH);
       }
+      // The in-progress stroke stays on the cheap path; it snaps to the exact rendering on release.
       if (this.draft != null) {
          if (this.draft.type == Tool.CROP) {
             this.drawCropOverlay(ctx, this.draft);
@@ -740,6 +825,19 @@ public class ScreenshotEditorScreen extends class_437 {
          ctx.method_73198(bx, y, 18, SW, (sel ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
          ctx.method_25300(this.field_22793, SIZE_LABELS[i], bx + 9, y + 4, (sel ? Palette.PANEL_BG : Palette.TEXT).getRGB());
       }
+      // Fill toggle + opacity cycle.
+      this.fillBtnX = x + SIZES.length * (18 + 3) + 8;
+      boolean fillHov = mouseX >= this.fillBtnX && mouseX <= this.fillBtnX + 30 && mouseY >= y && mouseY <= y + SW;
+      ctx.method_25294(this.fillBtnX, y, this.fillBtnX + 30, y + SW, (this.fillShapes ? Palette.GREEN : (fillHov ? Palette.BTN_HOVER : Palette.BTN_BG)).getRGB());
+      ctx.method_73198(this.fillBtnX, y, 30, SW, (this.fillShapes ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
+      ctx.method_25300(this.field_22793, "Fill", this.fillBtnX + 15, y + 4, (this.fillShapes ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+
+      this.opacityBtnX = this.fillBtnX + 34;
+      boolean opHov = mouseX >= this.opacityBtnX && mouseX <= this.opacityBtnX + 34 && mouseY >= y && mouseY <= y + SW;
+      ctx.method_25294(this.opacityBtnX, y, this.opacityBtnX + 34, y + SW, (opHov ? Palette.BTN_HOVER : Palette.BTN_BG).getRGB());
+      ctx.method_73198(this.opacityBtnX, y, 34, SW, Palette.PANEL_BORDER.getRGB());
+      ctx.method_25300(this.field_22793, this.alphaPct + "%", this.opacityBtnX + 17, y + 4, Palette.TEXT.getRGB());
+
       // Undo / redo at the right end of the bar.
       this.redoX = this.field_22789 - 12 - 26;
       this.undoX = this.redoX - 26 - 6;
