@@ -77,6 +77,21 @@ public final class CustomThemeRenderer {
 
    }
 
+   /** Baseline Y that vertically centres one 8px text line inside a box of height {@code boxH}. */
+   public static int centeredTextY(int boxY, int boxH) {
+      return boxY + Math.max(0, (boxH - 8) / 2);
+   }
+
+   /** Left X that horizontally centres {@code text} inside a box of width {@code boxW}. */
+   public static int centeredTextX(class_327 tr, String text, int boxX, int boxW, TurtModConfig config) {
+      return boxX + Math.max(0, (boxW - textWidth(tr, text, config)) / 2);
+   }
+
+   /** Draw a HUD label centred both ways inside its panel. */
+   public static void drawHudLabelCentered(class_332 context, class_327 tr, String text, int boxX, int boxY, int boxW, int boxH, int color, TurtModConfig config) {
+      drawHudLabel(context, tr, text, centeredTextX(tr, text, boxX, boxW, config), centeredTextY(boxY, boxH), color, config);
+   }
+
    public static void renderThemedText(class_332 context, class_327 textRenderer, class_2561 text, int x, int y, TurtModConfig config) {
       drawText(context, textRenderer, text, x, y, getTextColor(config), config);
    }

@@ -95,9 +95,12 @@ public final class ToggleSprintFeature {
          }
       } else {
          CustomThemeRenderer.renderThemedBox(context, x, y, boxW, textLocalH, config);
-         int ly = y + 2;
+         // Centre the stack vertically, then centre each line horizontally.
+         int ly = y + Math.max(0, (textLocalH - lines.size() * LINE_H) / 2);
          for (int i = 0; i < lines.size(); i++) {
-            CustomThemeRenderer.drawHudLabel(context, font, lines.get(i).toUpperCase(), x + 6, ly, colors.get(i), config);
+            String lineText = lines.get(i).toUpperCase();
+            CustomThemeRenderer.drawHudLabel(context, font, lineText,
+               CustomThemeRenderer.centeredTextX(font, lineText, x, boxW, config), ly, colors.get(i), config);
             ly += LINE_H;
          }
       }

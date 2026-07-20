@@ -47,8 +47,12 @@ public final class FpsPingOverlayFeature {
              CustomThemeRenderer.renderThemedBox(context, x, y, w, getBaseHeight(), config);
              String pingPart = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
              int fpsW = CustomThemeRenderer.textWidth(client.field_1772, fpsText, config);
-             CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, x + 6, y + 3, fpsColor, config);
-             CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingPart, x + 6 + fpsW, y + 3, textColor, config);
+             // Centre the two-part label as one unit inside the panel.
+             int totalW = fpsW + CustomThemeRenderer.textWidth(client.field_1772, "  " + pingPart, config);
+             int tx = x + Math.max(0, (w - totalW) / 2);
+             int ty = CustomThemeRenderer.centeredTextY(y, getBaseHeight());
+             CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, tx, ty, fpsColor, config);
+             CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingPart, tx + fpsW, ty, textColor, config);
           }
 
          context.method_51448().popMatrix();

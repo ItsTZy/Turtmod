@@ -47,7 +47,7 @@ public final class CpsCounterFeature {
          int textColor = config.hud.cpsRainbow
             ? (0xFF000000 | (java.awt.Color.HSBtoRGB((float) ((System.currentTimeMillis() % 3000L) / 3000.0), 0.8F, 1.0F) & 0xFFFFFF))
             : CustomThemeRenderer.getTextColor(config);
-         CustomThemeRenderer.drawHudLabel(context, client.field_1772, cpsText, x + 4, y + 4, textColor, config);
+         CustomThemeRenderer.drawHudLabelCentered(context, client.field_1772, cpsText, x, y, boxWidth, boxHeight, textColor, config);
          context.method_51448().popMatrix();
       }
    }

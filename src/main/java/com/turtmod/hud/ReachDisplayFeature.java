@@ -102,7 +102,7 @@ public final class ReachDisplayFeature {
          } else {
             int width = CustomThemeRenderer.textWidth(client.field_1772, value, config) + 12;
             CustomThemeRenderer.renderThemedBox(context, x, y, width, 14, config);
-            CustomThemeRenderer.drawHudLabel(context, client.field_1772, value, x + 6, y + 3, valueColor, config);
+            CustomThemeRenderer.drawHudLabelCentered(context, client.field_1772, value, x, y, width, 14, valueColor, config);
          }
 
          context.method_51448().popMatrix();
