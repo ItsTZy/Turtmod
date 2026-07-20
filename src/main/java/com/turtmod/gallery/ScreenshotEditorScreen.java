@@ -727,6 +727,26 @@ public class ScreenshotEditorScreen extends class_437 {
          }
          return true;
       }
+      // Single-key tool shortcuts, like a real editor.
+      Tool shortcut = switch (key) {
+         case 86 -> Tool.MOVE;         // V
+         case 67 -> Tool.CROP;         // C
+         case 80 -> Tool.PEN;          // P
+         case 72 -> Tool.HIGHLIGHTER;  // H
+         case 76 -> Tool.LINE;         // L
+         case 65 -> Tool.ARROW;        // A
+         case 82 -> Tool.RECT;         // R
+         case 69 -> Tool.ELLIPSE;      // E
+         case 84 -> Tool.TEXT;         // T
+         case 32 -> Tool.PAN;          // Space
+         default -> null;
+      };
+      if (shortcut != null) {
+         this.tool = shortcut;
+         this.pickerOpen = false;
+         this.setStatus(shortcut.name().charAt(0) + shortcut.name().substring(1).toLowerCase());
+         return true;
+      }
       // Delete / Backspace removes whatever the Move tool is hovering.
       if ((key == 261 || key == 259) && this.hoverAnn >= 0 && this.hoverAnn < this.annotations.size()) {
          this.pushUndo();

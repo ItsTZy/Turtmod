@@ -30,7 +30,7 @@ public final class FpsPingOverlayFeature {
          int hudHeight = Math.round(40.0F * scale);
          x = Math.max(0, Math.min(x, scaledWidth - hudWidth));
          y = Math.max(0, Math.min(y, scaledHeight - hudHeight));
-         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
+         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.fpsPingShowBackground;
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);

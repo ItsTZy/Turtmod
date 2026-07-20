@@ -73,7 +73,7 @@ public final class ReachDisplayFeature {
          int x = config.hud.reachHudX;
          int y = config.hud.reachHudY;
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.reachHudScalePercent);
-         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
+         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.reachShowBackground;
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);

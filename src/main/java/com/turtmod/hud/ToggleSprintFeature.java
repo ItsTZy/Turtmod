@@ -32,7 +32,7 @@ public final class ToggleSprintFeature {
       boolean isSneaking = config.hud.sprintShowSneaking && client.field_1724.method_5715();
       boolean toggleMode = isToggleSprintEnabled(client);
       TurtModConfig.SprintDisplayStyle style = config.hud.sprintDisplayStyle;
-      boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
+      boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.sprintShowBackground;
       int accent = CustomThemeRenderer.getAccentColor(config);
       int normal = CustomThemeRenderer.getTextColor(config);
 

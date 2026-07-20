@@ -350,6 +350,10 @@ public static final class Combat {
       public boolean coordsShowDimension = true;
       public boolean coordsShowDay = true;
       public boolean coordsShowBackground = true;
+      // Per-HUD frame toggles, so individual HUDs can go frameless without dropping the global alpha.
+      public boolean fpsPingShowBackground = true;
+      public boolean reachShowBackground = true;
+      public boolean sprintShowBackground = true;
       public boolean pingInTab = false;
       public boolean pingTabAutoColor = true;
       public String pingTabFormat = "%dms";

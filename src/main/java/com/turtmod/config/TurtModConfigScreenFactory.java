@@ -634,12 +634,14 @@ public final class TurtModConfigScreenFactory {
          case FPS_PING -> group
             .addOption(bool("Enabled", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))
             .addOption(bool("Color-Coded FPS", () -> cfg.hud.fpsColorCoded, v -> cfg.hud.fpsColorCoded = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 5))
+            .addOption(bool("Background", () -> cfg.hud.fpsPingShowBackground, v -> cfg.hud.fpsPingShowBackground = v));
          case REACH -> group
             .addOption(bool("Enabled", () -> cfg.hud.reachDisplay, v -> cfg.hud.reachDisplay = v))
             .addOption(bool("Reach Type Tag", () -> cfg.hud.reachShowTypeTag, v -> cfg.hud.reachShowTypeTag = v))
             .addOption(bool("Reach Entity Name", () -> cfg.hud.reachShowEntityName, v -> cfg.hud.reachShowEntityName = v))
-            .addOption(intOpt("Reach Decimals", () -> cfg.hud.reachDecimals, v -> cfg.hud.reachDecimals = v, 0, 3, 1));
+            .addOption(intOpt("Reach Decimals", () -> cfg.hud.reachDecimals, v -> cfg.hud.reachDecimals = v, 0, 3, 1))
+            .addOption(bool("Background", () -> cfg.hud.reachShowBackground, v -> cfg.hud.reachShowBackground = v));
          case KEYSTROKES -> group
             .addOption(bool("Enabled", () -> cfg.hud.keystrokesHud, v -> cfg.hud.keystrokesHud = v))
             .addOption(bool("Show CPS", () -> cfg.hud.keystrokesShowCps, v -> cfg.hud.keystrokesShowCps = v))
@@ -658,7 +660,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(enumOpt("Style", () -> cfg.hud.sprintDisplayStyle, v -> cfg.hud.sprintDisplayStyle = v, TurtModConfig.SprintDisplayStyle.class))
             .addOption(bool("Show Sneaking", () -> cfg.hud.sprintShowSneaking, v -> cfg.hud.sprintShowSneaking = v))
             .addOption(bool("Show Swimming", () -> cfg.hud.sprintShowSwimming, v -> cfg.hud.sprintShowSwimming = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.toggleSprintHudScalePercent, v -> cfg.hud.toggleSprintHudScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.toggleSprintHudScalePercent, v -> cfg.hud.toggleSprintHudScalePercent = v, 50, 300, 5))
+            .addOption(bool("Background", () -> cfg.hud.sprintShowBackground, v -> cfg.hud.sprintShowBackground = v));
          case INVENTORY_HUD -> group
             .addOption(bool("Enabled", () -> cfg.hud.inventoryHudEnabled, v -> cfg.hud.inventoryHudEnabled = v))
             .addOption(bool("Show Background", () -> cfg.hud.inventoryHudBackground, v -> cfg.hud.inventoryHudBackground = v))
