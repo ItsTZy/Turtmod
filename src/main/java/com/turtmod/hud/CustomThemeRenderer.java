@@ -1,6 +1,7 @@
 package com.turtmod.hud;
 
 import com.turtmod.config.TurtModConfig;
+import com.turtmod.ui.TurtUIUtils;
 import net.minecraft.class_2561;
 import net.minecraft.class_2583;
 import net.minecraft.class_327;
@@ -11,16 +12,44 @@ public final class CustomThemeRenderer {
    private CustomThemeRenderer() {
    }
 
+   /** ARGB int → awt Colour, so the shared {@link TurtUIUtils} rounded drawing helpers can be used. */
+   private static java.awt.Color col(int argb) {
+      return new java.awt.Color(argb, true);
+   }
+
+   /** The theme's corner radius, clamped so it can never exceed the box it's rounding. */
+   private static int radiusFor(TurtModConfig config, int w, int h) {
+      int r = Math.max(0, Math.min(12, config.theme.cornerRadius));
+      return Math.max(0, Math.min(r, Math.min(w, h) / 2 - 1));
+   }
+
+   /**
+    * The shared HUD panel. Styled to match the mod's own menu cards: a rounded surface, an optional
+    * glass highlight along the top edge, an optional 2px accent bar down the left, and a rounded
+    * hairline border. Geometry (x/y/w/h) is unchanged so HUD-editor hitboxes stay aligned.
+    */
    public static void renderThemedBox(class_332 context, int x, int y, int w, int h, TurtModConfig config) {
       int bg = getBackground(config);
-      int border = getBorder(config);
+      int r = radiusFor(config, w, h);
+      boolean transparent = isTransparentTextMode(config);
+
       if (bg >>> 24 > 0) {
-         context.method_25294(x, y, x + w, y + h, bg);
+         if (r > 0) {
+            TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(bg));
+         } else {
+            context.method_25294(x, y, x + w, y + h, bg);
+         }
       }
 
-      if (config.theme.hudShowBorders && !isTransparentTextMode(config) && w > 10 && h > 6) {
-         int accentLine = applyHudOpacity(config, applyAlpha(config.theme.hudAccentColor, 30));
-         context.method_25294(x + 1, y + 1, x + w - 1, y + 2, accentLine);
+      // Glass: a bright hairline along the top inside edge (same trick as TurtUIUtils.drawGlassPanel).
+      if (config.theme.hudGlass && !transparent && bg >>> 24 > 0 && w > 8 && h > 6) {
+         int highlight = applyHudOpacity(config, applyAlpha(16777215, 26));
+         context.method_25294(x + 1 + r, y + 1, x + w - 1 - r, y + 2, highlight);
+      }
+
+      // Accent bar down the left edge — the menu's "enabled" marker, sized to sit inside the padding.
+      if (config.theme.hudAccentBar && !transparent && h > 8) {
+         context.method_25294(x + 2, y + 3, x + 4, y + h - 3, getAccentColor(config));
       }
 
       if (config.theme.hudShowBorders && config.theme.hudBorderThickness > 0) {
@@ -38,7 +67,12 @@ public final class CustomThemeRenderer {
          int iy = y + i;
          int iw = Math.max(1, w - i * 2);
          int ih = Math.max(1, h - i * 2);
-         context.method_73198(ix, iy, iw, ih, color);
+         int r = radiusFor(config, iw, ih);
+         if (r > 0) {
+            TurtUIUtils.drawRoundedBorder(context, ix, iy, iw, ih, r, col(color));
+         } else {
+            context.method_73198(ix, iy, iw, ih, color);
+         }
       }
 
    }
@@ -91,12 +125,23 @@ public final class CustomThemeRenderer {
 
    public static void renderSlotCell(class_332 context, int x, int y, int w, int h, TurtModConfig config, boolean active) {
       int fill = getSlotBackground(config, active);
+      // Slots get a tighter radius than the outer panel so nested cells still read as square-ish.
+      int r = Math.max(0, Math.min(Math.min(3, config.theme.cornerRadius), Math.min(w, h) / 2 - 1));
       if (fill >>> 24 > 0) {
-         context.method_25294(x, y, x + w, y + h, fill);
+         if (r > 0) {
+            TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(fill));
+         } else {
+            context.method_25294(x, y, x + w, y + h, fill);
+         }
       }
 
       if (config.theme.slotOutlines && config.theme.hudShowBorders) {
-         context.method_73198(x, y, w, h, active ? getAccentColor(config) : getBorder(config));
+         int outline = active ? getAccentColor(config) : getBorder(config);
+         if (r > 0) {
+            TurtUIUtils.drawRoundedBorder(context, x, y, w, h, r, col(outline));
+         } else {
+            context.method_73198(x, y, w, h, outline);
+         }
       }
    }
 

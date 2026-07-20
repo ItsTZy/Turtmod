@@ -241,6 +241,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Text Shadows", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
             .addOption(bool("Bold HUD Text", () -> cfg.theme.hudTextBold, v -> cfg.theme.hudTextBold = v))
             .addOption(intOpt("Corner Radius", () -> cfg.theme.cornerRadius, v -> cfg.theme.cornerRadius = v, 0, 12, 1))
+            .addOption(bool("Glass Highlight", () -> cfg.theme.hudGlass, v -> cfg.theme.hudGlass = v))
+            .addOption(bool("Accent Bar", () -> cfg.theme.hudAccentBar, v -> cfg.theme.hudAccentBar = v))
             .addOption(button("Reset Theme", () -> resetThemeDefaults(cfg)))
             .build())
          .build();
@@ -259,6 +261,8 @@ public final class TurtModConfigScreenFactory {
       cfg.theme.enableShadows = d.enableShadows;
       cfg.theme.hudTextBold = d.hudTextBold;
       cfg.theme.cornerRadius = d.cornerRadius;
+      cfg.theme.hudGlass = d.hudGlass;
+      cfg.theme.hudAccentBar = d.hudAccentBar;
       cfg.theme.themeAlphaPercent = d.themeAlphaPercent;
       ConfigManager.save(cfg);
    }
@@ -732,6 +736,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Slot Outlines", () -> cfg.theme.slotOutlines, v -> cfg.theme.slotOutlines = v))
             .addOption(intOpt("Border Thickness", () -> cfg.theme.hudBorderThickness, v -> cfg.theme.hudBorderThickness = v, 0, 4, 1))
             .addOption(intOpt("Corner Radius", () -> cfg.theme.cornerRadius, v -> cfg.theme.cornerRadius = v, 0, 12, 1))
+            .addOption(bool("Glass Highlight", () -> cfg.theme.hudGlass, v -> cfg.theme.hudGlass = v))
+            .addOption(bool("Accent Bar", () -> cfg.theme.hudAccentBar, v -> cfg.theme.hudAccentBar = v))
             .addOption(bool("Text Shadows", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
             .addOption(bool("Bold HUD Text", () -> cfg.theme.hudTextBold, v -> cfg.theme.hudTextBold = v));
          case ELYTRA_HUD -> group
