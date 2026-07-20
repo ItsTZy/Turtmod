@@ -203,8 +203,9 @@ public final class TurtUIUtils {
          double insetF = r - dx;
          int solid = (int) Math.ceil(insetF);
          double cov = solid - insetF;
-         int aIn = (int) Math.round(baseA * Math.max(0.0, 1.0 - cov));
-         int aOut = (int) Math.round(baseA * cov);
+         // Skip pixels that would be nearly invisible - saves fills with no visible difference.
+         int aIn = cov > 0.94 ? 0 : (int) Math.round(baseA * Math.max(0.0, 1.0 - cov));
+         int aOut = cov < 0.06 ? 0 : (int) Math.round(baseA * cov);
          int left = x + solid;
          int right = x + w - solid;
          if (aIn > 0) {

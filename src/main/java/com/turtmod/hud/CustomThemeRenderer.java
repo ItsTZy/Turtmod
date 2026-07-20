@@ -30,6 +30,10 @@ public final class CustomThemeRenderer {
     */
    public static void renderThemedBox(class_332 context, int x, int y, int w, int h, TurtModConfig config) {
       int bg = getBackground(config);
+      boolean bordered = config.theme.hudShowBorders && config.theme.hudBorderThickness > 0;
+      if (bg >>> 24 == 0 && !bordered) {
+         return;   // nothing visible - skip the work entirely
+      }
       int r = radiusFor(config, w, h);
       boolean transparent = isTransparentTextMode(config);
 
@@ -140,8 +144,11 @@ public final class CustomThemeRenderer {
 
    public static void renderSlotCell(class_332 context, int x, int y, int w, int h, TurtModConfig config, boolean active) {
       int fill = getSlotBackground(config, active);
-      // Slots get a tighter radius than the outer panel so nested cells still read as square-ish.
-      int r = Math.max(0, Math.min(Math.min(3, config.theme.cornerRadius), Math.min(w, h) / 2 - 1));
+      // Slots are by far the most numerous HUD element (keystroke keys, armour/potion cells), so they
+      // stay on plain fills unless they're big enough for rounding to actually be visible. This keeps
+      // the per-frame draw count down - the rounded path costs ~45 fills per cell, a plain one costs 2.
+      int r = (w < 16 || h < 16) ? 0
+         : Math.max(0, Math.min(Math.min(3, config.theme.cornerRadius), Math.min(w, h) / 2 - 1));
       if (fill >>> 24 > 0) {
          if (r > 0) {
             TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(fill));
