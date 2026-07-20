@@ -93,8 +93,31 @@ public final class TurtModClient implements ClientModInitializer {
       TurtDiscordRpcService.bootstrap(config);
    }
 
+   /**
+    * One-time upgrade of the HUD theme to the menu-card look. Only applies when the theme still holds
+    * the exact pre-revamp defaults, so anyone who customised their colours keeps them untouched.
+    */
+   private static void migrateLegacyTheme(TurtModConfig cfg) {
+      if (cfg == null) {
+         return;
+      }
+      TurtModConfig.CustomTheme t = cfg.theme;
+      if (t.hudBackgroundColor == -14540254 && t.hudBackgroundAlpha == 49 && t.hudBorderColor == -9790395) {
+         TurtModConfig.CustomTheme d = new TurtModConfig.CustomTheme();
+         t.hudBackgroundColor = d.hudBackgroundColor;
+         t.hudBackgroundAlpha = d.hudBackgroundAlpha;
+         t.hudBorderColor = d.hudBorderColor;
+         t.cornerRadius = d.cornerRadius;
+         t.hudGlass = d.hudGlass;
+         t.hudAccentBar = d.hudAccentBar;
+         ConfigManager.save(cfg);
+         TurtLogger.info("Upgraded HUD theme to the new menu-card defaults.");
+      }
+   }
+
    public void onInitializeClient() {
       config = ConfigManager.load();
+      migrateLegacyTheme(config);
       CosmeticManager.init();
       TurtLogger.info("TurtMod initializing...");
       TurtLogger.info("Config loaded from: " + (config != null ? "memory" : "FAILED"));

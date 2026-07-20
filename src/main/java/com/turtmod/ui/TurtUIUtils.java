@@ -137,7 +137,12 @@ public final class TurtUIUtils {
       return mx >= x && mx <= x + w && my >= y && my <= y + h;
    }
 
-   // Rounded corner rect (corner-cut style, no shader needed). Cheap O(r) per corner.
+   /**
+    * Rounded rect with genuinely anti-aliased corners. The straight parts are ordinary fills; each
+    * corner pixel gets its alpha scaled by how much of it the circle actually covers, which is what
+    * makes small radii read as smooth instead of visibly stair-stepped. Cost is r² per corner, i.e.
+    * a few dozen 1px fills at the radii we use — negligible even per HUD frame.
+    */
    public static void drawRoundedRect(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
       int argb = c.getRGB();
@@ -145,18 +150,35 @@ public final class TurtUIUtils {
          context.method_25294(x, y, x + w, y + h, argb);
          return;
       }
-      // Middle full-width band.
-      context.method_25294(x, y + r, x + w, y + h - r, argb);
-      // Top + bottom rows, inset along a true quarter-circle so the corners are actually round.
-      for (int i = 0; i < r; i++) {
-         double dy = r - i - 0.5;
-         int inset = r - (int) Math.round(Math.sqrt((double) r * r - dy * dy));
-         context.method_25294(x + inset, y + i, x + w - inset, y + i + 1, argb);
-         context.method_25294(x + inset, y + h - i - 1, x + w - inset, y + h - i, argb);
+      int baseA = (argb >>> 24) & 0xFF;
+      int rgb = argb & 0xFFFFFF;
+      // Straight regions: a full-height centre band plus the two side bands between the arcs.
+      context.method_25294(x + r, y, x + w - r, y + h, argb);
+      context.method_25294(x, y + r, x + r, y + h - r, argb);
+      context.method_25294(x + w - r, y + r, x + w, y + h - r, argb);
+      // Corner quadrants, alpha-weighted by circle coverage.
+      for (int py = 0; py < r; py++) {
+         for (int px = 0; px < r; px++) {
+            double dx = r - px - 0.5;
+            double dy = r - py - 0.5;
+            double cov = r - Math.sqrt(dx * dx + dy * dy) + 0.5;
+            if (cov <= 0.0) {
+               continue;
+            }
+            int a = (int) Math.round(baseA * Math.min(1.0, cov));
+            if (a <= 0) {
+               continue;
+            }
+            int col = (a << 24) | rgb;
+            context.method_25294(x + px, y + py, x + px + 1, y + py + 1, col);
+            context.method_25294(x + w - px - 1, y + py, x + w - px, y + py + 1, col);
+            context.method_25294(x + px, y + h - py - 1, x + px + 1, y + h - py, col);
+            context.method_25294(x + w - px - 1, y + h - py - 1, x + w - px, y + h - py, col);
+         }
       }
    }
 
-   /** 1px border that follows the same rounded corners as {@link #drawRoundedRect}. */
+   /** 1px border matching {@link #drawRoundedRect}, with the same anti-aliased corner arcs. */
    public static void drawRoundedBorder(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
       int argb = c.getRGB();
@@ -164,19 +186,35 @@ public final class TurtUIUtils {
          context.method_73198(x, y, w, h, argb);
          return;
       }
+      int baseA = (argb >>> 24) & 0xFF;
+      int rgb = argb & 0xFFFFFF;
       // Straight edges between the corner arcs.
       context.method_25294(x + r, y, x + w - r, y + 1, argb);
       context.method_25294(x + r, y + h - 1, x + w - r, y + h, argb);
       context.method_25294(x, y + r, x + 1, y + h - r, argb);
       context.method_25294(x + w - 1, y + r, x + w, y + h - r, argb);
-      // Corner arc pixels.
-      for (int i = 0; i < r; i++) {
-         double dy = r - i - 0.5;
-         int inset = r - (int) Math.round(Math.sqrt((double) r * r - dy * dy));
-         context.method_25294(x + inset, y + i, x + inset + 1, y + i + 1, argb);
-         context.method_25294(x + w - inset - 1, y + i, x + w - inset, y + i + 1, argb);
-         context.method_25294(x + inset, y + h - i - 1, x + inset + 1, y + h - i, argb);
-         context.method_25294(x + w - inset - 1, y + h - i - 1, x + w - inset, y + h - i, argb);
+      // Corner arcs: coverage of the outer circle minus the one 1px inside = a soft 1px ring.
+      for (int py = 0; py < r; py++) {
+         for (int px = 0; px < r; px++) {
+            double dx = r - px - 0.5;
+            double dy = r - py - 0.5;
+            double d = Math.sqrt(dx * dx + dy * dy);
+            double outer = Math.max(0.0, Math.min(1.0, r - d + 0.5));
+            double inner = Math.max(0.0, Math.min(1.0, r - 1 - d + 0.5));
+            double cov = outer - inner;
+            if (cov <= 0.0) {
+               continue;
+            }
+            int a = (int) Math.round(baseA * cov);
+            if (a <= 0) {
+               continue;
+            }
+            int col = (a << 24) | rgb;
+            context.method_25294(x + px, y + py, x + px + 1, y + py + 1, col);
+            context.method_25294(x + w - px - 1, y + py, x + w - px, y + py + 1, col);
+            context.method_25294(x + px, y + h - py - 1, x + px + 1, y + h - py, col);
+            context.method_25294(x + w - px - 1, y + h - py - 1, x + w - px, y + h - py, col);
+         }
       }
    }
 

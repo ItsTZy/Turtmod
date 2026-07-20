@@ -99,7 +99,7 @@ public final class CustomThemeRenderer {
 
    public static int getBorder(TurtModConfig config) {
       int border = isTransparentTextMode(config) ? mix(config.theme.hudTextColor, config.theme.hudAccentColor, 0.35F) : mix(config.theme.hudBorderColor, config.theme.hudAccentColor, 0.18F);
-      int alpha = isTransparentTextMode(config) ? 160 : 220;
+      int alpha = isTransparentTextMode(config) ? 110 : 120;   // subtle hairline, like the menu cards
       return applyHudOpacity(config, applyAlpha(border, alpha));
    }
 

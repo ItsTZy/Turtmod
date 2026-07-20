@@ -586,9 +586,10 @@ public static final class Combat {
    }
 
    public static final class CustomTheme {
-      public int hudBackgroundColor = -14540254;
-      public int hudBackgroundAlpha = 49;
-      public int hudBorderColor = -9790395;
+      // Menu-card look: the same surface as the mod's UI cards, a readable fill, white hairline border.
+      public int hudBackgroundColor = 0xFF14181F;
+      public int hudBackgroundAlpha = 170;
+      public int hudBorderColor = 0xFFFFFFFF;
       public int hudBorderThickness = 1;
       public boolean hudShowBorders = true;
       public boolean slotOutlines = true;
