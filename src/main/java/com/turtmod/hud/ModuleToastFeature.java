@@ -22,7 +22,7 @@ import net.minecraft.class_332;
  */
 public final class ModuleToastFeature {
    private static final long ENTER_MS = 220, EXIT_MS = 300;
-   private static final int MAX_TOASTS = 5;
+   private static final int MAX_TOASTS = 8;   // hard cap; the visible count is configurable
    private static final List<Toast> TOASTS = new ArrayList<>();
 
    private ModuleToastFeature() {
@@ -93,6 +93,7 @@ public final class ModuleToastFeature {
       final int margin = 8, gap = 4, h = 22;
       final int pillH = 12, pillW = pillH * 2;
 
+      int maxVisible = Math.max(1, Math.min(MAX_TOASTS, cfg.hud.moduleToastMaxVisible));
       int slot = 0;
       for (int idx = TOASTS.size() - 1; idx >= 0; idx--) {
          Toast t = TOASTS.get(idx);
@@ -106,6 +107,9 @@ public final class ModuleToastFeature {
             continue;
          }
 
+         if (slot >= maxVisible) {
+            break;   // older toasts stay queued but off-screen
+         }
          int labelW = tr.method_1727(t.label);
          int w = 10 + labelW + 12 + pillW + 6;
 

@@ -333,6 +333,7 @@ public static final class Combat {
       public boolean moduleToasts = true;
       public ScreenshotCorner moduleToastCorner = ScreenshotCorner.TOP_RIGHT;
       public int moduleToastSeconds = 2;
+      public int moduleToastMaxVisible = 4;
       public boolean inventoryHudEnabled = false;
       public int inventoryHudX = 0;
       public int inventoryHudY = 203;

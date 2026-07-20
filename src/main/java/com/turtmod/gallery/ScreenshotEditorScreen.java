@@ -115,6 +115,7 @@ public class ScreenshotEditorScreen extends class_437 {
    private Annotation editingText;      // text annotation being typed
    private Annotation moving;           // committed annotation lifted out for dragging
    private int movingIndex = -1;        // where to drop it back in the z-order
+   private int hoverAnn = -1;           // annotation under the cursor while the Move tool is active
    private boolean panning;
    private double lastMx, lastMy;
 
@@ -726,6 +727,15 @@ public class ScreenshotEditorScreen extends class_437 {
          }
          return true;
       }
+      // Delete / Backspace removes whatever the Move tool is hovering.
+      if ((key == 261 || key == 259) && this.hoverAnn >= 0 && this.hoverAnn < this.annotations.size()) {
+         this.pushUndo();
+         this.annotations.remove(this.hoverAnn);
+         this.hoverAnn = -1;
+         this.invalidateOverlay();
+         this.setStatus("Deleted.");
+         return true;
+      }
       if (key == 256) {
          this.onCancel();
          return true;
@@ -825,6 +835,21 @@ public class ScreenshotEditorScreen extends class_437 {
       }
       if (this.draft != null && this.draft.type == Tool.CROP) {
          this.drawCropOverlay(ctx, this.draft);
+      }
+      // Move tool: outline whatever is under the cursor so it's clear what will be grabbed/deleted.
+      this.hoverAnn = -1;
+      if (this.tool == Tool.MOVE && this.moving == null && this.inCanvas(mouseX, mouseY)) {
+         this.hoverAnn = this.hitAnnotation(this.toImageX(mouseX), this.toImageY(mouseY));
+         if (this.hoverAnn >= 0) {
+            double[] b = EditorRasterizer.bounds(this.annotations.get(this.hoverAnn));
+            int bx1 = (int) Math.round(this.sx(b[0])), by1 = (int) Math.round(this.sy(b[1]));
+            int bx2 = (int) Math.round(this.sx(b[2])), by2 = (int) Math.round(this.sy(b[3]));
+            int accent = Palette.GREEN.getRGB();
+            ctx.method_25294(bx1, by1, bx2, by1 + 1, accent);
+            ctx.method_25294(bx1, by2 - 1, bx2, by2, accent);
+            ctx.method_25294(bx1, by1, bx1 + 1, by2, accent);
+            ctx.method_25294(bx2 - 1, by1, bx2, by2, accent);
+         }
       }
       if (this.editingText != null) {
          double cx = this.sx(this.editingText.pts.get(0)[0]);

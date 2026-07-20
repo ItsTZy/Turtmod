@@ -415,6 +415,7 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.moduleToasts = dh.moduleToasts;
             cfg.hud.moduleToastCorner = dh.moduleToastCorner;
             cfg.hud.moduleToastSeconds = dh.moduleToastSeconds;
+            cfg.hud.moduleToastMaxVisible = dh.moduleToastMaxVisible;
          }
          case CLEAN_F3 -> resetCleanF3Defaults(cfg);
          case HEALTH_INDICATOR -> resetHealthIndicatorDefaults(cfg);
@@ -681,7 +682,8 @@ public final class TurtModConfigScreenFactory {
          case MODULE_TOASTS -> group
             .addOption(bool("Enabled", () -> cfg.hud.moduleToasts, v -> cfg.hud.moduleToasts = v))
             .addOption(enumOpt("Corner", () -> cfg.hud.moduleToastCorner, v -> cfg.hud.moduleToastCorner = v, TurtModConfig.ScreenshotCorner.class))
-            .addOption(intOpt("Duration (seconds)", () -> cfg.hud.moduleToastSeconds, v -> cfg.hud.moduleToastSeconds = v, 1, 10, 1));
+            .addOption(intOpt("Duration (seconds)", () -> cfg.hud.moduleToastSeconds, v -> cfg.hud.moduleToastSeconds = v, 1, 10, 1))
+            .addOption(intOpt("Max Visible", () -> cfg.hud.moduleToastMaxVisible, v -> cfg.hud.moduleToastMaxVisible = v, 1, 8, 1));
          case CLEAN_F3 -> group
             .addOption(bool("Enabled", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))
             .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))
