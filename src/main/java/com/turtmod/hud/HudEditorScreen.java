@@ -24,6 +24,8 @@ public class HudEditorScreen extends class_437 {
 
    // Per-element hover glow state
    private final float[] elemGlow = new float[HudEditorFeature.Anchor.values().length];
+   /** Per-element gear-button hitboxes {x,y,w,h}, refreshed each frame (off-screen when hidden). */
+   private final int[][] gearRects = new int[HudEditorFeature.Anchor.values().length][4];
    private long lastFrameNs = System.nanoTime();
    private float openFade = 0.0F;
 
@@ -274,9 +276,57 @@ public class HudEditorScreen extends class_437 {
          TurtUIUtils.drawRoundedRect(ctx, chipX, chipY, chipW, 11, 2, new Color(chipBg, true));
          ctx.method_25300(client.field_1772, name, chipX + chipW / 2, chipY + 2,
             sel ? 0xFF000000 : (int)(g * 255) << 24 | (TEXT_MAIN.getRGB() & 0xFFFFFF) | 0xFF000000);
+
+         // Gear button beside the name chip — opens this HUD's settings page. Only while hovered/selected.
+         com.turtmod.config.TurtModConfigScreenFactory.ModuleKind kind = getAnchorModule(anchor);
+         if (kind != null && (hov || sel)) {
+            int gx = chipX + chipW + 3, gy = chipY;
+            boolean gHov = mx >= gx && mx <= gx + 11 && my >= gy && my <= gy + 11;
+            TurtUIUtils.drawRoundedRect(ctx, gx, gy, 11, 11, 2,
+               new Color(gHov ? ACCENT_GREEN.getRGB() : 0xCC2A2A2A, true));
+            drawGearIcon(ctx, gx, gy, gHov ? 0xFF101216 : 0xFFE6E6E6);
+            gearRects[i][0] = gx;
+            gearRects[i][1] = gy;
+            gearRects[i][2] = 11;
+            gearRects[i][3] = 11;
+         } else {
+            gearRects[i][0] = -1000;
+            gearRects[i][1] = -1000;
+            gearRects[i][2] = 0;
+            gearRects[i][3] = 0;
+         }
       }
       // Let HudEditorFeature draw the actual HUD widgets + selection handles
       HudEditorFeature.render(ctx, client, this.cfg, mx, my);
+   }
+
+   /** The settings page each draggable HUD belongs to, or null if it has no dedicated page. */
+   private static com.turtmod.config.TurtModConfigScreenFactory.ModuleKind getAnchorModule(HudEditorFeature.Anchor a) {
+      return switch (a) {
+         case ARMOR         -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.ARMOR_HUD;
+         case POTION        -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.POTION_HUD;
+         case OVERLAY       -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.FPS_PING;
+         case DEBUG         -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.CLEAN_F3;
+         case REACH         -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.REACH;
+         case SPRINT        -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.SPRINT_HUD;
+         case KEYSTROKES    -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.KEYSTROKES;
+         case CPS_COUNTER   -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.CPS_COUNTER;
+         case INVENTORY     -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.INVENTORY_HUD;
+         case COORDINATES   -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.COORDINATES_HUD;
+         case ZOOM          -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.ZOOM;
+         default            -> null;
+      };
+   }
+
+   /** Small gear glyph drawn inside an 11px chip. */
+   private static void drawGearIcon(class_332 ctx, int x, int y, int color) {
+      // 4 nubs around a ring with a hollow centre — reads as a cog at this size.
+      ctx.method_25294(x + 4, y + 1, x + 7, y + 3, color);
+      ctx.method_25294(x + 4, y + 8, x + 7, y + 10, color);
+      ctx.method_25294(x + 1, y + 4, x + 3, y + 7, color);
+      ctx.method_25294(x + 8, y + 4, x + 10, y + 7, color);
+      ctx.method_25294(x + 3, y + 3, x + 8, y + 8, color);
+      ctx.method_25294(x + 5, y + 5, x + 6, y + 6, 0xFF101216);
    }
 
    private static String getAnchorName(HudEditorFeature.Anchor a) {
@@ -304,6 +354,22 @@ public class HudEditorScreen extends class_437 {
       if (button == 0)
          for (TurtUIButton btn : this.buttons)
             if (btn.mouseClicked((int)mx, (int)my, button)) return true;
+      // Per-element gear buttons open that HUD's settings page (checked before drag handling).
+      if (button == 0) {
+         HudEditorFeature.Anchor[] anchors = HudEditorFeature.Anchor.values();
+         for (int i = 0; i < anchors.length; i++) {
+            int[] r = gearRects[i];
+            if (r[2] > 0 && mx >= r[0] && mx <= r[0] + r[2] && my >= r[1] && my <= r[1] + r[3]) {
+               var kind = getAnchorModule(anchors[i]);
+               if (kind != null && this.field_22787 != null) {
+                  ConfigManager.save(TurtModClient.getConfig());
+                  this.field_22787.method_1507(
+                     com.turtmod.config.TurtModConfigScreenFactory.createForModule(this, kind));
+                  return true;
+               }
+            }
+         }
+      }
       if (HudEditorFeature.mouseClicked(mx, my, button, this.field_22787, TurtModClient.getConfig())) return true;
       return super.method_25402(click, bl);
    }
