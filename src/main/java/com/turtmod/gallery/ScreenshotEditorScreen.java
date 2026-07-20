@@ -31,7 +31,7 @@ import net.minecraft.class_437;
  * annotations rasterized into a PNG via {@link EditorRasterizer} (AWT).
  */
 public class ScreenshotEditorScreen extends class_437 {
-   public enum Tool { PAN, MOVE, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT }
+   public enum Tool { PAN, MOVE, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT, BLUR, PIXELATE }
 
    /** One committed (or in-progress) vector edit, in image-pixel coordinates. */
    public static final class Annotation {
@@ -738,6 +738,8 @@ public class ScreenshotEditorScreen extends class_437 {
          case 82 -> Tool.RECT;         // R
          case 69 -> Tool.ELLIPSE;      // E
          case 84 -> Tool.TEXT;         // T
+         case 66 -> Tool.BLUR;         // B
+         case 88 -> Tool.PIXELATE;     // X
          case 32 -> Tool.PAN;          // Space
          default -> null;
       };
@@ -1200,6 +1202,20 @@ public class ScreenshotEditorScreen extends class_437 {
          case TEXT -> {
             ctx.method_25294(x, y, x + 12, y + 2, c);
             ctx.method_25294(x + 5, y, x + 7, y + 12, c);
+         }
+         case BLUR -> {
+            // soft concentric blocks
+            ctx.method_25294(x + 2, y + 2, x + 10, y + 10, c);
+            ctx.method_25294(x + 4, y + 4, x + 8, y + 8, 0xFF101216);
+         }
+         case PIXELATE -> {
+            for (int gx = 0; gx < 3; gx++) {
+               for (int gy = 0; gy < 3; gy++) {
+                  if ((gx + gy) % 2 == 0) {
+                     ctx.method_25294(x + gx * 4, y + gy * 4, x + gx * 4 + 4, y + gy * 4 + 4, c);
+                  }
+               }
+            }
          }
          default -> {
          }

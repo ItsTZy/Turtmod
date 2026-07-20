@@ -104,7 +104,14 @@ public final class EditorRasterizer {
       g.drawImage(read, 0, 0, null);
       applyHints(g);
       for (Annotation a : anns) {
-         draw(g, a);
+         if (a.type == ScreenshotEditorScreen.Tool.BLUR || a.type == ScreenshotEditorScreen.Tool.PIXELATE) {
+            g.dispose();
+            applyRegionEffect(full, a);
+            g = full.createGraphics();
+            applyHints(g);
+         } else {
+            draw(g, a);
+         }
       }
       g.dispose();
 
@@ -120,6 +127,80 @@ public final class EditorRasterizer {
       og.drawImage(full, -cx, -cy, null);
       og.dispose();
       return out;
+   }
+
+   /**
+    * Region effects (blur / pixelate) have to sample the image underneath, so they are applied to the
+    * composed picture rather than stroked like the other tools.
+    */
+   private static void applyRegionEffect(BufferedImage img, Annotation a) {
+      int x0 = Math.max(0, Math.min(ix(a, 0), ix(a, 1)));
+      int y0 = Math.max(0, Math.min(iy(a, 0), iy(a, 1)));
+      int x1 = Math.min(img.getWidth(), Math.max(ix(a, 0), ix(a, 1)));
+      int y1 = Math.min(img.getHeight(), Math.max(iy(a, 0), iy(a, 1)));
+      int w = x1 - x0, h = y1 - y0;
+      if (w <= 1 || h <= 1) {
+         return;
+      }
+      if (a.type == ScreenshotEditorScreen.Tool.PIXELATE) {
+         int block = Math.max(2, Math.round(a.size * 2f));
+         for (int by = y0; by < y1; by += block) {
+            for (int bx = x0; bx < x1; bx += block) {
+               int bw = Math.min(block, x1 - bx), bh = Math.min(block, y1 - by);
+               long r = 0, g2 = 0, b = 0, n = 0;
+               for (int yy = by; yy < by + bh; yy++) {
+                  for (int xx = bx; xx < bx + bw; xx++) {
+                     int c = img.getRGB(xx, yy);
+                     r += (c >> 16) & 0xFF;
+                     g2 += (c >> 8) & 0xFF;
+                     b += c & 0xFF;
+                     n++;
+                  }
+               }
+               if (n == 0) {
+                  continue;
+               }
+               int avg = 0xFF000000 | ((int) (r / n) << 16) | ((int) (g2 / n) << 8) | (int) (b / n);
+               for (int yy = by; yy < by + bh; yy++) {
+                  for (int xx = bx; xx < bx + bw; xx++) {
+                     img.setRGB(xx, yy, avg);
+                  }
+               }
+            }
+         }
+         return;
+      }
+      // BLUR: a couple of box-blur passes over the region.
+      int radius = Math.max(1, Math.round(a.size));
+      int[] src = img.getRGB(x0, y0, w, h, null, 0, w);
+      int[] dst = new int[src.length];
+      for (int pass = 0; pass < 2; pass++) {
+         for (int yy = 0; yy < h; yy++) {
+            for (int xx = 0; xx < w; xx++) {
+               long r = 0, g2 = 0, b = 0, n = 0;
+               for (int ky = -radius; ky <= radius; ky++) {
+                  int sy = yy + ky;
+                  if (sy < 0 || sy >= h) {
+                     continue;
+                  }
+                  for (int kx = -radius; kx <= radius; kx++) {
+                     int sx = xx + kx;
+                     if (sx < 0 || sx >= w) {
+                        continue;
+                     }
+                     int c = src[sy * w + sx];
+                     r += (c >> 16) & 0xFF;
+                     g2 += (c >> 8) & 0xFF;
+                     b += c & 0xFF;
+                     n++;
+                  }
+               }
+               dst[yy * w + xx] = 0xFF000000 | ((int) (r / n) << 16) | ((int) (g2 / n) << 8) | (int) (b / n);
+            }
+         }
+         System.arraycopy(dst, 0, src, 0, src.length);
+      }
+      img.setRGB(x0, y0, w, h, src, 0, w);
    }
 
    private static void draw(Graphics2D g, Annotation a) {
@@ -179,6 +260,13 @@ public final class EditorRasterizer {
             } else {
                g.drawOval(x, y, w, h);
             }
+         }
+         case BLUR, PIXELATE -> {
+            // In the live overlay these only mark their area; the real effect is applied on save.
+            g.setColor(new Color(255, 255, 255, 90));
+            g.setStroke(new BasicStroke(Math.max(1f, t / 2f)));
+            int x = Math.min(ix(a, 0), ix(a, 1)), y = Math.min(iy(a, 0), iy(a, 1));
+            g.drawRect(x, y, Math.abs(ix(a, 1) - ix(a, 0)), Math.abs(iy(a, 1) - iy(a, 0)));
          }
          case TEXT -> {
             if (a.text != null && !a.text.isEmpty()) {
