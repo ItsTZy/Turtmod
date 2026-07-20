@@ -84,6 +84,7 @@ public class CosmeticsScreen extends class_437 {
 
       this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply", btnTheme, this::uploadSelectedSkinGlobal)); sy += bh + gap;
       this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload", btnTheme, this::importSkinFile)); sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Edit Skin", btnTheme, this::openSkinEditor)); sy += bh + gap;
       this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", btnTheme, () -> {
          this.loadAvailableSkins(); this.setStatus("List refreshed.");
       })); sy += bh + gap;
@@ -204,6 +205,17 @@ public class CosmeticsScreen extends class_437 {
          this.globalSlimModel ? class_7920.field_41122 : class_7920.field_41123,
          true
       );
+   }
+
+   /** Open the skin editor, seeded with the selected skin when there is one. */
+   private void openSkinEditor() {
+      java.io.File seed = null;
+      if (this.selectedSkinIndex >= 0 && this.selectedSkinIndex < this.availableSkins.size()) {
+         seed = new java.io.File(((SkinEntry) this.availableSkins.get(this.selectedSkinIndex)).filePath);
+      }
+      if (this.field_22787 != null) {
+         this.field_22787.method_1507(new SkinEditorScreen(this, seed));
+      }
    }
 
    private void selectCurrentSkin() {
