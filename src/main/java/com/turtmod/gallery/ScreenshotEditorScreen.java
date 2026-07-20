@@ -31,7 +31,7 @@ import net.minecraft.class_437;
  * annotations rasterized into a PNG via {@link EditorRasterizer} (AWT).
  */
 public class ScreenshotEditorScreen extends class_437 {
-   public enum Tool { PAN, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT }
+   public enum Tool { PAN, MOVE, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT }
 
    /** One committed (or in-progress) vector edit, in image-pixel coordinates. */
    public static final class Annotation {
@@ -87,6 +87,12 @@ public class ScreenshotEditorScreen extends class_437 {
    private int alphaPct = 100;      // opacity of the colour being drawn with
    private boolean fillShapes;      // rect/ellipse solid instead of outline
 
+   // Custom colour: an extra swatch backed by an HSV picker (hue strip + saturation/value square).
+   private float pickH = 0.55f, pickS = 0.85f, pickV = 1.0f;
+   private boolean pickerOpen;
+   private int pickerX, pickerY;
+   private static final int PICK_W = 108, PICK_H = 64, HUE_H = 10;
+
    // ── Live overlay ───────────────────────────────────────────────────────────
    // Committed annotations are rasterized by EditorRasterizer (the same AWT code that writes the PNG)
    // into an image-space texture that is simply blitted. That makes the preview match the saved file
@@ -97,8 +103,18 @@ public class ScreenshotEditorScreen extends class_437 {
    private double overlayScale = 1.0;
    private int annVersion, overlayVersion = -1;
 
+   // The in-progress stroke gets its own small overlay covering just its bounds, rendered by the same
+   // rasterizer, so a stroke looks identical while you draw it and after it is committed.
+   private class_2960 draftId;
+   private int draftTexW, draftTexH;
+   private double draftOriginX, draftOriginY, draftBoxW, draftBoxH;
+   private boolean draftDirty;
+   private long lastDraftRenderNs;
+
    private Annotation draft;            // shape/pen currently being dragged
    private Annotation editingText;      // text annotation being typed
+   private Annotation moving;           // committed annotation lifted out for dragging
+   private int movingIndex = -1;        // where to drop it back in the z-order
    private boolean panning;
    private double lastMx, lastMy;
 
@@ -114,7 +130,7 @@ public class ScreenshotEditorScreen extends class_437 {
    // Tool-rail / bottom-bar hit rects, filled during render.
    private final int[] railX = new int[Tool.values().length];
    private final int[] railY = new int[Tool.values().length];
-   private final int[] swX = new int[SWATCHES.length];
+   private final int[] swX = new int[SWATCHES.length + 1];
    private int swY, sizeBarX, sizeBarY, undoX, redoX, barY, fillBtnX, opacityBtnX;
 
    private static final int RAIL_W = 26, RAIL_BTN = 22, RAIL_GAP = 4;
@@ -165,15 +181,121 @@ public class ScreenshotEditorScreen extends class_437 {
       }
    }
 
+   /** Topmost committed annotation whose painted bounds contain this image point, or -1. */
+   private int hitAnnotation(double ix, double iy) {
+      for (int i = this.annotations.size() - 1; i >= 0; i--) {
+         double[] b = EditorRasterizer.bounds(this.annotations.get(i));
+         if (ix >= b[0] && ix <= b[2] && iy >= b[1] && iy <= b[3]) {
+            return i;
+         }
+      }
+      return -1;
+   }
+
+   /** The custom swatch's RGB, from the picker's current hue/saturation/value. */
+   private int customColor() {
+      return 0xFF000000 | (Color.HSBtoRGB(this.pickH, this.pickS, this.pickV) & 0xFFFFFF);
+   }
+
+   /** Palette entry i - the fixed swatches, then the custom one at the end. */
+   private int swatchColor(int i) {
+      return i < SWATCHES.length ? SWATCHES[i] : this.customColor();
+   }
+
+   /** Number of selectable swatches (fixed palette + the custom one). */
+   private int swatchCount() {
+      return SWATCHES.length + 1;
+   }
+
    /** The active swatch with the current opacity applied. */
    private int currentColor() {
       int a = Math.max(0, Math.min(255, Math.round(this.alphaPct * 2.55f)));
-      return (a << 24) | (SWATCHES[this.colorIdx] & 0xFFFFFF);
+      return (a << 24) | (this.swatchColor(this.colorIdx) & 0xFFFFFF);
    }
 
    /** Mark the committed-annotation set dirty so the overlay is rebuilt next frame. */
    private void invalidateOverlay() {
       this.annVersion++;
+   }
+
+   /** Mark the in-progress stroke dirty (it re-renders on the next frame, throttled). */
+   private void markDraftDirty() {
+      this.draftDirty = true;
+   }
+
+   /** The live, not-yet-committed annotations: the stroke being dragged and any text being typed. */
+   private List<Annotation> liveAnnotations() {
+      List<Annotation> live = new ArrayList<>(2);
+      if (this.moving != null) {
+         live.add(this.moving);
+      }
+      if (this.draft != null && this.draft.type != Tool.CROP) {
+         live.add(this.draft);
+      }
+      if (this.editingText != null && !this.editingText.text.isEmpty()) {
+         live.add(this.editingText);
+      }
+      return live;
+   }
+
+   /**
+    * Rebuild the small overlay for the live stroke. Rendered by {@link EditorRasterizer} exactly like the
+    * committed overlay, so committing a stroke never changes how it looks. Throttled because a drag can
+    * fire many times a frame; the bounds are just the stroke's own box, so it stays cheap.
+    */
+   private void ensureDraftOverlay() {
+      List<Annotation> live = this.liveAnnotations();
+      if (live.isEmpty()) {
+         this.draftId = null;
+         this.draftDirty = false;
+         return;
+      }
+      long now = System.nanoTime();
+      if (!this.draftDirty || (this.draftId != null && now - this.lastDraftRenderNs < 25_000_000L)) {
+         return;
+      }
+      this.draftDirty = false;
+      this.lastDraftRenderNs = now;
+      try {
+         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+         for (Annotation a : live) {
+            double[] b = EditorRasterizer.bounds(a);
+            minX = Math.min(minX, b[0]);
+            minY = Math.min(minY, b[1]);
+            maxX = Math.max(maxX, b[2]);
+            maxY = Math.max(maxY, b[3]);
+         }
+         minX = Math.max(0, minX);
+         minY = Math.max(0, minY);
+         maxX = Math.min(this.imageWidth, maxX);
+         maxY = Math.min(this.imageHeight, maxY);
+         if (maxX <= minX || maxY <= minY) {
+            this.draftId = null;
+            return;
+         }
+         this.draftOriginX = minX;
+         this.draftOriginY = minY;
+         this.draftBoxW = maxX - minX;
+         this.draftBoxH = maxY - minY;
+         this.draftTexW = Math.max(1, (int) Math.round(this.draftBoxW * this.overlayScale));
+         this.draftTexH = Math.max(1, (int) Math.round(this.draftBoxH * this.overlayScale));
+
+         BufferedImage img = EditorRasterizer.renderOverlayRegion(this.draftTexW, this.draftTexH,
+            this.overlayScale, this.draftOriginX, this.draftOriginY, live);
+         class_1011 baked = new class_1011(this.draftTexW, this.draftTexH, false);
+         int[] row = new int[this.draftTexW];
+         for (int y = 0; y < this.draftTexH; y++) {
+            img.getRGB(0, y, this.draftTexW, 1, row, 0, this.draftTexW);
+            for (int x = 0; x < this.draftTexW; x++) {
+               baked.method_61941(x, y, row[x]);
+            }
+         }
+         String key = "editor_draft/" + Math.abs(this.file.getAbsolutePath().hashCode());
+         this.draftId = class_2960.method_60655("turtmod", key);
+         class_310.method_1551().method_1531().method_4616(this.draftId, new class_1043(() -> "turtmod:" + key, baked));
+      } catch (Exception e) {
+         this.draftId = null;
+      }
    }
 
    /**
@@ -373,9 +495,18 @@ public class ScreenshotEditorScreen extends class_437 {
                return true;
             }
          }
-         // Swatches.
-         for (int i = 0; i < SWATCHES.length; i++) {
+         // Colour picker panel (checked before the bar so its area isn't stolen by what's underneath).
+         if (this.pickerOpen && this.handlePickerClick(mx, my)) {
+            return true;
+         }
+         // Swatches; clicking the custom one (last) opens/closes the picker.
+         for (int i = 0; i < this.swatchCount(); i++) {
             if (mx >= this.swX[i] && mx <= this.swX[i] + SW && my >= this.swY && my <= this.swY + SW) {
+               if (i == SWATCHES.length) {
+                  this.pickerOpen = this.colorIdx == i ? !this.pickerOpen : true;
+               } else {
+                  this.pickerOpen = false;
+               }
                this.colorIdx = i;
                if (this.editingText != null) {
                   this.editingText.argb = this.currentColor();
@@ -429,6 +560,20 @@ public class ScreenshotEditorScreen extends class_437 {
          }
          if (button == 0) {
             double ix = this.clampIX(this.toImageX(mx)), iy = this.clampIY(this.toImageY(my));
+            if (this.tool == Tool.MOVE) {
+               int hit = this.hitAnnotation(ix, iy);
+               if (hit >= 0) {
+                  this.pushUndo();
+                  this.movingIndex = hit;
+                  this.moving = this.annotations.remove(hit);
+                  this.invalidateOverlay();   // it now renders through the cheap live overlay
+                  this.markDraftDirty();
+                  this.lastMx = mx;
+                  this.lastMy = my;
+                  this.setStatus("Moving - drag to reposition.");
+               }
+               return true;
+            }
             if (this.tool == Tool.TEXT) {
                this.commitEditingText();
                this.editingText = new Annotation(Tool.TEXT, this.currentColor(), SIZES[this.sizeIdx]);
@@ -441,6 +586,7 @@ public class ScreenshotEditorScreen extends class_437 {
             if (this.tool != Tool.PEN && this.tool != Tool.HIGHLIGHTER) {
                this.draft.pts.add(new double[]{ix, iy}); // second point for shapes
             }
+            this.markDraftDirty();
             return true;
          }
       }
@@ -449,11 +595,27 @@ public class ScreenshotEditorScreen extends class_437 {
 
    public boolean method_25403(class_11909 click, double dx, double dy) {
       double mx = click.comp_4798(), my = click.comp_4799();
+      // Dragging inside the open picker keeps updating the colour.
+      if (this.pickerOpen && this.handlePickerClick(mx, my)) {
+         return true;
+      }
       if (this.panning) {
          this.panX += mx - this.lastMx;
          this.panY += my - this.lastMy;
          this.lastMx = mx;
          this.lastMy = my;
+         return true;
+      }
+      if (this.moving != null) {
+         double dix = (mx - this.lastMx) / this.sp;
+         double diy = (my - this.lastMy) / this.sp;
+         for (double[] pt : this.moving.pts) {
+            pt[0] += dix;
+            pt[1] += diy;
+         }
+         this.lastMx = mx;
+         this.lastMy = my;
+         this.markDraftDirty();
          return true;
       }
       if (this.draft != null) {
@@ -463,6 +625,7 @@ public class ScreenshotEditorScreen extends class_437 {
          } else {
             this.draft.pts.set(1, new double[]{ix, iy});
          }
+         this.markDraftDirty();
          return true;
       }
       return super.method_25403(click, dx, dy);
@@ -473,9 +636,19 @@ public class ScreenshotEditorScreen extends class_437 {
          this.panning = false;
          return true;
       }
+      if (this.moving != null) {
+         this.annotations.add(Math.min(this.movingIndex, this.annotations.size()), this.moving);
+         this.moving = null;
+         this.movingIndex = -1;
+         this.draftId = null;
+         this.invalidateOverlay();
+         return true;
+      }
       if (this.draft != null) {
          Annotation d = this.draft;
          this.draft = null;
+         this.draftId = null;
+         this.markDraftDirty();
          if (d.type == Tool.CROP) {
             this.applyCrop(d);
          } else if (this.validDraft(d)) {
@@ -528,6 +701,7 @@ public class ScreenshotEditorScreen extends class_437 {
          String s = event.method_74226();
          if (s != null && !s.isEmpty()) {
             this.editingText.text += s;
+            this.markDraftDirty();
             return true;
          }
       }
@@ -544,6 +718,7 @@ public class ScreenshotEditorScreen extends class_437 {
                String tx = this.editingText.text;
                if (!tx.isEmpty()) {
                   this.editingText.text = tx.substring(0, tx.length() - 1);
+                  this.markDraftDirty();
                }
             }
             default -> {
@@ -638,16 +813,20 @@ public class ScreenshotEditorScreen extends class_437 {
          ctx.method_25302(class_10799.field_56883, this.overlayId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
             ou, ov, drawW, drawH, orw, orh, this.overlayW, this.overlayH);
       }
-      // The in-progress stroke stays on the cheap path; it snaps to the exact rendering on release.
-      if (this.draft != null) {
-         if (this.draft.type == Tool.CROP) {
-            this.drawCropOverlay(ctx, this.draft);
-         } else {
-            this.drawAnnotation(ctx, this.draft);
-         }
+      // The live stroke is drawn by the same rasterizer, so committing it never changes its look.
+      this.ensureDraftOverlay();
+      if (this.draftId != null) {
+         int dx = (int) Math.round(this.sx(this.draftOriginX));
+         int dy = (int) Math.round(this.sy(this.draftOriginY));
+         int dw = Math.max(1, (int) Math.round(this.draftBoxW * this.sp));
+         int dh = Math.max(1, (int) Math.round(this.draftBoxH * this.sp));
+         ctx.method_25302(class_10799.field_56883, this.draftId, dx, dy, 0f, 0f, dw, dh,
+            this.draftTexW, this.draftTexH, this.draftTexW, this.draftTexH);
+      }
+      if (this.draft != null && this.draft.type == Tool.CROP) {
+         this.drawCropOverlay(ctx, this.draft);
       }
       if (this.editingText != null) {
-         this.drawAnnotation(ctx, this.editingText);
          double cx = this.sx(this.editingText.pts.get(0)[0]);
          double cy = this.sy(this.editingText.pts.get(0)[1]);
          if ((System.currentTimeMillis() / 500) % 2 == 0) {
@@ -804,14 +983,23 @@ public class ScreenshotEditorScreen extends class_437 {
       this.barY = y;
       int x = this.canvasX;
       this.swY = y;
-      for (int i = 0; i < SWATCHES.length; i++) {
+      for (int i = 0; i < this.swatchCount(); i++) {
          this.swX[i] = x;
-         ctx.method_25294(x, y, x + SW, y + SW, 0xFF000000 | (SWATCHES[i] & 0xFFFFFF));
+         boolean custom = i == SWATCHES.length;
+         ctx.method_25294(x, y, x + SW, y + SW, 0xFF000000 | (this.swatchColor(i) & 0xFFFFFF));
          ctx.method_73198(x, y, SW, SW, (this.colorIdx == i ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
          if (this.colorIdx == i) {
             ctx.method_73198(x - 1, y - 1, SW + 2, SW + 2, Palette.GREEN.getRGB());
          }
+         if (custom) {
+            // little corner notch marks this as the editable one
+            ctx.method_25294(x + SW - 5, y + SW - 5, x + SW - 1, y + SW - 1, 0xFFFFFFFF);
+            ctx.method_25294(x + SW - 4, y + SW - 4, x + SW - 2, y + SW - 2, 0xFF000000 | (this.customColor() & 0xFFFFFF));
+         }
          x += SW + SWG;
+      }
+      if (this.pickerOpen) {
+         this.renderColorPicker(ctx, mouseX, mouseY);
       }
       x += 8;
       this.sizeBarX = x;
@@ -843,6 +1031,67 @@ public class ScreenshotEditorScreen extends class_437 {
       this.drawIconButton(ctx, this.redoX, y, mouseX, mouseY, "↷", !this.redo.isEmpty());
    }
 
+   /** HSV picker: a saturation/value square with a hue strip under it, above the custom swatch. */
+   private void renderColorPicker(class_332 ctx, int mouseX, int mouseY) {
+      int px = this.swX[SWATCHES.length] - PICK_W + SW;
+      int py = this.swY - PICK_H - HUE_H - 12;
+      px = Math.max(this.canvasX, Math.min(px, this.field_22789 - PICK_W - 8));
+      py = Math.max(this.canvasY, py);
+      this.pickerX = px;
+      this.pickerY = py;
+
+      TurtUIUtils.drawRoundedRect(ctx, px - 4, py - 4, PICK_W + 8, PICK_H + HUE_H + 14, 4, Palette.alpha(Palette.PANEL_BG, 245));
+      TurtUIUtils.drawRoundedBorder(ctx, px - 4, py - 4, PICK_W + 8, PICK_H + HUE_H + 14, 4, Palette.alpha(Palette.PANEL_BORDER, 255));
+
+      // Saturation (x) / value (y) square for the current hue, drawn in 2px cells to stay cheap.
+      for (int sxp = 0; sxp < PICK_W; sxp += 2) {
+         float sat = (float) sxp / (PICK_W - 1);
+         for (int syp = 0; syp < PICK_H; syp += 2) {
+            float val = 1f - (float) syp / (PICK_H - 1);
+            int rgb = 0xFF000000 | (Color.HSBtoRGB(this.pickH, sat, val) & 0xFFFFFF);
+            ctx.method_25294(px + sxp, py + syp, px + sxp + 2, py + syp + 2, rgb);
+         }
+      }
+      // Current SV marker.
+      int mxp = px + Math.round(this.pickS * (PICK_W - 1));
+      int myp = py + Math.round((1f - this.pickV) * (PICK_H - 1));
+      ctx.method_73198(mxp - 2, myp - 2, 5, 5, 0xFFFFFFFF);
+
+      // Hue strip.
+      int hy = py + PICK_H + 4;
+      for (int i = 0; i < PICK_W; i++) {
+         int rgb = 0xFF000000 | (Color.HSBtoRGB((float) i / (PICK_W - 1), 1f, 1f) & 0xFFFFFF);
+         ctx.method_25294(px + i, hy, px + i + 1, hy + HUE_H, rgb);
+      }
+      int hxp = px + Math.round(this.pickH * (PICK_W - 1));
+      ctx.method_73198(hxp - 1, hy - 1, 3, HUE_H + 2, 0xFFFFFFFF);
+   }
+
+   /** Route a click inside the open picker to the SV square or the hue strip. */
+   private boolean handlePickerClick(double mx, double my) {
+      int px = this.pickerX, py = this.pickerY;
+      if (mx >= px && mx < px + PICK_W && my >= py && my < py + PICK_H) {
+         this.pickS = (float) Math.max(0, Math.min(1, (mx - px) / (PICK_W - 1)));
+         this.pickV = 1f - (float) Math.max(0, Math.min(1, (my - py) / (PICK_H - 1)));
+         this.colorIdx = SWATCHES.length;
+         if (this.editingText != null) {
+            this.editingText.argb = this.currentColor();
+         }
+         return true;
+      }
+      int hy = py + PICK_H + 4;
+      if (mx >= px && mx < px + PICK_W && my >= hy && my < hy + HUE_H) {
+         this.pickH = (float) Math.max(0, Math.min(1, (mx - px) / (PICK_W - 1)));
+         this.colorIdx = SWATCHES.length;
+         if (this.editingText != null) {
+            this.editingText.argb = this.currentColor();
+         }
+         return true;
+      }
+      // Clicking anywhere else inside the panel keeps it open without doing anything.
+      return mx >= px - 4 && mx <= px + PICK_W + 4 && my >= py - 4 && my <= py + PICK_H + HUE_H + 10;
+   }
+
    private void drawIconButton(class_332 ctx, int x, int y, int mouseX, int mouseY, String glyph, boolean enabled) {
       boolean hov = enabled && mouseX >= x && mouseX <= x + 26 && mouseY >= y && mouseY <= y + 18;
       ctx.method_25294(x, y, x + 26, y + 18, (hov ? Palette.BTN_HOVER : Palette.BTN_BG).getRGB());
@@ -857,6 +1106,15 @@ public class ScreenshotEditorScreen extends class_437 {
          case PAN -> {
             ctx.method_25294(x + 5, y, x + 7, y + 12, c);
             ctx.method_25294(x, y + 5, x + 12, y + 7, c);
+         }
+         case MOVE -> {
+            // four-way arrow
+            ctx.method_25294(x + 5, y + 1, x + 7, y + 11, c);
+            ctx.method_25294(x + 1, y + 5, x + 11, y + 7, c);
+            ctx.method_25294(x + 4, y + 2, x + 8, y + 3, c);
+            ctx.method_25294(x + 4, y + 9, x + 8, y + 10, c);
+            ctx.method_25294(x + 2, y + 4, x + 3, y + 8, c);
+            ctx.method_25294(x + 9, y + 4, x + 10, y + 8, c);
          }
          case CROP -> {
             ctx.method_25294(x + 2, y, x + 3, y + 12, c);

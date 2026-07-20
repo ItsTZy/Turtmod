@@ -48,6 +48,51 @@ public final class EditorRasterizer {
       return img;
    }
 
+   /**
+    * Same as {@link #renderOverlay} but only covering the image-space region starting at
+    * ({@code offX},{@code offY}). Used for the in-progress stroke so it is drawn by this exact
+    * renderer while you drag — no change in appearance when the stroke is committed.
+    */
+   public static BufferedImage renderOverlayRegion(int w, int h, double scale, double offX, double offY, List<Annotation> anns) {
+      BufferedImage img = new BufferedImage(Math.max(1, w), Math.max(1, h), BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = img.createGraphics();
+      applyHints(g);
+      g.scale(scale, scale);
+      g.translate(-offX, -offY);
+      for (Annotation a : anns) {
+         draw(g, a);
+      }
+      g.dispose();
+      return img;
+   }
+
+   /** Rough image-space bounds an annotation paints into, padded for stroke width / arrow heads. */
+   public static double[] bounds(Annotation a) {
+      double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+      for (double[] p : a.pts) {
+         minX = Math.min(minX, p[0]);
+         minY = Math.min(minY, p[1]);
+         maxX = Math.max(maxX, p[0]);
+         maxY = Math.max(maxY, p[1]);
+      }
+      if (minX > maxX) {
+         return new double[]{0, 0, 0, 0};
+      }
+      double pad = Math.max(a.size * 3.0, 12.0);
+      if (a.type == ScreenshotEditorScreen.Tool.TEXT) {
+         int fp = fontPx(a.size);
+         String[] lines = (a.text == null ? "" : a.text).split("\n", -1);
+         int longest = 0;
+         for (String line : lines) {
+            longest = Math.max(longest, line.length());
+         }
+         maxX += fp * 0.75 * Math.max(1, longest);
+         maxY += fp * 1.35 * Math.max(1, lines.length);
+         pad = Math.max(pad, fp);
+      }
+      return new double[]{minX - pad, minY - pad, maxX + pad, maxY + pad};
+   }
+
    /** Compose the base image + annotations, apply crop, and return the final RGB(A) image. */
    public static BufferedImage bake(File source, int[] crop, List<Annotation> anns) throws Exception {
       BufferedImage read = ImageIO.read(source);
