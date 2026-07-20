@@ -143,6 +143,44 @@ public final class CleanF3Feature {
       return out;
    }
 
+   /**
+    * The vanilla-style right-hand column: system info plus what you're looking at. Anchored to the
+    * right screen edge like vanilla's, so it isn't part of the draggable left panel.
+    */
+   public static List<String[]> buildRightLines(class_310 client, TurtModConfig config) {
+      List<String[]> out = new ArrayList<>();
+      if (client == null || client.field_1724 == null || !config.hud.cleanF3RightColumn) {
+         return out;
+      }
+      Runtime rt = Runtime.getRuntime();
+      long max = rt.maxMemory();
+      long total = rt.totalMemory();
+      long used = total - rt.freeMemory();
+
+      out.add(new String[]{"Java", System.getProperty("java.version", "?") + " " + System.getProperty("sun.arch.data.model", "64") + "bit"});
+      out.add(new String[]{"Mem", String.format("%d%% %d/%dMB", used * 100L / max, used / 1048576L, max / 1048576L)});
+      out.add(new String[]{"Allocated", String.format("%d%% %dMB", total * 100L / max, total / 1048576L)});
+      out.add(new String[]{"CPU", rt.availableProcessors() + "x " + System.getProperty("os.arch", "?")});
+      if (client.method_22683() != null) {
+         out.add(new String[]{"Display", client.method_22683().method_4489() + "x" + client.method_22683().method_4506()});
+      }
+
+      // Targeted block / entity, with the block's id like vanilla shows.
+      class_239 hit = client.field_1765;
+      if (hit instanceof class_3965 blockHit && client.field_1687 != null) {
+         class_2338 bp = blockHit.method_17777();
+         out.add(new String[]{"Targeted Block", bp.method_10263() + " " + bp.method_10264() + " " + bp.method_10260()});
+         try {
+            String id = net.minecraft.class_7923.field_41175.method_10221(client.field_1687.method_8320(bp).method_26204()).toString();
+            out.add(new String[]{"", id});
+         } catch (Exception ignored) {
+         }
+      } else if (hit instanceof class_3966 entityHit) {
+         out.add(new String[]{"Targeted Entity", entityHit.method_17782().method_5477().getString()});
+      }
+      return out;
+   }
+
    /** Unscaled pixel width of the widest "label: value" line (incl. the per-line bg padding). */
    public static int boxWidth(class_310 client, List<String[]> lines) {
       if (client == null || lines.isEmpty()) {
@@ -163,6 +201,7 @@ public final class CleanF3Feature {
    }
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
+      renderRight(context, client, config);
       List<String[]> lines = buildLines(client, config);
       if (lines.isEmpty()) {
          return;
@@ -189,6 +228,38 @@ public final class CleanF3Feature {
          }
          context.method_27535(font, class_2561.method_43470(line[0] + ": "), textX, ly, config.hud.cleanF3LabelColor);
          context.method_27535(font, class_2561.method_43470(line[1]), textX + labelW, ly, config.hud.cleanF3ValueColor);
+      }
+      context.method_51448().popMatrix();
+   }
+
+   /** Vanilla-style right column, right-aligned to the screen edge and scaled like the left panel. */
+   private static void renderRight(class_332 context, class_310 client, TurtModConfig config) {
+      List<String[]> lines = buildRightLines(client, config);
+      if (lines.isEmpty()) {
+         return;
+      }
+      class_327 font = client.field_1772;
+      int sep = font.method_1727(": ");
+      float scale = CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent);
+      int screenW = Math.round(context.method_51421() / scale);
+      int y = config.hud.cleanF3Y;
+
+      context.method_51448().pushMatrix();
+      context.method_51448().scale(scale, scale);
+      for (int i = 0; i < lines.size(); i++) {
+         String[] line = lines.get(i);
+         boolean labelled = !line[0].isEmpty();
+         int labelW = labelled ? font.method_1727(line[0]) + sep : 0;
+         int lineW = labelW + font.method_1727(line[1]);
+         int lx = screenW - lineW - 4;
+         int ly = y + TOP_PAD + i * LINE_H;
+         if (config.hud.cleanF3ShowBackground) {
+            context.method_25294(lx - 1, ly - 1, lx + lineW + 1, ly + LINE_H - 1, BF3_BG);
+         }
+         if (labelled) {
+            context.method_27535(font, class_2561.method_43470(line[0] + ": "), lx, ly, config.hud.cleanF3LabelColor);
+         }
+         context.method_27535(font, class_2561.method_43470(line[1]), lx + labelW, ly, config.hud.cleanF3ValueColor);
       }
       context.method_51448().popMatrix();
    }

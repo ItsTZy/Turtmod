@@ -406,6 +406,8 @@ public static final class Combat {
       public boolean cleanF3ShowHeldItem;
       public boolean cleanF3ShowDimension;
       public boolean cleanF3ShowFpsExtremes;
+      // Vanilla-style right-hand column (Java / memory / CPU / display / what you are looking at).
+      public boolean cleanF3RightColumn = true;
       // BetterF3-style two-tone colouring + the line order (list of line keys, see DebugHudMixin).
       public int cleanF3LabelColor = 0xFF7FE08A;
       public int cleanF3ValueColor = 0xFFE6E6E6;
