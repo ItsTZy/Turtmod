@@ -138,10 +138,12 @@ public final class TurtUIUtils {
    }
 
    /**
-    * Rounded rect with genuinely anti-aliased corners. The straight parts are ordinary fills; each
-    * corner pixel gets its alpha scaled by how much of it the circle actually covers, which is what
-    * makes small radii read as smooth instead of visibly stair-stepped. Cost is r² per corner, i.e.
-    * a few dozen 1px fills at the radii we use — negligible even per HUD frame.
+    * Rounded rect with anti-aliased corners.
+    *
+    * <p>Per corner row we fill one solid span and add a single partial-coverage pixel at each end,
+    * so cost stays O(radius) — about {@code 1 + 6r} fills. An earlier version shaded every pixel of
+    * the r×r corner box (O(r²), ~576 fills at r=12); with the dozens of rounded elements a menu
+    * draws that flooded the render thread and hung the game, so keep this loop O(r).
     */
    public static void drawRoundedRect(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
@@ -152,33 +154,34 @@ public final class TurtUIUtils {
       }
       int baseA = (argb >>> 24) & 0xFF;
       int rgb = argb & 0xFFFFFF;
-      // Straight regions: a full-height centre band plus the two side bands between the arcs.
-      context.method_25294(x + r, y, x + w - r, y + h, argb);
-      context.method_25294(x, y + r, x + r, y + h - r, argb);
-      context.method_25294(x + w - r, y + r, x + w, y + h - r, argb);
-      // Corner quadrants, alpha-weighted by circle coverage.
-      for (int py = 0; py < r; py++) {
-         for (int px = 0; px < r; px++) {
-            double dx = r - px - 0.5;
-            double dy = r - py - 0.5;
-            double cov = r - Math.sqrt(dx * dx + dy * dy) + 0.5;
-            if (cov <= 0.0) {
-               continue;
+      // Body between the two arc bands.
+      context.method_25294(x, y + r, x + w, y + h - r, argb);
+      for (int i = 0; i < r; i++) {
+         double dy = r - i - 0.5;
+         double dx = Math.sqrt((double) r * r - dy * dy);
+         double insetF = r - dx;
+         int solid = (int) Math.ceil(insetF);
+         int left = x + solid;
+         int right = x + w - solid;
+         if (right > left) {
+            context.method_25294(left, y + i, right, y + i + 1, argb);
+            context.method_25294(left, y + h - i - 1, right, y + h - i, argb);
+         }
+         double cov = solid - insetF;
+         if (cov > 0.004) {
+            int a = (int) Math.round(baseA * cov);
+            if (a > 0) {
+               int col = (a << 24) | rgb;
+               context.method_25294(left - 1, y + i, left, y + i + 1, col);
+               context.method_25294(right, y + i, right + 1, y + i + 1, col);
+               context.method_25294(left - 1, y + h - i - 1, left, y + h - i, col);
+               context.method_25294(right, y + h - i - 1, right + 1, y + h - i, col);
             }
-            int a = (int) Math.round(baseA * Math.min(1.0, cov));
-            if (a <= 0) {
-               continue;
-            }
-            int col = (a << 24) | rgb;
-            context.method_25294(x + px, y + py, x + px + 1, y + py + 1, col);
-            context.method_25294(x + w - px - 1, y + py, x + w - px, y + py + 1, col);
-            context.method_25294(x + px, y + h - py - 1, x + px + 1, y + h - py, col);
-            context.method_25294(x + w - px - 1, y + h - py - 1, x + w - px, y + h - py, col);
          }
       }
    }
 
-   /** 1px border matching {@link #drawRoundedRect}, with the same anti-aliased corner arcs. */
+   /** 1px border matching {@link #drawRoundedRect}, with the same O(radius) anti-aliased arcs. */
    public static void drawRoundedBorder(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
       int argb = c.getRGB();
@@ -193,27 +196,30 @@ public final class TurtUIUtils {
       context.method_25294(x + r, y + h - 1, x + w - r, y + h, argb);
       context.method_25294(x, y + r, x + 1, y + h - r, argb);
       context.method_25294(x + w - 1, y + r, x + w, y + h - r, argb);
-      // Corner arcs: coverage of the outer circle minus the one 1px inside = a soft 1px ring.
-      for (int py = 0; py < r; py++) {
-         for (int px = 0; px < r; px++) {
-            double dx = r - px - 0.5;
-            double dy = r - py - 0.5;
-            double d = Math.sqrt(dx * dx + dy * dy);
-            double outer = Math.max(0.0, Math.min(1.0, r - d + 0.5));
-            double inner = Math.max(0.0, Math.min(1.0, r - 1 - d + 0.5));
-            double cov = outer - inner;
-            if (cov <= 0.0) {
-               continue;
-            }
-            int a = (int) Math.round(baseA * cov);
-            if (a <= 0) {
-               continue;
-            }
-            int col = (a << 24) | rgb;
-            context.method_25294(x + px, y + py, x + px + 1, y + py + 1, col);
-            context.method_25294(x + w - px - 1, y + py, x + w - px, y + py + 1, col);
-            context.method_25294(x + px, y + h - py - 1, x + px + 1, y + h - py, col);
-            context.method_25294(x + w - px - 1, y + h - py - 1, x + w - px, y + h - py, col);
+      // Arc pixels: split the edge across the two pixels it straddles so it reads smooth.
+      for (int i = 0; i < r; i++) {
+         double dy = r - i - 0.5;
+         double dx = Math.sqrt((double) r * r - dy * dy);
+         double insetF = r - dx;
+         int solid = (int) Math.ceil(insetF);
+         double cov = solid - insetF;
+         int aIn = (int) Math.round(baseA * Math.max(0.0, 1.0 - cov));
+         int aOut = (int) Math.round(baseA * cov);
+         int left = x + solid;
+         int right = x + w - solid;
+         if (aIn > 0) {
+            int col = (aIn << 24) | rgb;
+            context.method_25294(left, y + i, left + 1, y + i + 1, col);
+            context.method_25294(right - 1, y + i, right, y + i + 1, col);
+            context.method_25294(left, y + h - i - 1, left + 1, y + h - i, col);
+            context.method_25294(right - 1, y + h - i - 1, right, y + h - i, col);
+         }
+         if (aOut > 0) {
+            int col = (aOut << 24) | rgb;
+            context.method_25294(left - 1, y + i, left, y + i + 1, col);
+            context.method_25294(right, y + i, right + 1, y + i + 1, col);
+            context.method_25294(left - 1, y + h - i - 1, left, y + h - i, col);
+            context.method_25294(right, y + h - i - 1, right + 1, y + h - i, col);
          }
       }
    }
