@@ -41,6 +41,21 @@ public final class ScreenshotUploadFeature {
       }
    }
 
+   /** Open the newest screenshot straight in the editor (used by the corner preview's edit chip). */
+   public static void editLastScreenshot(class_310 client) {
+      String path = BetterScreenshotFeature.getLastAbsoluteScreenshotPath();
+      if (path == null) {
+         send(client, class_2561.method_43470("No recent screenshot found.").method_27692(class_124.field_1061));
+      } else {
+         File file = new File(path);
+         if (file.exists() && file.isFile()) {
+            client.execute(() -> client.method_1507(new com.turtmod.gallery.ScreenshotEditorScreen(client.field_1755, file)));
+         } else {
+            send(client, class_2561.method_43470("Screenshot file not found.").method_27692(class_124.field_1061));
+         }
+      }
+   }
+
    public static void openScreenshotFolder(class_310 client) {
       String path = BetterScreenshotFeature.getLastAbsoluteScreenshotPath();
       File folder;

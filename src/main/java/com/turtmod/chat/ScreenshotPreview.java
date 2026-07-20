@@ -19,7 +19,7 @@ import net.minecraft.class_3417;
 /**
  * Animated corner preview shown after taking a screenshot (F2): the shot scales + fades into the
  * configured corner, holds for a few seconds, then drops away — with inline TurtMod-styled action
- * chips (view / copy / delete). Original implementation; the actions reuse
+ * chips (view / edit / copy / delete). Original implementation; the actions reuse
  * {@link ScreenshotUploadFeature}. Fed a framebuffer image by {@code ScreenshotGrabMixin}, drawn each
  * HUD frame from {@code TurtModClient.onHudRender}, clicked via {@code MouseMixin}.
  */
@@ -192,10 +192,10 @@ public final class ScreenshotPreview {
       interactiveNow = interactive;
       if (interactive) {
          updateHover(mc, ctx);
-         int total = 3 * CHIP + 2 * CHIP_GAP;
+         int total = 4 * CHIP + 3 * CHIP_GAP;
          int rowX = drawX + drawW - total - 4;
          int rowY = drawY + drawH - CHIP - 4;
-         for (int i = 0; i < 3; i++) {
+         for (int i = 0; i < 4; i++) {
             int cx = rowX + i * (CHIP + CHIP_GAP);
             bx[i] = cx;
             by[i] = rowY;
@@ -217,7 +217,7 @@ public final class ScreenshotPreview {
       double mx = mc.field_1729.method_1603() * ctx.method_51421() / sx;
       double my = mc.field_1729.method_1604() * ctx.method_51443() / sy;
       hovered = -1;
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 4; i++) {
          if (mx >= bx[i] && mx <= bx[i] + CHIP && my >= by[i] && my <= by[i] + CHIP) {
             hovered = i;
          }
@@ -234,7 +234,7 @@ public final class ScreenshotPreview {
       double sy = Math.max(1, mc.method_22683().method_4506());
       double mx = mc.field_1729.method_1603() * mc.method_22683().method_4486() / sx;
       double my = mc.field_1729.method_1604() * mc.method_22683().method_4502() / sy;
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 4; i++) {
          if (mx >= bx[i] && mx <= bx[i] + CHIP && my >= by[i] && my <= by[i] + CHIP) {
             doAction(i, mc);
             return true;
@@ -246,8 +246,9 @@ public final class ScreenshotPreview {
    private static void doAction(int i, class_310 mc) {
       switch (i) {
          case 0 -> { ScreenshotUploadFeature.viewLastScreenshot(mc); closeAt = System.currentTimeMillis(); }
-         case 1 -> { ScreenshotUploadFeature.copyLastScreenshotPath(mc); copyAt = System.currentTimeMillis(); }
-         case 2 -> { deleteNewest(mc); dismissNow(); }
+         case 1 -> { ScreenshotUploadFeature.editLastScreenshot(mc); closeAt = System.currentTimeMillis(); }
+         case 2 -> { ScreenshotUploadFeature.copyLastScreenshotPath(mc); copyAt = System.currentTimeMillis(); }
+         case 3 -> { deleteNewest(mc); dismissNow(); }
          default -> { }
       }
    }
@@ -283,11 +284,17 @@ public final class ScreenshotPreview {
             ctx.method_25294(x + 2, y + 2, x + 5, y + 5, hole);
             ctx.method_25294(x + 3, y + 3, x + 4, y + 4, c);
          }
-         case 1 -> {
+         case 1 -> { // edit - pencil
+            for (int k = 0; k < 6; k++) {
+               ctx.method_25294(x + k, y + 6 - k, x + k + 2, y + 8 - k, c);
+            }
+            ctx.method_25294(x, y + 6, x + 2, y + 8, c);
+         }
+         case 2 -> {
             drawBorder(ctx, x + 2, y, 5, 5, c, 1);
             drawBorder(ctx, x, y + 2, 5, 5, c, 1);
          }
-         case 2 -> {
+         case 3 -> {
             ctx.method_25294(x, y + 1, x + 7, y + 2, c);
             ctx.method_25294(x + 2, y, x + 5, y + 1, c);
             drawBorder(ctx, x + 1, y + 2, 5, 5, c, 1);
