@@ -122,7 +122,7 @@ public final class ScreenshotPreview {
          }
       }
 
-      int w = Math.max(96, sw / 5);
+      int w = Math.max(64, Math.round(sw / 5f * Math.max(40, Math.min(200, cfg.hud.screenshotPreviewScalePercent)) / 100f));
       int h = imgW > 0 ? w * imgH / imgW : w * 9 / 16;
       int margin = 10;
 

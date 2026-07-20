@@ -326,6 +326,7 @@ public static final class Combat {
       public boolean screenshotPreview = true;
       public ScreenshotCorner screenshotPreviewCorner = ScreenshotCorner.BOTTOM_RIGHT;
       public int screenshotPreviewSeconds = 4;
+      public int screenshotPreviewScalePercent = 100;   // size of the corner preview card
       public boolean screenshotShutterSound = true;
       public boolean screenshotFlash = true;
       public boolean screenshotMenuButton = true;
@@ -334,6 +335,9 @@ public static final class Combat {
       public ScreenshotCorner moduleToastCorner = ScreenshotCorner.TOP_RIGHT;
       public int moduleToastSeconds = 2;
       public int moduleToastMaxVisible = 4;
+      // Nudge the toast stack away from its corner, for lining it up with other HUDs.
+      public int moduleToastOffsetX = 0;
+      public int moduleToastOffsetY = 0;
       public boolean inventoryHudEnabled = false;
       public int inventoryHudX = 0;
       public int inventoryHudY = 203;

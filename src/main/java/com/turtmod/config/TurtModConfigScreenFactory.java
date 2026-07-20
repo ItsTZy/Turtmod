@@ -407,6 +407,7 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.screenshotPreview = dh.screenshotPreview;
             cfg.hud.screenshotPreviewCorner = dh.screenshotPreviewCorner;
             cfg.hud.screenshotPreviewSeconds = dh.screenshotPreviewSeconds;
+            cfg.hud.screenshotPreviewScalePercent = dh.screenshotPreviewScalePercent;
             cfg.hud.screenshotShutterSound = dh.screenshotShutterSound;
             cfg.hud.screenshotFlash = dh.screenshotFlash;
             cfg.hud.screenshotMenuButton = dh.screenshotMenuButton;
@@ -416,6 +417,8 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.moduleToastCorner = dh.moduleToastCorner;
             cfg.hud.moduleToastSeconds = dh.moduleToastSeconds;
             cfg.hud.moduleToastMaxVisible = dh.moduleToastMaxVisible;
+            cfg.hud.moduleToastOffsetX = dh.moduleToastOffsetX;
+            cfg.hud.moduleToastOffsetY = dh.moduleToastOffsetY;
          }
          case CLEAN_F3 -> resetCleanF3Defaults(cfg);
          case HEALTH_INDICATOR -> resetHealthIndicatorDefaults(cfg);
@@ -679,6 +682,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Corner Preview", () -> cfg.hud.screenshotPreview, v -> cfg.hud.screenshotPreview = v))
             .addOption(enumOpt("Preview Corner", () -> cfg.hud.screenshotPreviewCorner, v -> cfg.hud.screenshotPreviewCorner = v, TurtModConfig.ScreenshotCorner.class))
             .addOption(intOpt("Preview Seconds", () -> cfg.hud.screenshotPreviewSeconds, v -> cfg.hud.screenshotPreviewSeconds = v, 1, 15, 1))
+            .addOption(intOpt("Preview Size %", () -> cfg.hud.screenshotPreviewScalePercent, v -> cfg.hud.screenshotPreviewScalePercent = v, 40, 200, 5))
             .addOption(bool("Shutter Sound", () -> cfg.hud.screenshotShutterSound, v -> cfg.hud.screenshotShutterSound = v))
             .addOption(bool("Camera Flash", () -> cfg.hud.screenshotFlash, v -> cfg.hud.screenshotFlash = v))
             .addOption(bool("Pause-Menu Gallery Button", () -> cfg.hud.screenshotMenuButton, v -> cfg.hud.screenshotMenuButton = v));
@@ -686,7 +690,9 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.hud.moduleToasts, v -> cfg.hud.moduleToasts = v))
             .addOption(enumOpt("Corner", () -> cfg.hud.moduleToastCorner, v -> cfg.hud.moduleToastCorner = v, TurtModConfig.ScreenshotCorner.class))
             .addOption(intOpt("Duration (seconds)", () -> cfg.hud.moduleToastSeconds, v -> cfg.hud.moduleToastSeconds = v, 1, 10, 1))
-            .addOption(intOpt("Max Visible", () -> cfg.hud.moduleToastMaxVisible, v -> cfg.hud.moduleToastMaxVisible = v, 1, 8, 1));
+            .addOption(intOpt("Max Visible", () -> cfg.hud.moduleToastMaxVisible, v -> cfg.hud.moduleToastMaxVisible = v, 1, 8, 1))
+            .addOption(intOpt("Offset X", () -> cfg.hud.moduleToastOffsetX, v -> cfg.hud.moduleToastOffsetX = v, -200, 200, 2))
+            .addOption(intOpt("Offset Y", () -> cfg.hud.moduleToastOffsetY, v -> cfg.hud.moduleToastOffsetY = v, -200, 200, 2));
          case CLEAN_F3 -> group
             .addOption(bool("Enabled", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))
             .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))

@@ -126,8 +126,8 @@ public final class ModuleToastFeature {
          }
          int a = Math.max(0, Math.min(255, Math.round(alpha * 255f)));
 
-         int x = (right ? sw - margin - w : margin) + Math.round(slideX);
-         int y = top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap);
+         int x = (right ? sw - margin - w : margin) + Math.round(slideX) + cfg.hud.moduleToastOffsetX;
+         int y = (top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap)) + cfg.hud.moduleToastOffsetY;
 
          Color accent = Palette.GREEN;
          // Card + hairline border, exactly like a module row in the menu.
