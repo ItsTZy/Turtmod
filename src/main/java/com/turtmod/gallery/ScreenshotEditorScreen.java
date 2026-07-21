@@ -31,7 +31,7 @@ import net.minecraft.class_437;
  * annotations rasterized into a PNG via {@link EditorRasterizer} (AWT).
  */
 public class ScreenshotEditorScreen extends class_437 {
-   public enum Tool { PAN, MOVE, ERASER, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT, BLUR, PIXELATE }
+   public enum Tool { PAN, MOVE, ERASER, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT }
 
    /** One committed (or in-progress) vector edit, in image-pixel coordinates. */
    public static final class Annotation {
@@ -753,8 +753,6 @@ public class ScreenshotEditorScreen extends class_437 {
          case 82 -> Tool.RECT;         // R
          case 69 -> Tool.ELLIPSE;      // E
          case 84 -> Tool.TEXT;         // T
-         case 66 -> Tool.BLUR;         // B
-         case 88 -> Tool.PIXELATE;     // X
          case 32 -> Tool.PAN;          // Space
          default -> null;
       };
@@ -791,10 +789,9 @@ public class ScreenshotEditorScreen extends class_437 {
       this.lastFrameNs = nowNs;
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, dt, 12f);
 
+      // Exact same backdrop as the hub/gallery (gradient + drifting glows) — no extra tint on top, so the
+      // editor reads as the same app/theme rather than a darker separate screen.
       TurtUIUtils.drawMenuBackdrop(ctx, this.field_22789, this.field_22790);
-      // Gentle extra darkening for canvas contrast, but keep the shared backdrop (gradient + drifting
-      // glows) visible so the editor matches the hub/gallery instead of reading as a separate app.
-      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x66121316);
       // Mod branding logo + gradient title, like the chrome screens.
       com.turtmod.ui.BrandingRenderer.drawLogo(ctx, 12, 8, 20, 20);
       TurtUIUtils.drawGradientText(ctx, this.field_22793, "SCREENSHOT EDITOR", 38, 12,
@@ -1051,7 +1048,7 @@ public class ScreenshotEditorScreen extends class_437 {
          if (sel) {
             ctx.method_73198(x - 1, by - 1, RAIL_BTN + 2, RAIL_BTN + 2, Palette.GREEN.getRGB());
          }
-         this.drawToolIcon(ctx, tv, x, by, (sel ? Palette.PANEL_BG : (hov ? Palette.GREEN : Palette.TEXT)).getRGB());
+         this.drawToolIcon(ctx, tv, x, by, (sel ? Palette.alpha(Palette.PANEL_BG, 255) : (hov ? Palette.GREEN : Palette.TEXT)).getRGB());
       }
    }
 
@@ -1093,8 +1090,6 @@ public class ScreenshotEditorScreen extends class_437 {
          case RECT -> "Rectangle  (R)";
          case ELLIPSE -> "Ellipse  (E)";
          case TEXT -> "Text  (T)";
-         case BLUR -> "Blur  (B)";
-         case PIXELATE -> "Pixelate  (X)";
       };
    }
 
@@ -1111,8 +1106,6 @@ public class ScreenshotEditorScreen extends class_437 {
          case RECT -> "Drag a rectangle (toggle Fill below).";
          case ELLIPSE -> "Drag an ellipse (toggle Fill below).";
          case TEXT -> "Click, then type. Enter to commit.";
-         case BLUR -> "Drag over an area to blur it out.";
-         case PIXELATE -> "Drag over an area to pixelate it.";
       };
    }
 
@@ -1147,14 +1140,14 @@ public class ScreenshotEditorScreen extends class_437 {
          boolean sel = this.sizeIdx == i;
          ctx.method_25294(bx, y, bx + 18, y + SW, (sel ? Palette.GREEN : Palette.BTN_BG).getRGB());
          ctx.method_73198(bx, y, 18, SW, (sel ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
-         ctx.method_25300(this.field_22793, SIZE_LABELS[i], bx + 9, y + 4, (sel ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+         ctx.method_25300(this.field_22793, SIZE_LABELS[i], bx + 9, y + 4, (sel ? Palette.alpha(Palette.PANEL_BG, 255) : Palette.TEXT).getRGB());
       }
       // Fill toggle + opacity cycle.
       this.fillBtnX = x + SIZES.length * (18 + 3) + 8;
       boolean fillHov = mouseX >= this.fillBtnX && mouseX <= this.fillBtnX + 30 && mouseY >= y && mouseY <= y + SW;
       ctx.method_25294(this.fillBtnX, y, this.fillBtnX + 30, y + SW, (this.fillShapes ? Palette.GREEN : (fillHov ? Palette.BTN_HOVER : Palette.BTN_BG)).getRGB());
       ctx.method_73198(this.fillBtnX, y, 30, SW, (this.fillShapes ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
-      ctx.method_25300(this.field_22793, "Fill", this.fillBtnX + 15, y + 4, (this.fillShapes ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+      ctx.method_25300(this.field_22793, "Fill", this.fillBtnX + 15, y + 4, (this.fillShapes ? Palette.alpha(Palette.PANEL_BG, 255) : Palette.TEXT).getRGB());
 
       this.opacityBtnX = this.fillBtnX + 34;
       boolean opHov = mouseX >= this.opacityBtnX && mouseX <= this.opacityBtnX + 34 && mouseY >= y && mouseY <= y + SW;
@@ -1300,20 +1293,6 @@ public class ScreenshotEditorScreen extends class_437 {
          case TEXT -> {
             ctx.method_25294(x, y, x + 12, y + 2, c);
             ctx.method_25294(x + 5, y, x + 7, y + 12, c);
-         }
-         case BLUR -> {
-            // soft concentric blocks
-            ctx.method_25294(x + 2, y + 2, x + 10, y + 10, c);
-            ctx.method_25294(x + 4, y + 4, x + 8, y + 8, 0xFF101216);
-         }
-         case PIXELATE -> {
-            for (int gx = 0; gx < 3; gx++) {
-               for (int gy = 0; gy < 3; gy++) {
-                  if ((gx + gy) % 2 == 0) {
-                     ctx.method_25294(x + gx * 4, y + gy * 4, x + gx * 4 + 4, y + gy * 4 + 4, c);
-                  }
-               }
-            }
          }
          default -> {
          }

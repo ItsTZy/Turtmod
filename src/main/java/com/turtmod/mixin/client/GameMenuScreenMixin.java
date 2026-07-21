@@ -34,9 +34,9 @@ public abstract class GameMenuScreenMixin extends class_437 {
       if (cfg == null || cfg.hud.screenshotMenuButton) {
          this.method_37063(class_4185.method_46430(class_2561.method_43470("📸"), (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))).method_46434(col, y, 20, 20).method_46431());
       }
-      // Skin Changer: a small button in the right margin with a live 3D body preview above it.
+      // Skin Changer: a small icon button stacked just above the screenshot-gallery button.
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
-         this.method_37063(new SkinPreviewButton(this.field_22789 / 2 + 130, y, 44, 20,
+         this.method_37063(new SkinPreviewButton(col, y - 24, 20, 20,
             (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));
       }
    }

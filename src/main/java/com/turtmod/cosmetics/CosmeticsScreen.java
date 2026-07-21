@@ -34,7 +34,7 @@ import org.joml.Vector3f;
  * preset pushes the skin and cape to your real Mojang account.
  */
 public class CosmeticsScreen extends class_437 {
-   private enum View { GALLERY, EDIT }
+   private enum View { GALLERY, EDIT, LIBRARY }
 
    private final class_437 parent;
    private View view = View.GALLERY;
@@ -61,6 +61,9 @@ public class CosmeticsScreen extends class_437 {
    private final List<int[]> capeRects = new ArrayList<>();   // [x,y,w,h,index] in logical space
 
    private float galleryScroll = 0f;
+   private final List<String> librarySkins = new ArrayList<>();   // absolute .png paths in the skins folder
+   private float libraryScroll = 0f;
+   private int modelTogX, modelTogY, modelTogW, modelTogH;        // segmented Classic|Slim toggle rect
    private String statusMessage = "";
    private int messageTicks = 0;
    private float openFade = 0f;
@@ -94,6 +97,7 @@ public class CosmeticsScreen extends class_437 {
       this.presets = PresetStore.load();
       this.layoutPanels();
       this.rebuildButtons();
+      loadCapes();   // so gallery cards and the editor preview can both show capes
    }
 
    private TurtUITheme theme() {
@@ -126,20 +130,23 @@ public class CosmeticsScreen extends class_437 {
          this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply", t, this::applySelected)); sy += bh + gap;
          this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Delete", t, this::deleteSelected));
          this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, this::method_25419));
-      } else {
-         // Editor: upload/model buttons live in the content area; sidebar holds save/apply/back.
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Save", t, this::saveEditing)); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply Now", t, () -> { saveEditing(); applyPreset(this.editing); })); sy += bh + group;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, this.editing != null && this.editing.slim ? "Model: Slim" : "Model: Classic", t, this::toggleModel));
+      } else if (this.view == View.EDIT) {
+         // Sidebar: save/apply both return to the gallery; model toggle is a segmented control under the preview.
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Save & Close", t, this::backToGallery)); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply Now", t, () -> { saveEditing(); applyPreset(this.editing); backToGallery(); })); sy += bh + group;
          this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back to Presets", t, this::backToGallery));
 
-         // Content-area upload row.
-         int cy = this.contentY + 44;
+         // Content-area skin sources: IGN field + Fetch, then Upload PNG / Skins Library.
          int col = this.contentX;
-         int colW = this.contentW * 52 / 100;   // left column holds the controls
+         int colW = this.contentW * 52 / 100;
+         int cy = this.contentY + 44;
          this.ignX = col; this.ignY = cy; this.ignW = colW - 60; this.ignH = bh;
          this.buttons.add(new TurtUIButton(col + colW - 56, cy, 56, bh, "Fetch", t, () -> fetchByName(this.ignInput))); cy += bh + gap;
-         this.buttons.add(new TurtUIButton(col, cy, colW, bh, "Upload PNG from PC", t, this::importSkinFile)); cy += bh + gap;
+         int halfW = (colW - gap) / 2;
+         this.buttons.add(new TurtUIButton(col, cy, halfW, bh, "Upload PNG", t, this::importSkinFile));
+         this.buttons.add(new TurtUIButton(col + halfW + gap, cy, colW - halfW - gap, bh, "Skins Library", t, this::openLibrary));
+      } else { // LIBRARY
+         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, () -> { this.view = View.EDIT; this.rebuildButtons(); }));
       }
    }
 
@@ -289,6 +296,28 @@ public class CosmeticsScreen extends class_437 {
       }
    }
 
+   private void openLibrary() {
+      loadAvailableSkins();
+      this.view = View.LIBRARY;
+      this.libraryScroll = 0f;
+      this.rebuildButtons();
+   }
+
+   /** All .png files currently in the skins folder (previously fetched / uploaded skins). */
+   private void loadAvailableSkins() {
+      this.librarySkins.clear();
+      Path dir = CosmeticManager.getSkinsDirectory();
+      try {
+         Files.createDirectories(dir);
+         java.io.File[] files = dir.toFile().listFiles((d, n) -> n.toLowerCase().endsWith(".png"));
+         if (files != null) {
+            java.util.Arrays.sort(files, java.util.Comparator.comparing(java.io.File::getName));
+            for (java.io.File f : files) this.librarySkins.add(f.getAbsolutePath());
+         }
+      } catch (Exception ignored) {
+      }
+   }
+
    private void loadCapes() {
       this.capesLoading = true;
       new Thread(() -> {
@@ -331,13 +360,16 @@ public class CosmeticsScreen extends class_437 {
 
       String player = this.field_22787 != null && this.field_22787.method_1548() != null
          ? this.field_22787.method_1548().method_1676() : "Player";
+      String chromeTitle = this.view == View.GALLERY ? "Skin Presets" : this.view == View.EDIT ? "Edit Preset" : "Skins Library";
       TurtLauncher.drawChrome(ctx, this.field_22793, this.panelX, this.panelY, this.panelW, this.panelH,
-         this.view == View.GALLERY ? "Skin Presets" : "Edit Preset", player, "Skins");
+         chromeTitle, player, "Skins");
 
       if (this.view == View.GALLERY) {
          renderGallery(ctx, mx, my);
-      } else {
+      } else if (this.view == View.EDIT) {
          renderEditor(ctx, mx, my);
+      } else {
+         renderLibrary(ctx, mx, my);
       }
 
       if (this.messageTicks > 0) {
@@ -382,6 +414,46 @@ public class CosmeticsScreen extends class_437 {
       ctx.method_44380();
    }
 
+   private void renderLibrary(class_332 ctx, int mx, int my) {
+      TurtLauncher.drawContentPanel(ctx, this.field_22793, this.contentX, this.contentY, this.contentW, this.contentH, "PICK A SAVED SKIN");
+      int viewTop = this.contentY + 22, viewH = this.contentH - 28;
+      if (this.librarySkins.isEmpty()) {
+         ctx.method_25300(this.field_22793, "No saved skins yet", this.contentX + this.contentW / 2, viewTop + viewH / 2 - 8, 0xFF888888);
+         ctx.method_25300(this.field_22793, "Fetch or upload one first", this.contentX + this.contentW / 2, viewTop + viewH / 2 + 4, 0xFF666666);
+         return;
+      }
+      int cols = galleryCols();
+      int usedW = cols * CARD_W + (cols - 1) * CARD_GAP;
+      int startX = this.contentX + (this.contentW - usedW) / 2;
+      ctx.method_44379(this.contentX + 1, viewTop, this.contentX + this.contentW - 1, viewTop + viewH);
+      for (int i = 0; i < this.librarySkins.size(); i++) {
+         int col = i % cols, row = i / cols;
+         int cardX = startX + col * (CARD_W + CARD_GAP);
+         int cardY = viewTop + row * (CARD_H + CARD_GAP) - (int) this.libraryScroll;
+         if (cardY + CARD_H <= viewTop || cardY >= viewTop + viewH) continue;
+         renderLibraryCard(ctx, this.librarySkins.get(i), cardX, cardY, mx, my);
+      }
+      ctx.method_44380();
+   }
+
+   private void renderLibraryCard(class_332 ctx, String path, int x, int y, int mx, int my) {
+      boolean hovered = mx >= x && mx <= x + CARD_W && my >= y && my <= y + CARD_H;
+      TurtUIUtils.drawRoundedRect(ctx, x, y, CARD_W, CARD_H, 5, new Color(hovered ? 0x33000000 : 0x1E000000, true));
+      int stageX = x + 8, stageY = y + 6, stageW = CARD_W - 16, stageH = CARD_H - 24;
+      TurtUIUtils.drawRoundedRect(ctx, stageX, stageY, stageW, stageH, 4, new Color(0, 0, 0, 130));
+      TurtUIUtils.drawStage(ctx, stageX, stageY, stageW, stageH, ACCENT_GREEN);
+      class_2960 tex = getSkinTexture(path);
+      if (tex != null) {
+         float rot = ((float) (System.currentTimeMillis() % 9000L) / 9000f * 360f);
+         drawModel3D(ctx, tex, false, null, stageX, stageY, stageW, stageH, 180f + rot, 0f, 0f, 0f);
+      }
+      TurtUIUtils.drawRoundedBorder(ctx, stageX, stageY, stageW, stageH, 4, new Color(255, 255, 255, hovered ? 60 : 24));
+      String name = new java.io.File(path).getName();
+      if (name.toLowerCase().endsWith(".png")) name = name.substring(0, name.length() - 4);
+      if (name.length() > 13) name = name.substring(0, 12) + "..";
+      ctx.method_25300(this.field_22793, name, x + CARD_W / 2, y + CARD_H - 11, hovered ? ACCENT_GREEN.getRGB() : TEXT_MAIN.getRGB());
+   }
+
    private void renderPresetCard(class_332 ctx, SkinPreset p, int x, int y, boolean selected, int mx, int my) {
       boolean hovered = mx >= x && mx <= x + CARD_W && my >= y && my <= y + CARD_H;
       int bg = selected ? 0x48000000 : (hovered ? 0x33000000 : 0x1E000000);
@@ -394,7 +466,7 @@ public class CosmeticsScreen extends class_437 {
       class_2960 tex = getSkinTexture(p.skinFile);
       if (tex != null) {
          float rot = ((float) (System.currentTimeMillis() % 9000L) / 9000f * 360f);
-         drawModel3D(ctx, tex, p.slim, stageX, stageY, stageW, stageH, 180f + rot, 0f, 0f, 0f);
+         drawModel3D(ctx, tex, p.slim, capeTextureFor(p.capeId), stageX, stageY, stageW, stageH, 180f + rot, 0f, 0f, 0f);
       } else {
          ctx.method_25300(this.field_22793, "empty", stageX + stageW / 2, stageY + stageH / 2 - 4, 0xFF666666);
       }
@@ -428,12 +500,16 @@ public class CosmeticsScreen extends class_437 {
       // IGN field label (the Fetch button + field are TurtUIButtons/handled in rebuildButtons).
       drawField(ctx, this.ignX, this.ignY, this.ignW, this.ignH, this.ignInput, this.ignFocused, "player IGN...");
 
-      // Drag hint under the upload buttons.
-      int hintY = this.contentY + 44 + (18 + 4) * 2 + 4;
+      // Model toggle (segmented Classic | Slim) — kept visible right above the capes.
+      this.modelTogX = leftX + 6; this.modelTogY = this.contentY + 90; this.modelTogW = colW - 12; this.modelTogH = 18;
+      drawModelToggle(ctx);
+
+      // Drag hint.
+      int hintY = this.contentY + 114;
       ctx.method_51433(this.field_22793, "…or drag a .png onto this window", leftX + 6, hintY, 0xFF7A8088, false);
 
-      // Capes strip.
-      int capeTop = hintY + 16;
+      // Capes strip (wraps to show every cape you own).
+      int capeTop = hintY + 14;
       ctx.method_51433(this.field_22793, "CAPES YOU OWN", leftX + 6, capeTop, ACCENT_GREEN.getRGB(), false);
       renderCapeStrip(ctx, leftX + 6, capeTop + 12, colW - 12, this.contentY + this.contentH - (capeTop + 12) - 6, mx, my);
 
@@ -452,7 +528,7 @@ public class CosmeticsScreen extends class_437 {
       class_2960 skinId = this.editing != null ? getSkinTexture(this.editing.skinFile) : null;
       if (skinId != null) {
          try {
-            drawModel3D(ctx, skinId, this.editing.slim, cx - scale, top, scale * 2, boxH, this.previewYaw, 0f, 0f, this.previewPitch);
+            drawModel3D(ctx, skinId, this.editing.slim, capeTextureFor(this.editing.capeId), cx - scale, top, scale * 2, boxH, this.previewYaw, 0f, 0f, this.previewPitch);
          } catch (Throwable e) {
             ctx.method_25300(this.field_22793, "preview error", cx, top + boxH / 2, 0xFFFF5555);
          }
@@ -464,30 +540,44 @@ public class CosmeticsScreen extends class_437 {
       ctx.method_25300(this.field_22793, this.editing != null && this.editing.slim ? "Slim Model" : "Classic Model", cx, bot + 2, 0xFF888888);
    }
 
+   private void drawModelToggle(class_332 ctx) {
+      boolean slim = this.editing != null && this.editing.slim;
+      int x = this.modelTogX, y = this.modelTogY, w = this.modelTogW, h = this.modelTogH;
+      int halfW = w / 2;
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, new Color(0, 0, 0, 120));
+      int ax = slim ? x + halfW : x;
+      int aw = slim ? w - halfW : halfW;
+      TurtUIUtils.drawRoundedRect(ctx, ax, y, aw, h, 4, Palette.alpha(ACCENT_GREEN, 210));
+      ctx.method_25300(this.field_22793, "Classic", x + halfW / 2, y + (h - 8) / 2, (!slim ? Palette.alpha(Palette.PANEL_BG, 255) : TEXT_MAIN).getRGB());
+      ctx.method_25300(this.field_22793, "Slim", x + halfW + (w - halfW) / 2, y + (h - 8) / 2, (slim ? Palette.alpha(Palette.PANEL_BG, 255) : TEXT_MAIN).getRGB());
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, new Color(255, 255, 255, 24));
+   }
+
+   /** Wrapping grid of the "no cape" chip + every owned cape, so nothing is truncated. */
    private void renderCapeStrip(class_332 ctx, int x, int y, int w, int h, int mx, int my) {
       this.capeRects.clear();
       if (this.capesLoading) {
          ctx.method_51433(this.field_22793, "loading...", x, y + 4, 0xFF888888, false);
          return;
       }
-      // "No cape" chip first, then the owned capes.
-      int chipW = 30, chipH = Math.min(h, 44), gap = 6;
-      int cxp = x;
-      boolean noneSel = this.editing != null && this.editing.capeId == null;
-      drawCapeChip(ctx, cxp, y, chipW, chipH, null, noneSel, mx, my);
-      this.capeRects.add(new int[]{cxp, y, chipW, chipH, -1});
-      cxp += chipW + gap;
-
-      for (int i = 0; i < this.capes.size(); i++) {
-         if (cxp + chipW > x + w) break;   // simple single-row strip
-         CapeService.Cape c = this.capes.get(i);
-         boolean sel = this.editing != null && c.id.equals(this.editing.capeId);
-         drawCapeChip(ctx, cxp, y, chipW, chipH, c, sel, mx, my);
-         this.capeRects.add(new int[]{cxp, y, chipW, chipH, i});
-         cxp += chipW + gap;
-      }
-      if (this.capes.isEmpty()) {
-         ctx.method_51433(this.field_22793, "(none owned)", cxp, y + 4, 0xFF7A8088, false);
+      int chipW = 30, chipH = 42, gap = 5;
+      int perRow = Math.max(1, (w + gap) / (chipW + gap));
+      int total = this.capes.size() + 1;   // index 0 = "no cape"
+      for (int idx = 0; idx < total; idx++) {
+         int col = idx % perRow, row = idx / perRow;
+         int cxp = x + col * (chipW + gap);
+         int cyp = y + row * (chipH + gap);
+         if (cyp + chipH > y + h) break;   // clip to the available height
+         if (idx == 0) {
+            boolean noneSel = this.editing != null && this.editing.capeId == null;
+            drawCapeChip(ctx, cxp, cyp, chipW, chipH, null, noneSel, mx, my);
+            this.capeRects.add(new int[]{cxp, cyp, chipW, chipH, -1});
+         } else {
+            CapeService.Cape c = this.capes.get(idx - 1);
+            boolean sel = this.editing != null && c.id.equals(this.editing.capeId);
+            drawCapeChip(ctx, cxp, cyp, chipW, chipH, c, sel, mx, my);
+            this.capeRects.add(new int[]{cxp, cyp, chipW, chipH, idx - 1});
+         }
       }
    }
 
@@ -516,10 +606,10 @@ public class CosmeticsScreen extends class_437 {
 
    // ── 3D model (unchanged framebuffer mapping; slim is now a parameter) ─────────────────────────────
 
-   private void drawModel3D(class_332 ctx, class_2960 skinId, boolean slim, int lx, int ly, int lw, int lh,
+   private void drawModel3D(class_332 ctx, class_2960 skinId, boolean slim, class_2960 capeId, int lx, int ly, int lw, int lh,
                             float bodyYaw, float headYaw, float headPitch, float tiltPitch) {
       if (skinId == null) return;
-      class_8685 skinTextures = buildSkinTextures(skinId, slim);
+      class_8685 skinTextures = buildSkinTextures(skinId, slim, capeId);
       class_10055 state = new class_10055();
       state.field_53520 = skinTextures;
       state.field_53329 = 0.6f;
@@ -554,9 +644,21 @@ public class CosmeticsScreen extends class_437 {
       ctx.method_70856(state, sScale, pos, baseRot, orbit, sx1, sy1, sx2, sy2);
    }
 
-   private class_8685 buildSkinTextures(class_2960 id, boolean slim) {
-      return new class_8685(new class_12079.class_12080(id, "turtmod_skin"), null, null,
+   private class_8685 buildSkinTextures(class_2960 id, boolean slim, class_2960 capeId) {
+      class_12079.class_12081 cape = capeId == null ? null : new class_12079.class_12080(capeId, "turtmod_cape");
+      return new class_8685(new class_12079.class_12080(id, "turtmod_skin"), cape, null,
          slim ? class_7920.field_41122 : class_7920.field_41123, true);
+   }
+
+   /** The registered cape texture for a preset's capeId (looked up in the owned-capes list), or null. */
+   private class_2960 capeTextureFor(String capeId) {
+      if (capeId == null) return null;
+      for (CapeService.Cape c : this.capes) {
+         if (capeId.equals(c.id) && c.url != null) {
+            return CapeTextureCache.get(c.url).id;
+         }
+      }
+      return null;
    }
 
    private void drawFilledEllipse(class_332 ctx, int cx, int cy, int rx, int ry, int argb) {
@@ -599,8 +701,17 @@ public class CosmeticsScreen extends class_437 {
                }
             }
          }
-      } else {
+      } else if (this.view == View.EDIT) {
          if (this.nameFocused || this.ignFocused) return true;
+         // Model toggle (left half = Classic, right half = Slim).
+         if (mx >= this.modelTogX && mx <= this.modelTogX + this.modelTogW && my >= this.modelTogY && my <= this.modelTogY + this.modelTogH) {
+            if (this.editing != null) {
+               this.editing.slim = mx >= this.modelTogX + this.modelTogW / 2;
+               setStatus("Model: " + (this.editing.slim ? "Slim" : "Classic"));
+               saveEditing();
+            }
+            return true;
+         }
          // Cape chips.
          for (int[] r : this.capeRects) {
             if (mx >= r[0] && mx <= r[0] + r[2] && my >= r[1] && my <= r[1] + r[3]) {
@@ -617,6 +728,25 @@ public class CosmeticsScreen extends class_437 {
          if (button == 0 && mx >= rightX && mx <= this.contentX + this.contentW && my >= this.contentY && my <= this.contentY + this.contentH) {
             this.draggingPreview = true;
             return true;
+         }
+      } else { // LIBRARY — pick a saved skin for the preset.
+         int viewTop = this.contentY + 22, viewH = this.contentH - 28;
+         if (!this.librarySkins.isEmpty() && mx >= this.contentX && mx <= this.contentX + this.contentW && my >= viewTop && my <= viewTop + viewH) {
+            int cols = galleryCols();
+            int usedW = cols * CARD_W + (cols - 1) * CARD_GAP;
+            int startX = this.contentX + (this.contentW - usedW) / 2;
+            for (int i = 0; i < this.librarySkins.size(); i++) {
+               int col = i % cols, row = i / cols;
+               int cardX = startX + col * (CARD_W + CARD_GAP);
+               int cardY = viewTop + row * (CARD_H + CARD_GAP) - (int) this.libraryScroll;
+               if (mx >= cardX && mx <= cardX + CARD_W && my >= cardY && my <= cardY + CARD_H) {
+                  if (this.editing != null) { this.editing.skinFile = this.librarySkins.get(i); saveEditing(); }
+                  this.view = View.EDIT;
+                  this.rebuildButtons();
+                  setStatus("Skin set from library.");
+                  return true;
+               }
+            }
          }
       }
       return super.method_25402(click, bl);
@@ -639,12 +769,15 @@ public class CosmeticsScreen extends class_437 {
    }
 
    public boolean method_25401(double mx, double my, double ha, double va) {
-      if (this.view == View.GALLERY) {
+      if (this.view == View.GALLERY || this.view == View.LIBRARY) {
          int cols = galleryCols();
-         int rows = (this.presets.size() + cols - 1) / cols;
+         int count = this.view == View.GALLERY ? this.presets.size() : this.librarySkins.size();
+         int rows = (count + cols - 1) / cols;
          float maxScroll = Math.max(0f, rows * (CARD_H + CARD_GAP) - (this.contentH - 28));
          if (maxScroll > 0f) {
-            this.galleryScroll = Math.max(0f, Math.min(maxScroll, this.galleryScroll - (float) va * 30f));
+            float ns = (this.view == View.GALLERY ? this.galleryScroll : this.libraryScroll) - (float) va * 30f;
+            ns = Math.max(0f, Math.min(maxScroll, ns));
+            if (this.view == View.GALLERY) this.galleryScroll = ns; else this.libraryScroll = ns;
             return true;
          }
       }
