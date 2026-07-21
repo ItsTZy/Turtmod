@@ -777,8 +777,11 @@ public class ScreenshotEditorScreen extends class_437 {
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, dt, 12f);
 
       TurtUIUtils.drawMenuBackdrop(ctx, this.field_22789, this.field_22790);
-      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0xE6121316);
-      ctx.method_25300(this.field_22793, "SCREENSHOT EDITOR", 46, 14, Palette.GREEN.getRGB());
+      // Gentle extra darkening for canvas contrast, but keep the shared backdrop (gradient + drifting
+      // glows) visible so the editor matches the hub/gallery instead of reading as a separate app.
+      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x66121316);
+      TurtUIUtils.drawGradientText(ctx, this.field_22793, "SCREENSHOT EDITOR", 46, 10,
+         Palette.GREEN, Palette.PINK, false, true);
 
       this.canvasX = 46;
       this.canvasY = 40;
