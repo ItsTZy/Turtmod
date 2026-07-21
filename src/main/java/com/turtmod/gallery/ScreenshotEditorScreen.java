@@ -31,7 +31,7 @@ import net.minecraft.class_437;
  * annotations rasterized into a PNG via {@link EditorRasterizer} (AWT).
  */
 public class ScreenshotEditorScreen extends class_437 {
-   public enum Tool { PAN, MOVE, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT, BLUR, PIXELATE }
+   public enum Tool { PAN, MOVE, ERASER, CROP, PEN, HIGHLIGHTER, LINE, ARROW, RECT, ELLIPSE, TEXT, BLUR, PIXELATE }
 
    /** One committed (or in-progress) vector edit, in image-pixel coordinates. */
    public static final class Annotation {
@@ -82,6 +82,7 @@ public class ScreenshotEditorScreen extends class_437 {
    private final Deque<State> redo = new ArrayDeque<>();
 
    private Tool tool = Tool.PEN;
+   private Tool hoverTool = null;   // tool the cursor is over this frame (for the tooltip)
    private int colorIdx = 0;
    private int sizeIdx = 1;
    private int alphaPct = 100;      // opacity of the colour being drawn with
@@ -575,6 +576,19 @@ public class ScreenshotEditorScreen extends class_437 {
                }
                return true;
             }
+            if (this.tool == Tool.ERASER) {
+               int hit = this.hitAnnotation(ix, iy);
+               if (hit >= 0) {
+                  this.pushUndo();
+                  this.annotations.remove(hit);
+                  this.invalidateOverlay();
+                  this.markDraftDirty();
+                  this.setStatus("Erased.");
+               } else {
+                  this.setStatus("Nothing to erase there.");
+               }
+               return true;
+            }
             if (this.tool == Tool.TEXT) {
                this.commitEditingText();
                this.editingText = new Annotation(Tool.TEXT, this.currentColor(), SIZES[this.sizeIdx]);
@@ -730,6 +744,7 @@ public class ScreenshotEditorScreen extends class_437 {
       // Single-key tool shortcuts, like a real editor.
       Tool shortcut = switch (key) {
          case 86 -> Tool.MOVE;         // V
+         case 68 -> Tool.ERASER;       // D (delete)
          case 67 -> Tool.CROP;         // C
          case 80 -> Tool.PEN;          // P
          case 72 -> Tool.HIGHLIGHTER;  // H
@@ -780,7 +795,9 @@ public class ScreenshotEditorScreen extends class_437 {
       // Gentle extra darkening for canvas contrast, but keep the shared backdrop (gradient + drifting
       // glows) visible so the editor matches the hub/gallery instead of reading as a separate app.
       ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x66121316);
-      TurtUIUtils.drawGradientText(ctx, this.field_22793, "SCREENSHOT EDITOR", 46, 10,
+      // Mod branding logo + gradient title, like the chrome screens.
+      com.turtmod.ui.BrandingRenderer.drawLogo(ctx, 12, 8, 20, 20);
+      TurtUIUtils.drawGradientText(ctx, this.field_22793, "SCREENSHOT EDITOR", 38, 12,
          Palette.GREEN, Palette.PINK, false, true);
 
       this.canvasX = 46;
@@ -805,6 +822,7 @@ public class ScreenshotEditorScreen extends class_437 {
          ctx.method_25300(this.field_22793, this.status, this.field_22789 / 2, this.field_22790 - 14, 0xFFB9F5C4);
          this.statusTicks--;
       }
+      this.renderToolTooltip(ctx, mouseX, mouseY);
       if (this.openFade < 0.99F) {
          int a = (int) ((1f - this.openFade) * 255f) & 255;
          ctx.method_25294(0, 0, this.field_22789, this.field_22790, a << 24);
@@ -1014,6 +1032,7 @@ public class ScreenshotEditorScreen extends class_437 {
    private void renderToolRail(class_332 ctx, int mouseX, int mouseY) {
       int x = 10;
       int y = 40;
+      this.hoverTool = null;
       TurtUIUtils.drawRoundedRect(ctx, x - 2, y - 4, RAIL_W, Tool.values().length * (RAIL_BTN + RAIL_GAP) + 6, 5, Palette.alpha(Palette.PANEL_BG, 235));
       for (Tool tv : Tool.values()) {
          int i = tv.ordinal();
@@ -1022,10 +1041,79 @@ public class ScreenshotEditorScreen extends class_437 {
          this.railY[i] = by;
          boolean sel = this.tool == tv;
          boolean hov = mouseX >= x && mouseX <= x + RAIL_BTN && mouseY >= by && mouseY <= by + RAIL_BTN;
+         if (hov) {
+            this.hoverTool = tv;
+         }
+         // Selected = solid green fill; hovered = green-tinted; idle = plain. Selected also gets a bright
+         // outer ring so the active tool is unmistakable.
          ctx.method_25294(x, by, x + RAIL_BTN, by + RAIL_BTN, (sel ? Palette.GREEN : (hov ? Palette.BTN_HOVER : Palette.BTN_BG)).getRGB());
          ctx.method_73198(x, by, RAIL_BTN, RAIL_BTN, (sel ? Palette.GREEN : Palette.PANEL_BORDER).getRGB());
-         this.drawToolIcon(ctx, tv, x, by, (sel ? Palette.PANEL_BG : Palette.TEXT).getRGB());
+         if (sel) {
+            ctx.method_73198(x - 1, by - 1, RAIL_BTN + 2, RAIL_BTN + 2, Palette.GREEN.getRGB());
+         }
+         this.drawToolIcon(ctx, tv, x, by, (sel ? Palette.PANEL_BG : (hov ? Palette.GREEN : Palette.TEXT)).getRGB());
       }
+   }
+
+   /** Floating tooltip for the hovered tool: bold green name + a short "how it works" line. */
+   private void renderToolTooltip(class_332 ctx, int mouseX, int mouseY) {
+      if (this.hoverTool == null) {
+         return;
+      }
+      String name = toolName(this.hoverTool);
+      String help = toolHelp(this.hoverTool);
+      int wName = this.field_22793.method_1727(name);
+      int wHelp = this.field_22793.method_1727(help);
+      int boxW = Math.max(wName, wHelp) + 14;
+      int boxH = 30;
+      int bx = mouseX + 14;
+      int by = mouseY + 6;
+      if (bx + boxW > this.field_22789 - 4) {
+         bx = mouseX - 14 - boxW;
+      }
+      if (by + boxH > this.field_22790 - 4) {
+         by = this.field_22790 - 4 - boxH;
+      }
+      TurtUIUtils.drawRoundedRect(ctx, bx, by, boxW, boxH, 4, new Color(11, 13, 20, 235));
+      TurtUIUtils.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, Palette.alpha(Palette.GREEN, 150));
+      ctx.method_51433(this.field_22793, name, bx + 7, by + 6, Palette.GREEN.getRGB(), false);
+      ctx.method_51433(this.field_22793, help, bx + 7, by + 18, Palette.TEXT_MUTED.getRGB(), false);
+   }
+
+   private static String toolName(Tool t) {
+      return switch (t) {
+         case PAN -> "Pan  (Space)";
+         case MOVE -> "Move  (V)";
+         case ERASER -> "Eraser  (D)";
+         case CROP -> "Crop  (C)";
+         case PEN -> "Pen  (P)";
+         case HIGHLIGHTER -> "Highlighter  (H)";
+         case LINE -> "Line  (L)";
+         case ARROW -> "Arrow  (A)";
+         case RECT -> "Rectangle  (R)";
+         case ELLIPSE -> "Ellipse  (E)";
+         case TEXT -> "Text  (T)";
+         case BLUR -> "Blur  (B)";
+         case PIXELATE -> "Pixelate  (X)";
+      };
+   }
+
+   private static String toolHelp(Tool t) {
+      return switch (t) {
+         case PAN -> "Drag to move the image around the canvas.";
+         case MOVE -> "Click a mark and drag to reposition it.";
+         case ERASER -> "Click a mark to delete it.";
+         case CROP -> "Drag a box, then confirm to trim the image.";
+         case PEN -> "Freehand draw in the current colour.";
+         case HIGHLIGHTER -> "Draw a soft translucent highlight.";
+         case LINE -> "Drag to draw a straight line.";
+         case ARROW -> "Drag to draw an arrow.";
+         case RECT -> "Drag a rectangle (toggle Fill below).";
+         case ELLIPSE -> "Drag an ellipse (toggle Fill below).";
+         case TEXT -> "Click, then type. Enter to commit.";
+         case BLUR -> "Drag over an area to blur it out.";
+         case PIXELATE -> "Drag over an area to pixelate it.";
+      };
    }
 
    private void renderBottomBar(class_332 ctx, int mouseX, int mouseY) {
@@ -1165,6 +1253,13 @@ public class ScreenshotEditorScreen extends class_437 {
             ctx.method_25294(x + 4, y + 9, x + 8, y + 10, c);
             ctx.method_25294(x + 2, y + 4, x + 3, y + 8, c);
             ctx.method_25294(x + 9, y + 4, x + 10, y + 8, c);
+         }
+         case ERASER -> {
+            // A slanted eraser block wiping across a base line.
+            for (int i = 0; i < 6; i++) {
+               ctx.method_25294(x + 1 + i, y + 8 - i, x + 8 + i, y + 12 - i, c);
+            }
+            ctx.method_25294(x + 1, y + 11, x + 11, y + 12, c); // surface line
          }
          case CROP -> {
             ctx.method_25294(x + 2, y, x + 3, y + 12, c);

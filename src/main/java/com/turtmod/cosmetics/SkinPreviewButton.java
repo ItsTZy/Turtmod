@@ -18,7 +18,7 @@ import org.joml.Vector3f;
 public class SkinPreviewButton extends class_4185.class_12231 {
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
-      super(x, y, w, h, class_2561.method_43470("Skin"), onPress, field_40754);
+      super(x, y, w, h, class_2561.method_43470("🧍"), onPress, field_40754);
    }
 
    @Override
