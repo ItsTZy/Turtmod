@@ -318,15 +318,13 @@ public class HudEditorScreen extends class_437 {
       };
    }
 
-   /** Small gear glyph drawn inside an 11px chip. */
+   /** Clean "settings sliders" glyph inside an 11px chip — reads better than a tiny cog. */
    private static void drawGearIcon(class_332 ctx, int x, int y, int color) {
-      // 4 nubs around a ring with a hollow centre — reads as a cog at this size.
-      ctx.method_25294(x + 4, y + 1, x + 7, y + 3, color);
-      ctx.method_25294(x + 4, y + 8, x + 7, y + 10, color);
-      ctx.method_25294(x + 1, y + 4, x + 3, y + 7, color);
-      ctx.method_25294(x + 8, y + 4, x + 10, y + 7, color);
-      ctx.method_25294(x + 3, y + 3, x + 8, y + 8, color);
-      ctx.method_25294(x + 5, y + 5, x + 6, y + 6, 0xFF101216);
+      // Two horizontal tracks, each with an offset knob.
+      ctx.method_25294(x + 2, y + 3, x + 9, y + 4, color);   // track 1
+      ctx.method_25294(x + 3, y + 2, x + 5, y + 5, color);   // knob 1 (left)
+      ctx.method_25294(x + 2, y + 7, x + 9, y + 8, color);   // track 2
+      ctx.method_25294(x + 6, y + 6, x + 8, y + 9, color);   // knob 2 (right)
    }
 
    private static String getAnchorName(HudEditorFeature.Anchor a) {
