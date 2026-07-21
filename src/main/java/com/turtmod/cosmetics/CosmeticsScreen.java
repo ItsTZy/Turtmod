@@ -109,7 +109,11 @@ public class CosmeticsScreen extends class_437 {
          this.loadAvailableSkins(); this.setStatus("List refreshed.");
       })); sy += bh + gap;
       this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Clear Selection", btnTheme, this::clearSelection)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openSkinsFolder));
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openSkinsFolder)); sy += bh + group;
+
+      // Group 4 — capes (real account capes you own).
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Capes...", btnTheme,
+         () -> this.field_22787.method_1507(new CapeScreen(this))));
 
       // Back pinned to the bottom of the sidebar.
       int backY = this.panelY + this.panelH - TurtLauncher.FOOTER_H - bh - 6;

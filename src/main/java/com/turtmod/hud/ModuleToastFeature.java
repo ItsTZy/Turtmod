@@ -130,10 +130,12 @@ public final class ModuleToastFeature {
          int y = (top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap)) + cfg.hud.moduleToastOffsetY;
 
          Color accent = Palette.GREEN;
-         // Glassy translucent card: gameplay shows through faintly, with a bright top hairline.
-         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, fade(new Color(0xD2121722, true), a));
-         ctx.method_25294(x + 5, y + 1, x + w - 5, y + 2, argb(Color.WHITE, a * 26 / 255));
-         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, fade(new Color(255, 255, 255, 34), a));
+         // Glassy translucent card, same hue/feel as the mod's menu glass (backdrop tint 9,11,18):
+         // gameplay clearly shows through, a soft inner gradient for depth, bright top hairline + hairline border.
+         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, fade(new Color(9, 11, 18, 150), a));
+         ctx.method_25296(x + 1, y + 1, x + w - 1, y + h / 2, argb(Color.WHITE, a * 12 / 255), 0);
+         ctx.method_25294(x + 5, y + 1, x + w - 5, y + 2, argb(Color.WHITE, a * 30 / 255));
+         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, fade(new Color(255, 255, 255, 30), a));
          // 2px accent bar down the left edge (the menu's "enabled" marker).
          if (t.on) {
             ctx.method_25294(x + 2, y + 3, x + 4, y + h - 3, argb(accent, a));
