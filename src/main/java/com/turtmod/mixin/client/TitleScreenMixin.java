@@ -39,8 +39,9 @@ public class TitleScreenMixin extends class_437 {
       com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
          int skinW = 96;
-         int skinX = Math.max(4, col - 4 - skinW);   // never run off the left edge on narrow windows
-         this.method_37063(new SkinPreviewButton(skinX, y, skinW, 20,
+         int skinX = Math.max(4, col - 4 - skinW);        // never run off the left edge on narrow windows
+         int skinY = this.field_22790 / 4 + 48 + 72;      // drop to the language/options row
+         this.method_37063(new SkinPreviewButton(skinX, skinY, skinW, 20,
             (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));
       }
    }
