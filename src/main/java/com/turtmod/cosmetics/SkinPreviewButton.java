@@ -78,7 +78,11 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       }
    }
 
-   /** Mirrors CosmeticsScreen.drawModel3D but in raw screen coords (a widget isn't UI-scaled). */
+   /**
+    * Renders the paper-doll exactly like vanilla's inventory player render (class_490.method_2486): the
+    * box corners and the scale are passed to method_70856 in GUI-scaled coords — NOT multiplied by the
+    * GUI scale factor. (Multiplying by it threw the model far off-screen, which is why it never showed.)
+    */
    private static void renderBody(class_332 ctx, class_8685 skin, int x1, int y1, int x2, int y2, int mouseX, int mouseY) {
       class_10055 state = new class_10055();
       state.field_53520 = skin;
@@ -89,24 +93,19 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       state.field_61823.clear();
       state.field_53453 = 1.0f;
       state.field_53454 = 1.0f;
-      int cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-      float headYaw = (float) Math.toDegrees(Math.atan((cx - mouseX) * 0.008));
-      float headPitch = (float) Math.toDegrees(Math.atan((mouseY - cy) * 0.008));
-      state.field_53446 = 180f;            // body faces the viewer (front)
-      state.field_53447 = headYaw;         // head tracks the cursor a little (relative to body — no 180 flip)
-      state.field_53448 = headPitch;
 
-      double gs = ctx.method_51421() > 0 ? class_310.method_1551().method_22683().method_4495() : 1.0;
-      int lh = y2 - y1;
-      int scale = Math.max(6, lh / 3);
-      int sx1 = (int) Math.round(x1 * gs);
-      int sx2 = (int) Math.round(x2 * gs);
-      int sy1 = (int) Math.round(y1 * gs);
-      int sy2 = (int) Math.round(y2 * gs);
-      float sScale = (float) (scale * gs);
+      float cx = (x1 + x2) / 2.0f, cy = (y1 + y2) / 2.0f;
+      float p = (float) Math.atan((cx - mouseX) / 40.0f);
+      float q = (float) Math.atan((cy - mouseY) / 40.0f);
+      state.field_53446 = 180.0f;          // body faces the viewer (front)
+      state.field_53447 = p * 20.0f;       // head tracks the cursor a little
+      state.field_53448 = -q * 20.0f;
 
+      int scale = Math.max(6, (y2 - y1) * 3 / 7);
       Quaternionf baseRot = new Quaternionf().rotateZ((float) Math.PI);
-      Vector3f pos = new Vector3f(0f, state.field_53330 / 2f + 0.0625f, 0f);
-      ctx.method_70856(state, sScale, pos, baseRot, null, sx1, sy1, sx2, sy2);
+      Quaternionf tilt = new Quaternionf().rotateX(q * 20.0f * ((float) Math.PI / 180.0f));
+      baseRot.mul(tilt);
+      Vector3f pos = new Vector3f(0.0f, state.field_53330 / 2.0f + 0.0625f, 0.0f);
+      ctx.method_70856(state, scale, pos, baseRot, tilt, x1, y1, x2, y2);
    }
 }
