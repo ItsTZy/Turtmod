@@ -1,6 +1,7 @@
 package com.turtmod.cosmetics;
 
 import net.minecraft.class_10055;
+import net.minecraft.class_1068;
 import net.minecraft.class_2561;
 import net.minecraft.class_310;
 import net.minecraft.class_332;
@@ -44,10 +45,15 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (y1 < 2) { int d = 2 - y1; y1 += d; y2 += d; }
       if (y2 > sh - 2) { int d = y2 - (sh - 2); y1 -= d; y2 -= d; }
 
+      // Scissor to the preview region before submitting the entity — the GUI entity render captures the
+      // current scissor, and without this the model can be clipped away in a widget context (SkinShuffle
+      // does the same in GuiEntityRenderer.drawEntity).
+      ctx.method_44379(x1, y1, x2, y2);
       renderBody(ctx, skin, x1, y1, x2, y2, mouseX, mouseY);
+      ctx.method_44380();
    }
 
-   /** The player's live skin when in-world, else the account skin (both carry the active cape). */
+   /** The player's live skin when in-world, else the account skin, else a default skin — never null. */
    private static class_8685 currentSkin() {
       class_310 mc = class_310.method_1551();
       if (mc == null) {
@@ -60,9 +66,15 @@ public class SkinPreviewButton extends class_4185.class_12231 {
          }
       }
       try {
-         return mc.method_1582().method_73544(mc.method_53462(), true).get();
+         class_8685 s = mc.method_1582().method_73544(mc.method_53462(), false).get();
+         if (s != null) return s;
+      } catch (Exception ignored) {
+      }
+      // Guaranteed fallback so a preview always shows on the title screen.
+      try {
+         return class_1068.method_4648(mc.method_1548().method_44717());
       } catch (Exception e) {
-         return null;
+         return class_1068.method_62620();
       }
    }
 
