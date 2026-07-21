@@ -47,6 +47,10 @@ public class CosmeticsScreen extends class_437 {
    private long lastFrameNs = System.nanoTime();
 
    private final List<TurtUIButton> buttons = new ArrayList();
+   // Fetch-by-username: a small manual text field (kept in logical space with everything else).
+   private String ignInput = "";
+   private boolean ignFocused = false;
+   private int ignX, ignY, ignW, ignH;
    // Fixed logical layout scaled to fit any resolution / GUI scale.
    private static final int LOGICAL_W = 580;
    private static final int LOGICAL_H = 400;
@@ -75,32 +79,69 @@ public class CosmeticsScreen extends class_437 {
       TurtUITheme btnTheme = new TurtUITheme(BTN_BG, PANEL_BORDER, TEXT_MAIN, BTN_HOVER, ACCENT_PINK);
       this.buttons.clear();
 
-      // ── All action buttons live INSIDE the sidebar (chrome layer) ──
+      // ── All action buttons live INSIDE the sidebar, in clear groups ──
       int sx = this.panelX + 6;
       int sw = TurtLauncher.SIDEBAR_W - 12;
       int sy = this.panelY + TurtLauncher.HEADER_H + 8;
       int gap = 4;
       int bh = 18;
+      int group = 10;   // extra space between groups
 
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply", btnTheme, this::uploadSelectedSkinGlobal)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload", btnTheme, this::importSkinFile)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Edit Skin", btnTheme, this::openSkinEditor)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", btnTheme, () -> {
-         this.loadAvailableSkins(); this.setStatus("List refreshed.");
-      })); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Clear", btnTheme, this::clearSelection)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openSkinsFolder)); sy += bh + gap + 6;
+      // Group 1 — get a skin: username field + Fetch, then Upload.
+      this.ignX = sx;
+      this.ignY = sy;
+      this.ignW = sw;
+      this.ignH = bh;
+      sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Fetch by Name", btnTheme, () -> this.fetchByName(this.ignInput))); sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload PNG", btnTheme, this::importSkinFile)); sy += bh + group;
 
-      // Functional Model toggle (single button, flips on click)
+      // Group 2 — use the selected skin.
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply Skin", btnTheme, this::uploadSelectedSkinGlobal)); sy += bh + gap;
       this.buttons.add(new TurtUIButton(sx, sy, sw, bh, modelLabel(), btnTheme, () -> {
          this.globalSlimModel = !this.globalSlimModel;
          this.setStatus("Model: " + (this.globalSlimModel ? "Slim" : "Classic"));
          this.method_25426(); // rebuild to update label
-      })); sy += bh + gap + 6;
+      })); sy += bh + group;
 
-      // Back at bottom of sidebar
+      // Group 3 — manage the list.
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", btnTheme, () -> {
+         this.loadAvailableSkins(); this.setStatus("List refreshed.");
+      })); sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Clear Selection", btnTheme, this::clearSelection)); sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openSkinsFolder));
+
+      // Back pinned to the bottom of the sidebar.
       int backY = this.panelY + this.panelH - TurtLauncher.FOOTER_H - bh - 6;
       this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", btnTheme, this::method_25419));
+   }
+
+   /** Download the named player's current skin into the skins folder and refresh the list. */
+   private void fetchByName(String name) {
+      if (name == null || name.trim().isEmpty()) {
+         this.setStatus("Type a username first.");
+         return;
+      }
+      String clean = name.trim();
+      this.setStatus("Looking up " + clean + "...");
+      new Thread(() -> {
+         byte[] png = SkinFetcher.fetchSkin(clean);
+         this.field_22787.execute(() -> {
+            if (png == null) {
+               this.setStatus("Could not fetch that player's skin.");
+               return;
+            }
+            try {
+               java.nio.file.Path dir = CosmeticManager.getSkinsDirectory();
+               java.nio.file.Files.createDirectories(dir);
+               java.nio.file.Files.write(dir.resolve(clean + ".png"), png);
+               this.loadAvailableSkins();
+               this.setStatus("Loaded " + clean + "'s skin.");
+            } catch (Exception e) {
+               this.setStatus("Could not save the fetched skin.");
+            }
+         });
+      }, "turtmod-skin-fetch").start();
    }
 
    private String modelLabel() {
@@ -205,17 +246,6 @@ public class CosmeticsScreen extends class_437 {
          this.globalSlimModel ? class_7920.field_41122 : class_7920.field_41123,
          true
       );
-   }
-
-   /** Open the skin editor, seeded with the selected skin when there is one. */
-   private void openSkinEditor() {
-      java.io.File seed = null;
-      if (this.selectedSkinIndex >= 0 && this.selectedSkinIndex < this.availableSkins.size()) {
-         seed = new java.io.File(((SkinEntry) this.availableSkins.get(this.selectedSkinIndex)).filePath);
-      }
-      if (this.field_22787 != null) {
-         this.field_22787.method_1507(new SkinEditorScreen(this, seed));
-      }
    }
 
    private void selectCurrentSkin() {
@@ -354,6 +384,16 @@ public class CosmeticsScreen extends class_437 {
          ctx.method_25300(this.field_22793, this.statusMessage, this.listX + this.listW / 2, this.listY - 1, ACCENT_GREEN.getRGB());
          --this.messageTicks;
       }
+
+      // Username field (drawn under the buttons so its hover/focus reads clearly).
+      ctx.method_25294(this.ignX, this.ignY, this.ignX + this.ignW, this.ignY + this.ignH,
+         com.turtmod.ui.Palette.SEARCH_BG.getRGB());
+      ctx.method_73198(this.ignX, this.ignY, this.ignW, this.ignH,
+         (this.ignFocused ? com.turtmod.ui.Palette.GREEN : com.turtmod.ui.Palette.SEARCH_BORDER).getRGB());
+      boolean placeholder = this.ignInput.isEmpty() && !this.ignFocused;
+      String shown = placeholder ? "player name..." : this.ignInput + (this.ignFocused ? "_" : "");
+      ctx.method_51433(this.field_22793, shown, this.ignX + 4, this.ignY + (this.ignH - 8) / 2,
+         (placeholder ? com.turtmod.ui.Palette.TEXT_MUTED : com.turtmod.ui.Palette.TEXT).getRGB(), false);
 
       // ── INTERACTION LAYER (buttons, drawn last = top) ──
       for (TurtUIButton btn : this.buttons) btn.render(ctx, mx, my, this.field_22793);
@@ -521,8 +561,11 @@ public class CosmeticsScreen extends class_437 {
    public boolean method_25402(class_11909 click, boolean bl) {
       double mx = this.uiScale.toLogicalX(click.comp_4798()), my = this.uiScale.toLogicalY(click.comp_4799());
       int button = click.method_74245();
+      // Username field focus (click inside focuses, click outside blurs).
+      this.ignFocused = mx >= this.ignX && mx <= this.ignX + this.ignW && my >= this.ignY && my <= this.ignY + this.ignH;
       // Buttons (sidebar) — highest priority
       for (TurtUIButton btn : this.buttons) if (btn.mouseClicked(mx, my, button)) return true;
+      if (this.ignFocused) return true;
       // List row selection (pixel-based, accounts for smooth scroll)
       int viewTop = this.skinViewTop();
       int viewH = this.skinViewH();
@@ -570,6 +613,37 @@ public class CosmeticsScreen extends class_437 {
          return true;
       }
       return super.method_25401(mx, my, ha, va);
+   }
+
+   public boolean method_25400(net.minecraft.class_11905 event) {
+      if (this.ignFocused) {
+         String s = event.method_74226();
+         if (s != null && !s.isEmpty() && this.ignInput.length() < 16) {
+            this.ignInput += s;
+            return true;
+         }
+      }
+      return super.method_25400(event);
+   }
+
+   public boolean method_25404(net.minecraft.class_11908 input) {
+      if (this.ignFocused) {
+         int key = input.comp_4795();
+         if (key == 259) {   // backspace
+            if (!this.ignInput.isEmpty()) this.ignInput = this.ignInput.substring(0, this.ignInput.length() - 1);
+            return true;
+         }
+         if (key == 257 || key == 335) {   // enter
+            this.fetchByName(this.ignInput);
+            this.ignFocused = false;
+            return true;
+         }
+         if (key == 256) {   // esc unfocuses the field instead of closing
+            this.ignFocused = false;
+            return true;
+         }
+      }
+      return super.method_25404(input);
    }
 
    public void method_25419() {

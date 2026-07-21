@@ -260,6 +260,27 @@ public class CosmeticManager {
       return hasCustomSkin && customSkinTexture != null;
    }
 
+   /**
+    * Best available skin texture id for a preview icon: the applied TurtMod skin if there is one, else the
+    * local player's live skin, else null (the caller draws a placeholder). Safe to call from any screen.
+    */
+   public static class_2960 getCurrentSkinId() {
+      if (hasCustomSkin && customSkinTexture != null) {
+         return customSkinTexture;
+      }
+      if (previewSkinTexture != null) {
+         return previewSkinTexture;
+      }
+      net.minecraft.class_310 mc = net.minecraft.class_310.method_1551();
+      if (mc != null && mc.field_1724 != null) {
+         try {
+            return mc.field_1724.method_52814().comp_1626().comp_3627();
+         } catch (Exception ignored) {
+         }
+      }
+      return null;
+   }
+
    public static Path getSkinsDirectory() {
       return SKINS_DIR;
    }

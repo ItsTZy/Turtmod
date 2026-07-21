@@ -130,9 +130,10 @@ public final class ModuleToastFeature {
          int y = (top ? margin + slot * (h + gap) : sh - margin - h - slot * (h + gap)) + cfg.hud.moduleToastOffsetY;
 
          Color accent = Palette.GREEN;
-         // Card + hairline border, exactly like a module row in the menu.
-         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, fade(Palette.CARD_BG, a));
-         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, fade(Palette.CARD_BORDER, a));
+         // Glassy translucent card: gameplay shows through faintly, with a bright top hairline.
+         TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, fade(new Color(0xD2121722, true), a));
+         ctx.method_25294(x + 5, y + 1, x + w - 5, y + 2, argb(Color.WHITE, a * 26 / 255));
+         TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, fade(new Color(255, 255, 255, 34), a));
          // 2px accent bar down the left edge (the menu's "enabled" marker).
          if (t.on) {
             ctx.method_25294(x + 2, y + 3, x + 4, y + h - 3, argb(accent, a));

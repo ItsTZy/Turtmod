@@ -330,6 +330,7 @@ public static final class Combat {
       public boolean screenshotShutterSound = true;
       public boolean screenshotFlash = true;
       public boolean screenshotMenuButton = true;
+      public boolean skinChangerMenuButton = true;
       // Animated toast shown when a module toggles on/off in-game.
       public boolean moduleToasts = true;
       public ScreenshotCorner moduleToastCorner = ScreenshotCorner.TOP_RIGHT;
@@ -417,6 +418,8 @@ public static final class Combat {
       public boolean cleanF3ShowFpsExtremes;
       // Vanilla-style right-hand column (Java / memory / CPU / display / what you are looking at).
       public boolean cleanF3RightColumn = true;
+      // Use the HUD theme's accent/text colours for F3 instead of the custom cleanF3 colours.
+      public boolean cleanF3ThemeColors = true;
       // BetterF3-style two-tone colouring + the line order (list of line keys, see DebugHudMixin).
       public int cleanF3LabelColor = 0xFF7FE08A;
       public int cleanF3ValueColor = 0xFFE6E6E6;

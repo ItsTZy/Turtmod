@@ -226,8 +226,10 @@ public final class CleanF3Feature {
          if (config.hud.cleanF3ShowBackground) {
             context.method_25294(textX - 1, ly - 1, textX + lineW + 1, ly + LINE_H - 1, BF3_BG);
          }
-         context.method_27535(font, class_2561.method_43470(line[0] + ": "), textX, ly, config.hud.cleanF3LabelColor);
-         context.method_27535(font, class_2561.method_43470(line[1]), textX + labelW, ly, config.hud.cleanF3ValueColor);
+         int labelColor = config.hud.cleanF3ThemeColors ? CustomThemeRenderer.getAccentColor(config) : config.hud.cleanF3LabelColor;
+         int valueColor = config.hud.cleanF3ThemeColors ? CustomThemeRenderer.getTextColor(config) : config.hud.cleanF3ValueColor;
+         context.method_27535(font, class_2561.method_43470(line[0] + ": "), textX, ly, labelColor);
+         context.method_27535(font, class_2561.method_43470(line[1]), textX + labelW, ly, valueColor);
       }
       context.method_51448().popMatrix();
    }
@@ -256,10 +258,12 @@ public final class CleanF3Feature {
          if (config.hud.cleanF3ShowBackground) {
             context.method_25294(lx - 1, ly - 1, lx + lineW + 1, ly + LINE_H - 1, BF3_BG);
          }
+         int labelColor = config.hud.cleanF3ThemeColors ? CustomThemeRenderer.getAccentColor(config) : config.hud.cleanF3LabelColor;
+         int valueColor = config.hud.cleanF3ThemeColors ? CustomThemeRenderer.getTextColor(config) : config.hud.cleanF3ValueColor;
          if (labelled) {
-            context.method_27535(font, class_2561.method_43470(line[0] + ": "), lx, ly, config.hud.cleanF3LabelColor);
+            context.method_27535(font, class_2561.method_43470(line[0] + ": "), lx, ly, labelColor);
          }
-         context.method_27535(font, class_2561.method_43470(line[1]), lx + labelW, ly, config.hud.cleanF3ValueColor);
+         context.method_27535(font, class_2561.method_43470(line[1]), lx + labelW, ly, valueColor);
       }
       context.method_51448().popMatrix();
    }

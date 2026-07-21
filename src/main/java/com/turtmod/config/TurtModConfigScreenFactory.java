@@ -698,6 +698,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))
             .addOption(bool("Background", () -> cfg.hud.cleanF3ShowBackground, v -> cfg.hud.cleanF3ShowBackground = v))
             .addOption(bool("Right Column (system info)", () -> cfg.hud.cleanF3RightColumn, v -> cfg.hud.cleanF3RightColumn = v))
+            .addOption(bool("Theme Colours", () -> cfg.hud.cleanF3ThemeColors, v -> cfg.hud.cleanF3ThemeColors = v))
             .addOption(color("Label Color", () -> cfg.hud.cleanF3LabelColor, v -> cfg.hud.cleanF3LabelColor = v))
             .addOption(color("Value Color", () -> cfg.hud.cleanF3ValueColor, v -> cfg.hud.cleanF3ValueColor = v))
             .addOption(button("Reorder Lines", () -> {
