@@ -17,8 +17,8 @@ import org.joml.Vector3f;
  */
 public class SkinPreviewButton extends class_4185.class_12231 {
 
-   private static final int PREVIEW_H = 84;   // preview height above the button
-   private static final int BODY_W = 44;
+   private static final int PREVIEW_H = 110;   // preview height above the button
+   private static final int BODY_W = 58;
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
       super(x, y, w, h, class_2561.method_43470("🧍 Skin Changer"), onPress, field_40754);
@@ -93,11 +93,13 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       state.field_61823.clear();
       state.field_53453 = 1.0f;
       state.field_53454 = 1.0f;
+      state.field_53532 = true;            // show the cape layer
 
       float cx = (x1 + x2) / 2.0f, cy = (y1 + y2) / 2.0f;
       float p = (float) Math.atan((cx - mouseX) / 40.0f);
       float q = (float) Math.atan((cy - mouseY) / 40.0f);
-      state.field_53446 = 180.0f;          // body faces the viewer (front)
+      float spin = (System.currentTimeMillis() % 6000L) / 6000.0f * 360.0f;   // slow turntable
+      state.field_53446 = 180.0f + spin;   // body slowly rotates so you see the front, sides, and cape
       state.field_53447 = p * 20.0f;       // head tracks the cursor a little
       state.field_53448 = -q * 20.0f;
 
