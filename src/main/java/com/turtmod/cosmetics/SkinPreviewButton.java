@@ -41,9 +41,9 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (skin == null) {
          return;
       }
-      // Preview box above the button, nudged left with a gap so it doesn't sit on the button; clamped on-screen.
+      // Preview box centred above the button with a gap so it doesn't sit on it; clamped on-screen.
       int bx = this.method_46426(), by = this.method_46427(), bw = this.method_25368();
-      int cx = bx + bw / 2 - 30;
+      int cx = bx + bw / 2;
       int y2 = by - 12, y1 = y2 - PREVIEW_H;
       int x1 = cx - BODY_W / 2, x2 = cx + BODY_W / 2;
 
@@ -92,6 +92,19 @@ public class SkinPreviewButton extends class_4185.class_12231 {
          return true;
       }
       return super.method_25402(click, bl);   // button press if over the button, else no-op
+   }
+
+   /**
+    * Report "mouse over" for the preview area as well as the button. The screen only dispatches clicks /
+    * drags to the widget the cursor is over (isMouseOver), so without this the preview never received the
+    * grab and only the head (which tracks the cursor) appeared to move.
+    */
+   @Override
+   public boolean method_25405(double x, double y) {
+      if (super.method_25405(x, y)) {
+         return true;
+      }
+      return x >= this.pvx1 && x <= this.pvx2 && y >= this.pvy1 && y <= this.pvy2;
    }
 
    @Override
