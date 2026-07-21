@@ -28,15 +28,16 @@ public abstract class GameMenuScreenMixin extends class_437 {
       int x = this.field_22789 / 2 + 104;
       int y = this.field_22790 / 4 + 112;
       this.method_37063(new TurtLogoButton(x, y, 20, 20, (button) -> this.field_22787.method_1507(new TurtModMainMenuScreen(this))));
-      // A tidy icon column on the left of the button block: screenshot gallery, then the skin changer.
+      // Left of the vanilla button block: the screenshot gallery, with the labelled Skin Changer to its left.
       int col = this.field_22789 / 2 - 124;
       com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
       if (cfg == null || cfg.hud.screenshotMenuButton) {
          this.method_37063(class_4185.method_46430(class_2561.method_43470("📸"), (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))).method_46434(col, y, 20, 20).method_46431());
       }
-      // Skin Changer: a small icon button stacked just above the screenshot-gallery button.
+      // Skin Changer: a wider labelled button to the LEFT of the gallery button, with a live skin preview above.
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
-         this.method_37063(new SkinPreviewButton(col, y - 24, 20, 20,
+         int skinW = 96;
+         this.method_37063(new SkinPreviewButton(col - 4 - skinW, y, skinW, 20,
             (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));
       }
    }

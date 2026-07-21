@@ -63,6 +63,12 @@ public class CosmeticsScreen extends class_437 {
    private float galleryScroll = 0f;
    private final List<String> librarySkins = new ArrayList<>();   // absolute .png paths in the skins folder
    private float libraryScroll = 0f;
+
+   // Preset search (GALLERY tab).
+   private String presetSearch = "";
+   private boolean searchFocused = false;
+   private int searchX, searchY, searchW, searchH;
+   private final List<Integer> presetFilter = new ArrayList<>();   // indices into `presets` matching the search
    private int modelTogX, modelTogY, modelTogW, modelTogH;        // segmented Classic|Slim toggle rect
    private String statusMessage = "";
    private int messageTicks = 0;
@@ -145,7 +151,10 @@ public class CosmeticsScreen extends class_437 {
          int halfW = (colW - gap) / 2;
          this.buttons.add(new TurtUIButton(col, cy, halfW, bh, "Upload PNG", t, this::importSkinFile));
          this.buttons.add(new TurtUIButton(col + halfW + gap, cy, colW - halfW - gap, bh, "Skins Library", t, this::openLibrary));
-      } else { // LIBRARY
+      } else { // LIBRARY — pull skins in from anywhere: upload, drag, or the folder itself.
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload PNG", t, this::importSkinToLibrary)); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", t, this::openSkinsFolder)); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", t, this::loadAvailableSkins));
          this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, () -> { this.view = View.EDIT; this.rebuildButtons(); }));
       }
    }
@@ -283,13 +292,28 @@ public class CosmeticsScreen extends class_437 {
          Files.createDirectories(dest.getParent());
          Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
          if (this.editing != null) { this.editing.skinFile = dest.toAbsolutePath().toString(); saveEditing(); }
+         if (this.view == View.LIBRARY) loadAvailableSkins();   // show the freshly-added skin immediately
          setStatus("Imported " + name);
       } catch (Exception e) { setStatus("Import failed: " + e.getMessage()); }
    }
 
-   /** Drag & drop: any dropped .png becomes the editing preset's skin. */
+   /** Upload a PNG straight into the library (same picker as the editor, then refresh the grid). */
+   private void importSkinToLibrary() {
+      importSkinFile();
+   }
+
+   /** Open the skins folder in the OS file browser so you can drop / manage skins by hand. */
+   private void openSkinsFolder() {
+      try {
+         Path dir = CosmeticManager.getSkinsDirectory();
+         Files.createDirectories(dir);
+         class_156.method_668().method_672(dir.toFile());
+      } catch (Exception e) { setStatus("Could not open the skins folder."); }
+   }
+
+   /** Drag & drop: any dropped .png is imported (assigned to the preset, and shown in the library). */
    public void method_29638(List<Path> files) {
-      if (this.view == View.EDIT && files != null) {
+      if ((this.view == View.EDIT || this.view == View.LIBRARY) && files != null) {
          for (Path p : files) {
             if (p.getFileName().toString().toLowerCase().endsWith(".png")) { importSkinPath(p); break; }
          }
@@ -389,13 +413,33 @@ public class CosmeticsScreen extends class_437 {
       return Math.max(1, (this.contentW + CARD_GAP) / (CARD_W + CARD_GAP));
    }
 
+   /** Rebuild the list of preset indices matching the search box (all of them when the box is empty). */
+   private void rebuildFilter() {
+      this.presetFilter.clear();
+      String q = this.presetSearch.trim().toLowerCase();
+      for (int i = 0; i < this.presets.size(); i++) {
+         String n = this.presets.get(i).name == null ? "" : this.presets.get(i).name.toLowerCase();
+         if (q.isEmpty() || n.contains(q)) this.presetFilter.add(i);
+      }
+   }
+
    private void renderGallery(class_332 ctx, int mx, int my) {
       TurtLauncher.drawContentPanel(ctx, this.field_22793, this.contentX, this.contentY, this.contentW, this.contentH, "YOUR PRESETS");
-      int viewTop = this.contentY + 22, viewH = this.contentH - 28;
+      rebuildFilter();
+
+      // Search bar across the top.
+      this.searchX = this.contentX + 6; this.searchY = this.contentY + 20; this.searchW = this.contentW - 12; this.searchH = 16;
+      drawField(ctx, this.searchX, this.searchY, this.searchW, this.searchH, this.presetSearch, this.searchFocused, "search presets...");
+
+      int viewTop = this.contentY + 44, viewH = this.contentH - 50;
 
       if (this.presets.isEmpty()) {
          ctx.method_25300(this.field_22793, "No presets yet", this.contentX + this.contentW / 2, viewTop + viewH / 2 - 8, 0xFF888888);
          ctx.method_25300(this.field_22793, "Click 'New Preset'", this.contentX + this.contentW / 2, viewTop + viewH / 2 + 4, 0xFF666666);
+         return;
+      }
+      if (this.presetFilter.isEmpty()) {
+         ctx.method_25300(this.field_22793, "No presets match \"" + this.presetSearch + "\"", this.contentX + this.contentW / 2, viewTop + viewH / 2 - 4, 0xFF888888);
          return;
       }
 
@@ -404,8 +448,9 @@ public class CosmeticsScreen extends class_437 {
       int startX = this.contentX + (this.contentW - usedW) / 2;
 
       ctx.method_44379(this.contentX + 1, viewTop, this.contentX + this.contentW - 1, viewTop + viewH);
-      for (int i = 0; i < this.presets.size(); i++) {
-         int col = i % cols, row = i / cols;
+      for (int f = 0; f < this.presetFilter.size(); f++) {
+         int i = this.presetFilter.get(f);
+         int col = f % cols, row = f / cols;
          int cardX = startX + col * (CARD_W + CARD_GAP);
          int cardY = viewTop + row * (CARD_H + CARD_GAP) - (int) this.galleryScroll;
          if (cardY + CARD_H <= viewTop || cardY >= viewTop + viewH) continue;
@@ -685,13 +730,17 @@ public class CosmeticsScreen extends class_437 {
       for (TurtUIButton btn : this.buttons) if (btn.mouseClicked(mx, my, button)) return true;
 
       if (this.view == View.GALLERY) {
-         int viewTop = this.contentY + 22, viewH = this.contentH - 28;
-         if (!this.presets.isEmpty() && mx >= this.contentX && mx <= this.contentX + this.contentW && my >= viewTop && my <= viewTop + viewH) {
+         // Search-box focus.
+         this.searchFocused = mx >= this.searchX && mx <= this.searchX + this.searchW && my >= this.searchY && my <= this.searchY + this.searchH;
+         if (this.searchFocused) return true;
+         int viewTop = this.contentY + 44, viewH = this.contentH - 50;
+         if (!this.presetFilter.isEmpty() && mx >= this.contentX && mx <= this.contentX + this.contentW && my >= viewTop && my <= viewTop + viewH) {
             int cols = galleryCols();
             int usedW = cols * CARD_W + (cols - 1) * CARD_GAP;
             int startX = this.contentX + (this.contentW - usedW) / 2;
-            for (int i = 0; i < this.presets.size(); i++) {
-               int col = i % cols, row = i / cols;
+            for (int f = 0; f < this.presetFilter.size(); f++) {
+               int i = this.presetFilter.get(f);
+               int col = f % cols, row = f / cols;
                int cardX = startX + col * (CARD_W + CARD_GAP);
                int cardY = viewTop + row * (CARD_H + CARD_GAP) - (int) this.galleryScroll;
                if (mx >= cardX && mx <= cardX + CARD_W && my >= cardY && my <= cardY + CARD_H) {
@@ -771,9 +820,10 @@ public class CosmeticsScreen extends class_437 {
    public boolean method_25401(double mx, double my, double ha, double va) {
       if (this.view == View.GALLERY || this.view == View.LIBRARY) {
          int cols = galleryCols();
-         int count = this.view == View.GALLERY ? this.presets.size() : this.librarySkins.size();
+         int count = this.view == View.GALLERY ? this.presetFilter.size() : this.librarySkins.size();
          int rows = (count + cols - 1) / cols;
-         float maxScroll = Math.max(0f, rows * (CARD_H + CARD_GAP) - (this.contentH - 28));
+         int viewH = this.view == View.GALLERY ? this.contentH - 50 : this.contentH - 28;
+         float maxScroll = Math.max(0f, rows * (CARD_H + CARD_GAP) - viewH);
          if (maxScroll > 0f) {
             float ns = (this.view == View.GALLERY ? this.galleryScroll : this.libraryScroll) - (float) va * 30f;
             ns = Math.max(0f, Math.min(maxScroll, ns));
@@ -789,12 +839,17 @@ public class CosmeticsScreen extends class_437 {
       if (s != null && !s.isEmpty()) {
          if (this.nameFocused && this.nameInput.length() < 24) { this.nameInput += s; return true; }
          if (this.ignFocused && this.ignInput.length() < 16) { this.ignInput += s; return true; }
+         if (this.searchFocused && this.presetSearch.length() < 24) { this.presetSearch += s; this.galleryScroll = 0f; return true; }
       }
       return super.method_25400(event);
    }
 
    public boolean method_25404(net.minecraft.class_11908 input) {
       int key = input.comp_4795();
+      if (this.searchFocused) {
+         if (key == 259) { if (!this.presetSearch.isEmpty()) this.presetSearch = this.presetSearch.substring(0, this.presetSearch.length() - 1); this.galleryScroll = 0f; return true; }
+         if (key == 257 || key == 335 || key == 256) { this.searchFocused = false; return true; }
+      }
       if (this.nameFocused || this.ignFocused) {
          if (key == 259) {   // backspace
             if (this.nameFocused && !this.nameInput.isEmpty()) this.nameInput = this.nameInput.substring(0, this.nameInput.length() - 1);

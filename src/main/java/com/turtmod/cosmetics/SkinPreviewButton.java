@@ -10,15 +10,15 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * A menu button that renders a live 3D preview of the player's current skin above itself, then opens the
- * Skin Changer. Modelled on SkinShuffle's OpenCarouselButton: the preview is drawn inside the widget's own
- * render pass (so it always shows, unlike a screen render-inject), using the same GUI entity-render task
- * the Skin Changer's preview uses.
+ * A menu button that renders a live 3D preview of the player's current skin (with cape) above itself, then
+ * opens the Skin Changer. Modelled on SkinShuffle's OpenCarouselButton: the preview is drawn inside the
+ * widget's own render pass (so it always shows, unlike a screen render-inject), using the same GUI
+ * entity-render task the Skin Changer's preview uses. 1.21.11 only — newer versions use a different pipeline.
  */
 public class SkinPreviewButton extends class_4185.class_12231 {
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
-      super(x, y, w, h, class_2561.method_43470("🧍"), onPress, field_40754);
+      super(x, y, w, h, class_2561.method_43470("🧍 Skin Changer"), onPress, field_40754);
    }
 
    @Override
@@ -28,8 +28,8 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (skin == null) {
          return;
       }
-      // Tall body preview centred above the button.
-      int pw = this.method_25368() + 12;
+      // Compact body preview centred above the button (fixed size so a wide, labelled button stays tidy).
+      int pw = 44;
       int ph = (int) (pw * 1.9f);
       int cx = this.method_46426() + this.method_25368() / 2;
       int x1 = cx - pw / 2;
@@ -39,7 +39,7 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       renderBody(ctx, skin, x1, y1, x2, y2, mouseX, mouseY);
    }
 
-   /** The player's live skin when in-world, else the account skin (deterministic default if unresolved). */
+   /** The player's live skin when in-world, else the account skin (both carry the active cape). */
    private static class_8685 currentSkin() {
       class_310 mc = class_310.method_1551();
       if (mc == null) {
@@ -72,8 +72,8 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       int cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
       float headYaw = (float) Math.toDegrees(Math.atan((cx - mouseX) * 0.008));
       float headPitch = (float) Math.toDegrees(Math.atan((mouseY - cy) * 0.008));
-      state.field_53446 = 180f;                 // body faces the viewer
-      state.field_53447 = 180f + headYaw;       // head tracks the cursor a little
+      state.field_53446 = 180f;            // body faces the viewer (front)
+      state.field_53447 = headYaw;         // head tracks the cursor a little (relative to body — no 180 flip)
       state.field_53448 = headPitch;
 
       double gs = ctx.method_51421() > 0 ? class_310.method_1551().method_22683().method_4495() : 1.0;
