@@ -28,6 +28,7 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    private boolean manual = false;            // true once the user has dragged to rotate
    private float userYaw = 0f;
    private float userPitch = 0f;
+   private int lastMx, lastMy;                // for computing drag delta in the render loop
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
       super(x, y, w, h, class_2561.method_43470("🧍 Skin Changer"), onPress, field_40754);
@@ -40,10 +41,10 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (skin == null) {
          return;
       }
-      // Preview box centred above the button, clamped so it never leaves the screen.
+      // Preview box above the button, nudged left with a gap so it doesn't sit on the button; clamped on-screen.
       int bx = this.method_46426(), by = this.method_46427(), bw = this.method_25368();
-      int cx = bx + bw / 2;
-      int y2 = by - 4, y1 = y2 - PREVIEW_H;
+      int cx = bx + bw / 2 - 30;
+      int y2 = by - 12, y1 = y2 - PREVIEW_H;
       int x1 = cx - BODY_W / 2, x2 = cx + BODY_W / 2;
 
       class_310 mc = class_310.method_1551();
@@ -54,6 +55,16 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (y1 < 2) { int d = 2 - y1; y1 += d; y2 += d; }
       if (y2 > sh - 2) { int d = y2 - (sh - 2); y1 -= d; y2 -= d; }
       this.pvx1 = x1; this.pvy1 = y1; this.pvx2 = x2; this.pvy2 = y2;
+
+      // Drive rotation from the render loop's live cursor delta (reliable, unlike drag-event routing).
+      if (this.dragging) {
+         this.manual = true;
+         this.userYaw += (mouseX - this.lastMx);
+         this.userPitch += (mouseY - this.lastMy) * 0.02f;
+         this.userPitch = Math.max(-0.6f, Math.min(0.6f, this.userPitch));
+      }
+      this.lastMx = mouseX;
+      this.lastMy = mouseY;
 
       float bodyYaw, tiltPitch;
       if (this.manual) {
@@ -75,7 +86,9 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    public boolean method_25402(class_11909 click, boolean bl) {
       double mx = click.comp_4798(), my = click.comp_4799();
       if (mx >= this.pvx1 && mx <= this.pvx2 && my >= this.pvy1 && my <= this.pvy2) {
-         this.dragging = true;   // grab the preview to rotate it
+         this.dragging = true;   // grab the preview to rotate it (delta applied in the render loop)
+         this.lastMx = (int) mx;
+         this.lastMy = (int) my;
          return true;
       }
       return super.method_25402(click, bl);   // button press if over the button, else no-op
@@ -84,11 +97,7 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    @Override
    public boolean method_25403(class_11909 click, double dx, double dy) {
       if (this.dragging) {
-         this.manual = true;
-         this.userYaw += (float) dx;
-         this.userPitch += (float) dy * 0.02f;
-         this.userPitch = Math.max(-0.6f, Math.min(0.6f, this.userPitch));
-         return true;
+         return true;   // consume; the actual rotation is applied from the render-loop cursor delta
       }
       return super.method_25403(click, dx, dy);
    }
