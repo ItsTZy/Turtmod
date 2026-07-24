@@ -69,22 +69,27 @@ public abstract class EntityRenderDispatcherMixin {
    private boolean turtmod$showInvisibleHitboxes(class_1297 entity) {
       boolean invisible = entity.method_5767();
       TurtModConfig cfg = TurtModClient.getConfig();
-      if (!invisible || cfg == null || !cfg.misc.enabled || !cfg.hud.customHitboxes || !cfg.hud.hitboxShowInvisible) {
+      if (!invisible || cfg == null || !cfg.misc.enabled || !cfg.hud.customHitboxes) {
          return invisible;
       }
       if (entity instanceof class_1657 player) {
          if (!cfg.hud.hitboxPlayers) {
             return invisible;
          }
-         // "Armor Only": keep invisible players hidden unless they're wearing armour.
-         if (cfg.hud.hitboxShowInvisibleArmorOnly && !turtmod$hasVisibleArmor(player)) {
-            return invisible;
+         // "Armor Only" is an INDEPENDENT switch: reveal an invisible player's hitbox whenever they're
+         // wearing armour (armour already gives them away), and hide it again the moment they take it off.
+         if (cfg.hud.hitboxShowInvisibleArmorOnly && turtmod$hasVisibleArmor(player)) {
+            return false;
          }
-         return false;
+         // "Show On Invisible Players": reveal every invisible player.
+         if (cfg.hud.hitboxShowInvisible) {
+            return false;
+         }
+         return invisible;
       }
-      // Non-player entities: only when "Include Mobs/Entities" is on. The recolor injector's per-type
-      // filters (hostile/passive/others/distance) still apply by zeroing the colour of unwanted types.
-      if (cfg.hud.hitboxShowInvisibleEntities) {
+      // Non-player entities: only with the full "Show On Invisible" + "Include Mobs". The recolor injector's
+      // per-type filters (hostile/passive/others/distance) still apply by zeroing the colour of unwanted types.
+      if (cfg.hud.hitboxShowInvisible && cfg.hud.hitboxShowInvisibleEntities) {
          return false;
       }
       return invisible;

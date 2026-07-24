@@ -65,9 +65,16 @@ public abstract class EntityRendererMixin {
       if (config.visual.showOwnNametag && player == client.field_1724) {
          return true;
       }
-      if (config.combat.playerHealthIndicator && config.combat.playerHealthIndicatorInvisible && player != client.field_1724 && player.method_5767()
-            && (!config.combat.playerHealthIndicatorArmorOnly || turtmod$hasVisibleArmor(player))) {
-         return true;
+      if (config.combat.playerHealthIndicator && player != client.field_1724 && player.method_5767()) {
+         // "Only Players With Armor" is an independent switch: reveal an invisible player's health whenever
+         // they're wearing armour, and hide it again once they take it off.
+         if (config.combat.playerHealthIndicatorArmorOnly) {
+            return turtmod$hasVisibleArmor(player);
+         }
+         // "Show Invisible Players": reveal every invisible player's health.
+         if (config.combat.playerHealthIndicatorInvisible) {
+            return true;
+         }
       }
       return false;
    }
