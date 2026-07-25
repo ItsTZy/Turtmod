@@ -77,6 +77,8 @@ public final class CleanF3Feature {
       }
       if (config.hud.cleanF3ShowPosition) {
          avail.put("pos", new String[]{"XYZ", String.format("%.3f / %.3f / %.3f", p.field_1352, p.field_1351, p.field_1350)});
+      }
+      if (config.hud.cleanF3ShowBlock) {
          avail.put("block", new String[]{"Block", String.format("%d %d %d", pos.method_10263(), pos.method_10264(), pos.method_10260())});
       }
       if (config.hud.cleanF3ShowChunk) {

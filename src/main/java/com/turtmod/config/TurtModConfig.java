@@ -408,6 +408,7 @@ public static final class Combat {
       public boolean cleanF3ShowBiome;
       public boolean cleanF3ShowLookingAt;
       public boolean cleanF3ShowLight;
+      public boolean cleanF3ShowBlock = true;   // block coords line (split from XYZ so each is independent)
       public boolean cleanF3ShowChunk;
       public boolean cleanF3ShowBackground;
       public boolean cleanF3ShowSpeed;
