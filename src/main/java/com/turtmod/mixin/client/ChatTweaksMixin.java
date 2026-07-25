@@ -15,7 +15,9 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
  */
 @Mixin(class_338.class)
 public abstract class ChatTweaksMixin {
-   @ModifyConstant(method = {"method_1815", "method_58744"}, constant = @Constant(intValue = 100))
+   // require = 0: if the caps ever can't be located (mapping change / inlined constant), the injection is
+   // skipped instead of aborting the whole class_338 transform — chat history just stays vanilla, no crash.
+   @ModifyConstant(method = {"method_1815", "method_58744"}, constant = @Constant(intValue = 100), require = 0)
    private int turtmod$chatHistory(int original) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (cfg != null && cfg.misc.enabled && cfg.hud.chatTweaksEnabled) {
