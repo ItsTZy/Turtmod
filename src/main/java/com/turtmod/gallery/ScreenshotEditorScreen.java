@@ -138,6 +138,23 @@ public class ScreenshotEditorScreen extends class_437 {
    private static final int RAIL_W = 26, RAIL_BTN = 22, RAIL_GAP = 4;
    private static final int SW = 16, SWG = 5;
 
+   // Scale-to-fit: below this design size the whole editor is uniformly scaled down (never up) and centred,
+   // so nothing runs off-screen at small window sizes. lw/lh are the logical dims used for all layout.
+   private static final int MIN_W = 620, MIN_H = 360;
+   private int lw, lh;
+   private double uiFit = 1.0, uiOffX = 0.0, uiOffY = 0.0;
+
+   private void computeFit() {
+      this.lw = Math.max(this.field_22789, MIN_W);
+      this.lh = Math.max(this.field_22790, MIN_H);
+      this.uiFit = Math.min((double) this.field_22789 / this.lw, (double) this.field_22790 / this.lh);
+      this.uiOffX = (this.field_22789 - this.lw * this.uiFit) / 2.0;
+      this.uiOffY = (this.field_22790 - this.lh * this.uiFit) / 2.0;
+   }
+
+   private double logicalX(double screenX) { return (screenX - this.uiOffX) / this.uiFit; }
+   private double logicalY(double screenY) { return (screenY - this.uiOffY) / this.uiFit; }
+
    public ScreenshotEditorScreen(class_437 parent, File file) {
       super(class_2561.method_43470("Screenshot Editor"));
       this.parent = parent;
@@ -154,11 +171,12 @@ public class ScreenshotEditorScreen extends class_437 {
    private void rebuildButtons() {
       this.buttons.clear();
       TurtUITheme t = new TurtUITheme(Palette.BTN_BG, Palette.PANEL_BORDER, Palette.TEXT, Palette.BTN_HOVER, Palette.GREEN);
+      this.computeFit();
       int bh = 20, gap = 6, y = 10;
-      // Shrink the four action buttons to fit whatever width is left of the header on narrow windows.
-      int avail = this.field_22789 - 12 - 120;
+      // Shrink the four action buttons to fit whatever width is left of the header (logical space).
+      int avail = this.lw - 12 - 120;
       int bw = Math.max(38, Math.min(78, (avail - 3 * gap) / 4));
-      int x = this.field_22789 - 12 - bw;
+      int x = this.lw - 12 - bw;
       this.buttons.add(new TurtUIButton(x, y, bw, bh, "Cancel", t, this::onCancel));
       x -= bw + gap;
       this.buttons.add(new TurtUIButton(x, y, bw, bh, "Copy", t, this::onCopy));
@@ -483,7 +501,8 @@ public class ScreenshotEditorScreen extends class_437 {
 
    // ── Input ──
    public boolean method_25402(class_11909 click, boolean bl) {
-      double mx = click.comp_4798(), my = click.comp_4799();
+      this.computeFit();
+      double mx = this.logicalX(click.comp_4798()), my = this.logicalY(click.comp_4799());
       int button = click.method_74245();
       for (TurtUIButton b : this.buttons) {
          if (b.mouseClicked(mx, my, button)) {
@@ -612,7 +631,8 @@ public class ScreenshotEditorScreen extends class_437 {
    }
 
    public boolean method_25403(class_11909 click, double dx, double dy) {
-      double mx = click.comp_4798(), my = click.comp_4799();
+      this.computeFit();
+      double mx = this.logicalX(click.comp_4798()), my = this.logicalY(click.comp_4799());
       // Dragging inside the open picker keeps updating the colour.
       if (this.pickerOpen && this.handlePickerClick(mx, my)) {
          return true;
@@ -702,6 +722,8 @@ public class ScreenshotEditorScreen extends class_437 {
    }
 
    public boolean method_25401(double mx, double my, double horizontal, double vertical) {
+      this.computeFit();
+      mx = this.logicalX(mx); my = this.logicalY(my);
       if (this.textureId != null && this.inCanvas(mx, my)) {
          if (vertical > 0) {
             this.zoom *= 1.12f;
@@ -792,9 +814,16 @@ public class ScreenshotEditorScreen extends class_437 {
       this.lastFrameNs = nowNs;
       this.openFade = TurtUIUtils.lerp01(this.openFade, 1f, dt, 12f);
 
-      // Exact same backdrop as the hub/gallery (gradient + drifting glows) — no extra tint on top, so the
-      // editor reads as the same app/theme rather than a darker separate screen.
+      // Exact same backdrop as the hub/gallery (gradient + drifting glows) — drawn full-screen, unscaled.
       TurtUIUtils.drawMenuBackdrop(ctx, this.field_22789, this.field_22790);
+
+      // Everything else is laid out in logical (lw x lh) space and uniformly scaled to fit small windows.
+      this.computeFit();
+      int mlx = (int) Math.round(this.logicalX(mouseX)), mly = (int) Math.round(this.logicalY(mouseY));
+      ctx.method_51448().pushMatrix();
+      ctx.method_51448().translate((float) this.uiOffX, (float) this.uiOffY);
+      ctx.method_51448().scale((float) this.uiFit, (float) this.uiFit);
+
       // Mod branding logo + gradient title, like the chrome screens.
       com.turtmod.ui.BrandingRenderer.drawLogo(ctx, 12, 8, 20, 20);
       TurtUIUtils.drawGradientText(ctx, this.field_22793, "SCREENSHOT EDITOR", 38, 12,
@@ -802,27 +831,29 @@ public class ScreenshotEditorScreen extends class_437 {
 
       this.canvasX = 46;
       this.canvasY = 40;
-      this.canvasW = this.field_22789 - this.canvasX - 12;
-      this.canvasH = this.field_22790 - this.canvasY - 46;
+      this.canvasW = this.lw - this.canvasX - 12;
+      this.canvasH = this.lh - this.canvasY - 46;
 
       if (this.errorMessage != null || this.textureId == null) {
          ctx.method_25300(this.field_22793, this.errorMessage == null ? "Loading…" : this.errorMessage,
-            this.field_22789 / 2, this.field_22790 / 2, 0xFFFF8080);
+            this.lw / 2, this.lh / 2, 0xFFFF8080);
       } else {
-         this.renderCanvas(ctx, mouseX, mouseY);
+         this.renderCanvas(ctx, mlx, mly);
       }
 
-      this.renderToolRail(ctx, mouseX, mouseY);
-      this.renderBottomBar(ctx, mouseX, mouseY);
+      this.renderToolRail(ctx, mlx, mly);
+      this.renderBottomBar(ctx, mlx, mly);
 
       for (TurtUIButton b : this.buttons) {
-         b.render(ctx, mouseX, mouseY, this.field_22793);
+         b.render(ctx, mlx, mly, this.field_22793);
       }
       if (this.statusTicks > 0) {
-         ctx.method_25300(this.field_22793, this.status, this.field_22789 / 2, this.field_22790 - 14, 0xFFB9F5C4);
+         ctx.method_25300(this.field_22793, this.status, this.lw / 2, this.lh - 14, 0xFFB9F5C4);
          this.statusTicks--;
       }
-      this.renderToolTooltip(ctx, mouseX, mouseY);
+      this.renderToolTooltip(ctx, mlx, mly);
+      ctx.method_51448().popMatrix();
+
       if (this.openFade < 0.99F) {
          int a = (int) ((1f - this.openFade) * 255f) & 255;
          ctx.method_25294(0, 0, this.field_22789, this.field_22790, a << 24);
@@ -1031,7 +1062,7 @@ public class ScreenshotEditorScreen extends class_437 {
       int n = Tool.values().length;
       // Compress the spacing so the whole rail always fits vertically on short windows.
       int pitch = RAIL_BTN + RAIL_GAP;
-      int avail = this.field_22790 - y - 8;
+      int avail = this.lh - y - 8;
       if (n * pitch > avail) {
          pitch = Math.max(RAIL_BTN + 1, avail / n);
       }
@@ -1072,11 +1103,11 @@ public class ScreenshotEditorScreen extends class_437 {
       int boxH = 30;
       int bx = mouseX + 14;
       int by = mouseY + 6;
-      if (bx + boxW > this.field_22789 - 4) {
+      if (bx + boxW > this.lw - 4) {
          bx = mouseX - 14 - boxW;
       }
-      if (by + boxH > this.field_22790 - 4) {
-         by = this.field_22790 - 4 - boxH;
+      if (by + boxH > this.lh - 4) {
+         by = this.lh - 4 - boxH;
       }
       TurtUIUtils.drawRoundedRect(ctx, bx, by, boxW, boxH, 4, new Color(11, 13, 20, 235));
       TurtUIUtils.drawRoundedBorder(ctx, bx, by, boxW, boxH, 4, Palette.alpha(Palette.GREEN, 150));
@@ -1117,7 +1148,7 @@ public class ScreenshotEditorScreen extends class_437 {
    }
 
    private void renderBottomBar(class_332 ctx, int mouseX, int mouseY) {
-      int y = this.field_22790 - 30;
+      int y = this.lh - 30;
       this.barY = y;
       int x = this.canvasX;
       this.swY = y;
@@ -1163,7 +1194,7 @@ public class ScreenshotEditorScreen extends class_437 {
       ctx.method_25300(this.field_22793, this.alphaPct + "%", this.opacityBtnX + 17, y + 4, Palette.TEXT.getRGB());
 
       // Undo / redo at the right end of the bar.
-      this.redoX = this.field_22789 - 12 - 26;
+      this.redoX = this.lw - 12 - 26;
       this.undoX = this.redoX - 26 - 6;
       this.drawIconButton(ctx, this.undoX, y, mouseX, mouseY, "↶", !this.undo.isEmpty());
       this.drawIconButton(ctx, this.redoX, y, mouseX, mouseY, "↷", !this.redo.isEmpty());
@@ -1173,7 +1204,7 @@ public class ScreenshotEditorScreen extends class_437 {
    private void renderColorPicker(class_332 ctx, int mouseX, int mouseY) {
       int px = this.swX[SWATCHES.length] - PICK_W + SW;
       int py = this.swY - PICK_H - HUE_H - 12;
-      px = Math.max(this.canvasX, Math.min(px, this.field_22789 - PICK_W - 8));
+      px = Math.max(this.canvasX, Math.min(px, this.lw - PICK_W - 8));
       py = Math.max(this.canvasY, py);
       this.pickerX = px;
       this.pickerY = py;
