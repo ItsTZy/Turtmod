@@ -8,6 +8,8 @@
 		"HitColorMixin",
 		"CameraMixin",
 		"ClearViewMixin",
+		"TitleTweaksMixin",
+		"BossbarTweaksMixin",
 		"DebugHudMixin",
 		"DebugHitboxCleanupMixin",
 		"EntityMixin",
