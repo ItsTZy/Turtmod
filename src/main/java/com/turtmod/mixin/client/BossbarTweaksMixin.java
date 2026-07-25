@@ -2,30 +2,36 @@ package com.turtmod.mixin.client;
 
 import com.turtmod.TurtModClient;
 import com.turtmod.config.TurtModConfig;
+import java.util.Map;
 import net.minecraft.class_310;
-import net.minecraft.class_327;
 import net.minecraft.class_332;
-import net.minecraft.class_338;
+import net.minecraft.class_337;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Bossbar Tweaks: hide the server boss bars, hide them only while F3 is open, or scale/reposition them.
- * Hooks the HUD's boss-bar render entry ({@code class_338.method_75804}, called from
- * {@code class_329}). Matrix push at HEAD / pop at TAIL stays balanced because that method never
- * early-returns (the empty-bar check lives deeper in {@code method_1805}).
+ * Hooks the boss-health overlay render ({@code class_337.method_1796}, called from {@code class_329}).
+ * The matrix push at HEAD is gated on there being at least one boss (so it matches the method's own empty
+ * early-return) and popped at TAIL, keeping the stack balanced.
  */
-@Mixin(class_338.class)
+@Mixin(class_337.class)
 public abstract class BossbarTweaksMixin {
+   @Shadow @SuppressWarnings("rawtypes") private Map field_2060;   // active boss events
+
    private boolean turtmod$pushedBoss;
 
-   @Inject(method = "method_75804", at = @At("HEAD"), cancellable = true)
-   private void turtmod$bossHead(class_332 ctx, class_327 font, int i, int j, int k, boolean bl, boolean bl2, CallbackInfo ci) {
+   @Inject(method = "method_1796", at = @At("HEAD"), cancellable = true)
+   private void turtmod$bossHead(class_332 ctx, CallbackInfo ci) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (cfg == null || !cfg.misc.enabled || !cfg.hud.bossbarTweaksEnabled) {
          return;
+      }
+      if (this.field_2060 == null || this.field_2060.isEmpty()) {
+         return;   // no bosses — let vanilla take its own early return
       }
       if (cfg.hud.bossbarHide) {
          ci.cancel();
@@ -51,8 +57,8 @@ public abstract class BossbarTweaksMixin {
       this.turtmod$pushedBoss = true;
    }
 
-   @Inject(method = "method_75804", at = @At("TAIL"))
-   private void turtmod$bossTail(class_332 ctx, class_327 font, int i, int j, int k, boolean bl, boolean bl2, CallbackInfo ci) {
+   @Inject(method = "method_1796", at = @At("TAIL"))
+   private void turtmod$bossTail(class_332 ctx, CallbackInfo ci) {
       if (this.turtmod$pushedBoss) {
          ctx.method_51448().popMatrix();
          this.turtmod$pushedBoss = false;

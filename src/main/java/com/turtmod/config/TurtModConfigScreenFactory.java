@@ -91,6 +91,7 @@ public final class TurtModConfigScreenFactory {
          case TITLE_TWEAKS -> "Title Tweaks";
          case BOSSBAR_TWEAKS -> "Bossbar Tweaks";
          case SCROLLABLE_TOOLTIPS -> "Scrollable Tooltips";
+         case CHAT_TWEAKS -> "Chat Tweaks";
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
@@ -499,6 +500,10 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.bossbarOffsetY = dh.bossbarOffsetY;
          }
          case SCROLLABLE_TOOLTIPS -> cfg.hud.scrollableTooltips = dh.scrollableTooltips;
+         case CHAT_TWEAKS -> {
+            cfg.hud.chatTweaksEnabled = dh.chatTweaksEnabled;
+            cfg.hud.chatHistoryLength = dh.chatHistoryLength;
+         }
          case COMMAND_KEYS -> {
             cfg.misc.commandKeysEnabled = dm.commandKeysEnabled;
             cfg.misc.commandKeys = new String[]{"", "", "", "", ""};
@@ -839,6 +844,9 @@ public final class TurtModConfigScreenFactory {
          case SCROLLABLE_TOOLTIPS -> group
             .addOption(bool("Enabled", () -> cfg.hud.scrollableTooltips, v -> cfg.hud.scrollableTooltips = v))
             .addOption(button("Scroll the mouse wheel over a tooltip taller than the screen.", () -> {}));
+         case CHAT_TWEAKS -> group
+            .addOption(bool("Enabled", () -> cfg.hud.chatTweaksEnabled, v -> cfg.hud.chatTweaksEnabled = v))
+            .addOption(intOpt("Chat History", () -> cfg.hud.chatHistoryLength, v -> cfg.hud.chatHistoryLength = v, 100, 1000, 50));
          case COMMAND_KEYS -> group
             .addOption(bool("Enabled", () -> cfg.misc.commandKeysEnabled, v -> cfg.misc.commandKeysEnabled = v))
             .addOption(button("Edit Command Keys...", () -> {
@@ -1183,6 +1191,7 @@ public final class TurtModConfigScreenFactory {
       TITLE_TWEAKS,
       BOSSBAR_TWEAKS,
       SCROLLABLE_TOOLTIPS,
+      CHAT_TWEAKS,
       COMMAND_KEYS,
       KIT_LOADER,
       GAMEMODE_SWITCHER,

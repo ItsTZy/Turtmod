@@ -12,6 +12,7 @@
 		"BossbarTweaksMixin",
 		"ScrollableTooltipMixin",
 		"TooltipScrollScreenMixin",
+		"ChatTweaksMixin",
 		"DebugHudMixin",
 		"DebugHitboxCleanupMixin",
 		"EntityMixin",
