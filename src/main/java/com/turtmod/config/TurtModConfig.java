@@ -464,6 +464,9 @@ public static final class Combat {
       public boolean hitboxShowInvisibleArmorOnly = false;
       public boolean hitboxShowInvisibleEntities = false;
       public boolean cleanDebugHitboxes = false;
+      // User-picked per-entity hitbox colours: entity-type id (e.g. "minecraft:zombie") -> ARGB colour.
+      // Any entity in this map draws its hitbox in the chosen colour instead of the default one.
+      public final java.util.Map<String, Integer> hitboxEntityColors = new java.util.LinkedHashMap<>();
       public int totemHudX;
       public int totemHudY;
       public int totemHudScalePercent;

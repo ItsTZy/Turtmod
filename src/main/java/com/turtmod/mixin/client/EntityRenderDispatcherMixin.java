@@ -121,6 +121,11 @@ public abstract class EntityRenderDispatcherMixin {
    }
 
    private static int turtmod$getColor(class_1297 entity, class_1297 targeted, TurtModConfig config) {
+      // A user-picked per-entity colour wins outright, so an entity you added always shows its own colour.
+      Integer custom = turtmod$customColorFor(entity, config);
+      if (custom != null) {
+         return custom;
+      }
       if (config.hud.hitboxHurtColorEnabled && entity instanceof class_1309 living) {
          if (living.field_6235 > 0) {
             return config.hud.hitboxHurtColor;
@@ -128,5 +133,14 @@ public abstract class EntityRenderDispatcherMixin {
       }
 
       return config.hud.hitboxChangeTargetColor && targeted == entity ? config.hud.hitboxTargetColor : config.hud.hitboxColor;
+   }
+
+   /** The user-picked colour for this entity's type, or null if the type isn't in the custom list. */
+   private static Integer turtmod$customColorFor(class_1297 entity, TurtModConfig config) {
+      if (config.hud.hitboxEntityColors == null || config.hud.hitboxEntityColors.isEmpty()) {
+         return null;
+      }
+      net.minecraft.class_2960 id = net.minecraft.class_7923.field_41177.method_10221(entity.method_5864());
+      return id == null ? null : config.hud.hitboxEntityColors.get(id.toString());
    }
 }

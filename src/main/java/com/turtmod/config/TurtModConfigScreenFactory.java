@@ -186,6 +186,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Self", () -> cfg.hud.hitboxSelf, v -> cfg.hud.hitboxSelf = v))
             .addOption(intOpt("Max Distance", () -> cfg.hud.hitboxMaxDistance, v -> cfg.hud.hitboxMaxDistance = v, 8, 256, 1))
             .addOption(color("Hitbox Color", () -> cfg.hud.hitboxColor, v -> cfg.hud.hitboxColor = v))
+            .addOption(button("Entity Colors...", () -> class_310.method_1551().method_1507(new com.turtmod.hud.HitboxColorsScreen(class_310.method_1551().field_1755))))
             .addOption(bool("Target Color", () -> cfg.hud.hitboxChangeTargetColor, v -> cfg.hud.hitboxChangeTargetColor = v))
             .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v))
             .addOption(bool("Hurt Color", () -> cfg.hud.hitboxHurtColorEnabled, v -> cfg.hud.hitboxHurtColorEnabled = v))
