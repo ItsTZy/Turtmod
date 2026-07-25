@@ -87,6 +87,7 @@ public final class TurtModConfigScreenFactory {
          case DEATH_COORDS -> "Death Coords";
          case MUTE_SOUNDS -> "Mute Sounds";
          case HIDE_PARTICLES -> "Hide Particles";
+         case CLEAR_VIEW -> "Clear View";
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
@@ -473,6 +474,12 @@ public final class TurtModConfigScreenFactory {
             cfg.misc.hideParticles = dm.hideParticles;
             cfg.misc.hiddenParticleIds.clear();
          }
+         case CLEAR_VIEW -> {
+            cfg.misc.clearViewEnabled = dm.clearViewEnabled;
+            cfg.misc.clearViewHidePotionParticles = dm.clearViewHidePotionParticles;
+            cfg.misc.clearViewReduceEatingParticles = dm.clearViewReduceEatingParticles;
+            cfg.misc.clearViewHideEatingParticles = dm.clearViewHideEatingParticles;
+         }
          case COMMAND_KEYS -> {
             cfg.misc.commandKeysEnabled = dm.commandKeysEnabled;
             cfg.misc.commandKeys = new String[]{"", "", "", "", ""};
@@ -792,6 +799,11 @@ public final class TurtModConfigScreenFactory {
                "Hide Particles", "Click a particle to hide/show (spawns a preview)",
                registryIds(net.minecraft.class_7923.field_41180), cfg.misc.hiddenParticleIds,
                RegistryPickerScreen.PreviewType.PARTICLE)));
+         case CLEAR_VIEW -> group
+            .addOption(bool("Enabled", () -> cfg.misc.clearViewEnabled, v -> cfg.misc.clearViewEnabled = v))
+            .addOption(bool("Hide Own Potion Particles", () -> cfg.misc.clearViewHidePotionParticles, v -> cfg.misc.clearViewHidePotionParticles = v))
+            .addOption(bool("Shrink Eating Particles", () -> cfg.misc.clearViewReduceEatingParticles, v -> cfg.misc.clearViewReduceEatingParticles = v))
+            .addOption(bool("Hide Eating Particles", () -> cfg.misc.clearViewHideEatingParticles, v -> cfg.misc.clearViewHideEatingParticles = v));
          case COMMAND_KEYS -> group
             .addOption(bool("Enabled", () -> cfg.misc.commandKeysEnabled, v -> cfg.misc.commandKeysEnabled = v))
             .addOption(button("Edit Command Keys...", () -> {
@@ -1132,6 +1144,7 @@ public final class TurtModConfigScreenFactory {
       DEATH_COORDS,
       MUTE_SOUNDS,
       HIDE_PARTICLES,
+      CLEAR_VIEW,
       COMMAND_KEYS,
       KIT_LOADER,
       GAMEMODE_SWITCHER,

@@ -784,6 +784,12 @@ public static final class Combat {
       public boolean muteNoteBlocks = false;
       public boolean muteTotemPop = false;
       public boolean muteXpOrb = false;
+      // Clear View: a cleaner first-person look. Hides YOUR OWN potion swirls (first person only) and
+      // trims/hides the eating "crumbs". Others / third-person are unaffected.
+      public boolean clearViewEnabled = true;
+      public boolean clearViewHidePotionParticles = true;
+      public boolean clearViewReduceEatingParticles = true;
+      public boolean clearViewHideEatingParticles = false;
       public boolean commandKeysEnabled = true;
       // Legacy: one command/message per slot (migrated into commandKeyMacros on load; kept for
       // backwards compatibility so old configs don't get wiped). "/" prefix = command, else chat.
