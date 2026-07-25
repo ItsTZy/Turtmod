@@ -436,6 +436,9 @@ public static final class Combat {
       public int titleOffsetX = 0;
       public int titleOffsetY = 0;
 
+      // Scrollable Tooltips: mouse-wheel scroll tooltips taller than the screen.
+      public boolean scrollableTooltips = true;
+
       // Bossbar Tweaks: hide / hide-in-F3 / scale / offset the server boss bars.
       public boolean bossbarTweaksEnabled = true;
       public boolean bossbarHide = false;

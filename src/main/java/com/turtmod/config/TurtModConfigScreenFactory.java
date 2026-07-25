@@ -90,6 +90,7 @@ public final class TurtModConfigScreenFactory {
          case CLEAR_VIEW -> "Clear View";
          case TITLE_TWEAKS -> "Title Tweaks";
          case BOSSBAR_TWEAKS -> "Bossbar Tweaks";
+         case SCROLLABLE_TOOLTIPS -> "Scrollable Tooltips";
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
@@ -497,6 +498,7 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.bossbarOffsetX = dh.bossbarOffsetX;
             cfg.hud.bossbarOffsetY = dh.bossbarOffsetY;
          }
+         case SCROLLABLE_TOOLTIPS -> cfg.hud.scrollableTooltips = dh.scrollableTooltips;
          case COMMAND_KEYS -> {
             cfg.misc.commandKeysEnabled = dm.commandKeysEnabled;
             cfg.misc.commandKeys = new String[]{"", "", "", "", ""};
@@ -834,6 +836,9 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Scale %", () -> cfg.hud.bossbarScalePercent, v -> cfg.hud.bossbarScalePercent = v, 25, 300, 5))
             .addOption(intOpt("Offset X", () -> cfg.hud.bossbarOffsetX, v -> cfg.hud.bossbarOffsetX = v, -400, 400, 2))
             .addOption(intOpt("Offset Y", () -> cfg.hud.bossbarOffsetY, v -> cfg.hud.bossbarOffsetY = v, -100, 300, 2));
+         case SCROLLABLE_TOOLTIPS -> group
+            .addOption(bool("Enabled", () -> cfg.hud.scrollableTooltips, v -> cfg.hud.scrollableTooltips = v))
+            .addOption(button("Scroll the mouse wheel over a tooltip taller than the screen.", () -> {}));
          case COMMAND_KEYS -> group
             .addOption(bool("Enabled", () -> cfg.misc.commandKeysEnabled, v -> cfg.misc.commandKeysEnabled = v))
             .addOption(button("Edit Command Keys...", () -> {
@@ -1177,6 +1182,7 @@ public final class TurtModConfigScreenFactory {
       CLEAR_VIEW,
       TITLE_TWEAKS,
       BOSSBAR_TWEAKS,
+      SCROLLABLE_TOOLTIPS,
       COMMAND_KEYS,
       KIT_LOADER,
       GAMEMODE_SWITCHER,
