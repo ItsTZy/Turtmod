@@ -154,7 +154,10 @@ public class ScreenshotEditorScreen extends class_437 {
    private void rebuildButtons() {
       this.buttons.clear();
       TurtUITheme t = new TurtUITheme(Palette.BTN_BG, Palette.PANEL_BORDER, Palette.TEXT, Palette.BTN_HOVER, Palette.GREEN);
-      int bw = 78, bh = 20, gap = 6, y = 10;
+      int bh = 20, gap = 6, y = 10;
+      // Shrink the four action buttons to fit whatever width is left of the header on narrow windows.
+      int avail = this.field_22789 - 12 - 120;
+      int bw = Math.max(38, Math.min(78, (avail - 3 * gap) / 4));
       int x = this.field_22789 - 12 - bw;
       this.buttons.add(new TurtUIButton(x, y, bw, bh, "Cancel", t, this::onCancel));
       x -= bw + gap;
@@ -863,12 +866,14 @@ public class ScreenshotEditorScreen extends class_437 {
          ctx.method_25302(class_10799.field_56883, this.overlayId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
             ou, ov, drawW, drawH, orw, orh, this.overlayW, this.overlayH);
       }
-      // The live stroke is drawn DIRECTLY (GPU) for instant, smooth feedback with no per-frame AWT bake;
-      // it's baked into the overlay via the shared rasterizer only once, on release.
+      // Live (uncommitted) items — the stroke being drawn, whatever is being moved, and text being typed —
+      // are drawn DIRECTLY on the GPU for instant, smooth feedback with no per-frame AWT bake. They bake
+      // into the overlay via the shared rasterizer only once, on release.
       if (this.draft != null && this.draft.type == Tool.CROP) {
          this.drawCropOverlay(ctx, this.draft);
-      } else if (this.draft != null) {
-         this.drawAnnotation(ctx, this.draft);
+      }
+      for (Annotation live : this.liveAnnotations()) {
+         this.drawAnnotation(ctx, live);
       }
       // Move tool: outline whatever is under the cursor so it's clear what will be grabbed/deleted.
       this.hoverAnn = -1;
