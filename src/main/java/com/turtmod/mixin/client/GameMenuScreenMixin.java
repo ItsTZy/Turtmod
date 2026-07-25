@@ -36,8 +36,13 @@ public abstract class GameMenuScreenMixin extends class_437 {
       }
       // Skin Changer: a wider labelled button to the LEFT of the gallery button, with a live skin preview above.
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
+         int gap = 4;
          int skinW = 96;
-         int skinX = Math.max(4, col - 4 - skinW);   // never run off the left edge on narrow windows
+         int skinX = col - gap - skinW;
+         if (skinX < 4) {                     // not enough room at full width: keep the gap, shrink to fit
+            skinW = Math.max(20, col - gap - 4);
+            skinX = 4;
+         }
          this.method_37063(new SkinPreviewButton(skinX, y, skinW, 20,
             (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));
       }

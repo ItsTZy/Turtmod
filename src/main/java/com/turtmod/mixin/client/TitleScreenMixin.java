@@ -38,8 +38,13 @@ public class TitleScreenMixin extends class_437 {
       this.method_37063(class_4185.method_46430(class_2561.method_43470("📸"), (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))).method_46434(col, y, 20, 20).method_46431());
       com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
+         int gap = 4;
          int skinW = 96;
-         int skinX = Math.max(4, col - 4 - skinW);        // never run off the left edge on narrow windows
+         int skinX = col - gap - skinW;
+         if (skinX < 4) {                                 // keep the gap, shrink to fit on narrow windows
+            skinW = Math.max(20, col - gap - 4);
+            skinX = 4;
+         }
          int skinY = this.field_22790 / 4 + 48 + 84;      // just below the language/options row
          this.method_37063(new SkinPreviewButton(skinX, skinY, skinW, 20,
             (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));

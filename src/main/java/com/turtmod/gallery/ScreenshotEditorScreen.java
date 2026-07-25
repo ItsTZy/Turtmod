@@ -863,18 +863,12 @@ public class ScreenshotEditorScreen extends class_437 {
          ctx.method_25302(class_10799.field_56883, this.overlayId, (int) Math.round(this.drawX), (int) Math.round(this.drawY),
             ou, ov, drawW, drawH, orw, orh, this.overlayW, this.overlayH);
       }
-      // The live stroke is drawn by the same rasterizer, so committing it never changes its look.
-      this.ensureDraftOverlay();
-      if (this.draftId != null) {
-         int dx = (int) Math.round(this.sx(this.draftOriginX));
-         int dy = (int) Math.round(this.sy(this.draftOriginY));
-         int dw = Math.max(1, (int) Math.round(this.draftBoxW * this.sp));
-         int dh = Math.max(1, (int) Math.round(this.draftBoxH * this.sp));
-         ctx.method_25302(class_10799.field_56883, this.draftId, dx, dy, 0f, 0f, dw, dh,
-            this.draftTexW, this.draftTexH, this.draftTexW, this.draftTexH);
-      }
+      // The live stroke is drawn DIRECTLY (GPU) for instant, smooth feedback with no per-frame AWT bake;
+      // it's baked into the overlay via the shared rasterizer only once, on release.
       if (this.draft != null && this.draft.type == Tool.CROP) {
          this.drawCropOverlay(ctx, this.draft);
+      } else if (this.draft != null) {
+         this.drawAnnotation(ctx, this.draft);
       }
       // Move tool: outline whatever is under the cursor so it's clear what will be grabbed/deleted.
       this.hoverAnn = -1;
@@ -1029,11 +1023,19 @@ public class ScreenshotEditorScreen extends class_437 {
    private void renderToolRail(class_332 ctx, int mouseX, int mouseY) {
       int x = 10;
       int y = 40;
+      int n = Tool.values().length;
+      // Compress the spacing so the whole rail always fits vertically on short windows.
+      int pitch = RAIL_BTN + RAIL_GAP;
+      int avail = this.field_22790 - y - 8;
+      if (n * pitch > avail) {
+         pitch = Math.max(RAIL_BTN + 1, avail / n);
+      }
+      int railH = (n - 1) * pitch + RAIL_BTN + 6;
       this.hoverTool = null;
-      TurtUIUtils.drawRoundedRect(ctx, x - 2, y - 4, RAIL_W, Tool.values().length * (RAIL_BTN + RAIL_GAP) + 6, 5, Palette.alpha(Palette.PANEL_BG, 235));
+      TurtUIUtils.drawRoundedRect(ctx, x - 2, y - 4, RAIL_W, railH, 5, Palette.alpha(Palette.PANEL_BG, 235));
       for (Tool tv : Tool.values()) {
          int i = tv.ordinal();
-         int by = y + i * (RAIL_BTN + RAIL_GAP);
+         int by = y + i * pitch;
          this.railX[i] = x;
          this.railY[i] = by;
          boolean sel = this.tool == tv;

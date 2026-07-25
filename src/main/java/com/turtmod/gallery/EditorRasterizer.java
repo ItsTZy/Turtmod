@@ -145,16 +145,20 @@ public final class EditorRasterizer {
          }
          case ARROW -> {
             g.setColor(color);
-            g.setStroke(new BasicStroke(t, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             int x1 = ix(a, 0), y1 = iy(a, 0), x2 = ix(a, 1), y2 = iy(a, 1);
-            g.drawLine(x1, y1, x2, y2);
             double ang = Math.atan2(y2 - y1, x2 - x1);
-            double head = Math.max(10.0, t * 4.0);
-            double a1 = ang + Math.toRadians(160), a2 = ang - Math.toRadians(160);
+            double head = Math.max(12.0, t * 4.5);
+            double wing = Math.toRadians(26);   // half-angle of the arrowhead — narrow = sharp/pointy
+            // Stop the shaft just short of the tip so the pointed head isn't blunted by the line's end.
+            double back = head * 0.75;
+            double sx = x2 - back * Math.cos(ang), sy = y2 - back * Math.sin(ang);
+            g.setStroke(new BasicStroke(t, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+            g.draw(new java.awt.geom.Line2D.Double(x1, y1, sx, sy));
+            // Sharp triangular head with the point exactly at (x2, y2).
             Path2D.Double p = new Path2D.Double();
             p.moveTo(x2, y2);
-            p.lineTo(x2 + head * Math.cos(a1), y2 + head * Math.sin(a1));
-            p.lineTo(x2 + head * Math.cos(a2), y2 + head * Math.sin(a2));
+            p.lineTo(x2 - head * Math.cos(ang - wing), y2 - head * Math.sin(ang - wing));
+            p.lineTo(x2 - head * Math.cos(ang + wing), y2 - head * Math.sin(ang + wing));
             p.closePath();
             g.fill(p);
          }
