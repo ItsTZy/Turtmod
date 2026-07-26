@@ -21,7 +21,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class ScrollableTooltipMixin {
    @Redirect(
       method = "method_51435",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_8000;method_47944(IIIIII)Lorg/joml/Vector2ic;")
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_8000;method_47944(IIIIII)Lorg/joml/Vector2ic;"),
+      require = 0
    )
    private Vector2ic turtmod$scrollTooltip(class_8000 positioner, int screenW, int screenH, int mouseX, int mouseY, int tooltipW, int tooltipH) {
       Vector2ic pos = positioner.method_47944(screenW, screenH, mouseX, mouseY, tooltipW, tooltipH);

@@ -24,7 +24,7 @@ public abstract class BossbarTweaksMixin {
 
    private boolean turtmod$pushedBoss;
 
-   @Inject(method = "method_1796", at = @At("HEAD"), cancellable = true)
+   @Inject(method = "method_1796", at = @At("HEAD"), cancellable = true, require = 0)
    private void turtmod$bossHead(class_332 ctx, CallbackInfo ci) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (cfg == null || !cfg.misc.enabled || !cfg.hud.bossbarTweaksEnabled) {
@@ -57,7 +57,7 @@ public abstract class BossbarTweaksMixin {
       this.turtmod$pushedBoss = true;
    }
 
-   @Inject(method = "method_1796", at = @At("TAIL"))
+   @Inject(method = "method_1796", at = @At("TAIL"), require = 0)
    private void turtmod$bossTail(class_332 ctx, CallbackInfo ci) {
       if (this.turtmod$pushedBoss) {
          ctx.method_51448().popMatrix();

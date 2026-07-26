@@ -24,7 +24,7 @@ public abstract class TitleTweaksMixin {
 
    private boolean turtmod$pushedTitle;
 
-   @Inject(method = "method_55801", at = @At("HEAD"), cancellable = true)
+   @Inject(method = "method_55801", at = @At("HEAD"), cancellable = true, require = 0)
    private void turtmod$titleHead(class_332 ctx, class_9779 tick, CallbackInfo ci) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (cfg == null || !cfg.misc.enabled || !cfg.hud.titleTweaksEnabled) {
@@ -49,7 +49,7 @@ public abstract class TitleTweaksMixin {
       this.turtmod$pushedTitle = true;
    }
 
-   @Inject(method = "method_55801", at = @At("TAIL"))
+   @Inject(method = "method_55801", at = @At("TAIL"), require = 0)
    private void turtmod$titleTail(class_332 ctx, class_9779 tick, CallbackInfo ci) {
       if (this.turtmod$pushedTitle) {
          ctx.method_51448().popMatrix();

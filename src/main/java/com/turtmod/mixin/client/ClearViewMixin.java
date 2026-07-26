@@ -34,7 +34,8 @@ public abstract class ClearViewMixin {
    /** Drop the local player's own potion swirl emission (the {@code level.addParticle} call). */
    @Redirect(
       method = "method_6050",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_1937;method_8406(Lnet/minecraft/class_2394;DDDDDD)V")
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_1937;method_8406(Lnet/minecraft/class_2394;DDDDDD)V"),
+      require = 0
    )
    private void turtmod$hideOwnPotionParticles(class_1937 level, class_2394 particle, double x, double y, double z, double vx, double vy, double vz) {
       TurtModConfig cfg = TurtModClient.getConfig();
@@ -45,7 +46,7 @@ public abstract class ClearViewMixin {
    }
 
    /** Cancel eating crumbs entirely (local player) when "hide" is on. */
-   @Inject(method = "method_6037", at = @At("HEAD"), cancellable = true)
+   @Inject(method = "method_6037", at = @At("HEAD"), cancellable = true, require = 0)
    private void turtmod$hideEatingParticles(net.minecraft.class_1799 stack, int count, CallbackInfo ci) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (turtmod$on(cfg) && cfg.misc.clearViewHideEatingParticles && turtmod$isSelf()) {
@@ -54,7 +55,7 @@ public abstract class ClearViewMixin {
    }
 
    /** Otherwise trim the crumb count so they stay but are far fewer / less visible (local player). */
-   @ModifyVariable(method = "method_6037", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+   @ModifyVariable(method = "method_6037", at = @At("HEAD"), ordinal = 0, argsOnly = true, require = 0)
    private int turtmod$reduceEatingParticles(int count) {
       TurtModConfig cfg = TurtModClient.getConfig();
       if (turtmod$on(cfg) && cfg.misc.clearViewReduceEatingParticles && !cfg.misc.clearViewHideEatingParticles && turtmod$isSelf()) {

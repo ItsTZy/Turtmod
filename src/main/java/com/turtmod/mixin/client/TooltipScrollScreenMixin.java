@@ -18,7 +18,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class TooltipScrollScreenMixin {
    @Redirect(
       method = "method_1598",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_437;method_25401(DDDD)Z")
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/class_437;method_25401(DDDD)Z"),
+      require = 0
    )
    private boolean turtmod$tooltipScroll(class_437 screen, double mouseX, double mouseY, double horizontal, double vertical) {
       TurtModConfig cfg = TurtModClient.getConfig();
