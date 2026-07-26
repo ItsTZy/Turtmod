@@ -436,9 +436,6 @@ public static final class Combat {
       public int titleOffsetX = 0;
       public int titleOffsetY = 0;
 
-      // Scrollable Tooltips: mouse-wheel scroll tooltips taller than the screen.
-      public boolean scrollableTooltips = true;
-
       // Chat Tweaks: keep more chat history than vanilla's 100-message cap.
       public boolean chatTweaksEnabled = true;
       public int chatHistoryLength = 250;

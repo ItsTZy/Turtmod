@@ -10,8 +10,6 @@
 		"ClearViewMixin",
 		"TitleTweaksMixin",
 		"BossbarTweaksMixin",
-		"ScrollableTooltipMixin",
-		"TooltipScrollScreenMixin",
 		"ChatTweaksMixin",
 		"DebugHudMixin",
 		"DebugHitboxCleanupMixin",
