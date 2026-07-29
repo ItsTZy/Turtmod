@@ -53,17 +53,8 @@ public class HudEditorScreen extends class_437 {
 
       // One compact, auto-sized, centered toolbar — no full-width chrome, so the
       // whole screen stays visible for placing HUD elements.
-      String[] labels = {
-         this.cfg.hud.snapToGrid   ? "Grid: On"   : "Grid: Off",
-         this.cfg.hud.snapToCenter ? "Center: On" : "Center: Off",
-         "Grid " + this.cfg.hud.gridSize,
-         "Reset",
-         "Done"
-      };
+      String[] labels = { "Reset", "Done" };
       Runnable[] actions = {
-         () -> { this.cfg.hud.snapToGrid   = !this.cfg.hud.snapToGrid;   ConfigManager.save(this.cfg); this.method_25426(); },
-         () -> { this.cfg.hud.snapToCenter = !this.cfg.hud.snapToCenter; ConfigManager.save(this.cfg); this.method_25426(); },
-         () -> { this.cfg.hud.gridSize = this.cfg.hud.gridSize >= 32 ? 4 : this.cfg.hud.gridSize + 4; ConfigManager.save(this.cfg); this.method_25426(); },
          () -> { HudEditorFeature.resetAllPositions(TurtModClient.getConfig()); HudEditorFeature.resetSelectedScale(TurtModClient.getConfig()); this.resetFlash = 1f; },
          this::method_25419
       };
@@ -108,19 +99,8 @@ public class HudEditorScreen extends class_437 {
       int sw = this.field_22787.method_22683().method_4486();
       int sh = this.field_22787.method_22683().method_4502();
 
-      // ── 1. Full-screen desaturated backdrop
-      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0xBB000000);
-
-      // ── 2. Dot-grid overlay (clean, minimal)
-      int gridSize = this.cfg.hud.snapToGrid ? this.cfg.hud.gridSize : 24;
-      for (int x = 0; x <= sw; x += gridSize)
-         for (int y = 0; y <= sh; y += gridSize)
-            ctx.method_25294(x, y, x + 1, y + 1, 0x18FFFFFF);
-
-      // ── 3. Center guide lines
-      int cx = sw / 2, cy = sh / 2;
-      ctx.method_25294(cx, 0, cx + 1, sh, 0x30FFFFFF);
-      ctx.method_25294(0, cy, sw, cy + 1, 0x30FFFFFF);
+      // ── 1. Light, mostly-transparent dim so you can still see the game/HUDs you're placing.
+      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x55000000);
 
       // ── 4. Per-element cards (group backgrounds + labels)
       renderElementCards(ctx, mx, my, dt);
@@ -186,7 +166,7 @@ public class HudEditorScreen extends class_437 {
       int dh = HudEditorFeature.getHeight(d, c, this.cfg);
       int[] dXs = { dx, dx + dw / 2, dx + dw };
       int[] dYs = { dy, dy + dh / 2, dy + dh };
-      int guide = (0xCC << 24) | (ACCENT_PINK.getRGB() & 0xFFFFFF);
+      int guide = 0x88FFFFFF;   // subtle white alignment guides (was pink)
 
       for (HudEditorFeature.Anchor o : HudEditorFeature.Anchor.values()) {
          if (o == d || o == HudEditorFeature.Anchor.ZOOM || !HudEditorFeature.isEnabled(o, this.cfg)) {
@@ -228,7 +208,7 @@ public class HudEditorScreen extends class_437 {
       int pxc = Math.max(2, Math.min(dx, sw - pw - 2));
       int pyc = (dy + dh + 13 <= sh) ? dy + dh + 2 : dy - 13;
       TurtUIUtils.drawRoundedRect(ctx, pxc, pyc, pw, 11, 3, new Color(0xCC10131A, true));
-      TurtUIUtils.drawRoundedBorder(ctx, pxc, pyc, pw, 11, 3, ACCENT_PINK);
+      TurtUIUtils.drawRoundedBorder(ctx, pxc, pyc, pw, 11, 3, ACCENT_GREEN);
       ctx.method_51433(this.field_22793, pos, pxc + 5, pyc + 2, 0xFFFFFFFF, false);
    }
 
@@ -249,22 +229,15 @@ public class HudEditorScreen extends class_437 {
          elemGlow[i] = TurtUIUtils.lerp01(elemGlow[i], (hov || sel) ? 1f : 0f, dt, 10f);
          float g = elemGlow[i];
 
-         // Card background
-         int bg = sel ? 0x60000000 : (hov ? 0x40FFFFFF : 0x25000000);
+         // Subtle card background.
+         int bg = sel ? 0x55000000 : (hov ? 0x38000000 : 0x22000000);
          TurtUIUtils.drawRoundedRect(ctx, ex - 6, ey - 6, ew + 12, eh + 12, 4, new Color(bg, true));
 
-         // Glow border
+         // Clean border: green when selected, faint white on hover, nothing otherwise.
          if (sel) {
-            // Bright green border for selected
-            TurtUIUtils.drawHoverGlow(ctx, ex - 4, ey - 4, ew + 8, eh + 8, 4, g, ACCENT_GREEN);
             ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, ACCENT_GREEN.getRGB());
          } else if (g > 0.02f) {
-            TurtUIUtils.drawHoverGlow(ctx, ex - 4, ey - 4, ew + 8, eh + 8, 4, g, ACCENT_PINK);
-            ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, new Color(
-               ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), (int)(g * 180)
-            ).getRGB());
-         } else {
-            ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, 0x40666666);
+            ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, new Color(255, 255, 255, (int) (g * 110)).getRGB());
          }
 
          // Name label chip above element
@@ -272,10 +245,11 @@ public class HudEditorScreen extends class_437 {
          int chipW = client.field_1772.method_1727(name) + 8;
          int chipX = ex - 4 + (ew + 8) / 2 - chipW / 2;
          int chipY = ey - 17;
-         int chipBg = sel ? ACCENT_GREEN.getRGB() : (hov ? 0xBB333333 : 0x88222222);
+         // Selected = dark chip with a green name (not a green chip with black text, which read as "black").
+         int chipBg = sel ? 0xE00E1A12 : (hov ? 0xBB333333 : 0x88222222);
          TurtUIUtils.drawRoundedRect(ctx, chipX, chipY, chipW, 11, 2, new Color(chipBg, true));
          ctx.method_25300(client.field_1772, name, chipX + chipW / 2, chipY + 2,
-            sel ? 0xFF000000 : (int)(g * 255) << 24 | (TEXT_MAIN.getRGB() & 0xFFFFFF) | 0xFF000000);
+            sel ? ACCENT_GREEN.getRGB() : (int)(g * 255) << 24 | (TEXT_MAIN.getRGB() & 0xFFFFFF) | 0xFF000000);
 
          // Gear button beside the name chip — opens this HUD's settings page. Only while hovered/selected.
          com.turtmod.config.TurtModConfigScreenFactory.ModuleKind kind = getAnchorModule(anchor);

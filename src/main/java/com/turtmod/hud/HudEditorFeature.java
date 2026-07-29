@@ -40,10 +40,6 @@ public final class HudEditorFeature {
       // on-screen so it's always reachable in the editor.
       clampAllToScreen(client, config, sw, sh);
 
-      int cx = sw / 2;
-      int cy = sh / 2;
-      context.method_25294(cx, 0, cx + 1, sh, 1150139999);
-      context.method_25294(0, cy, sw, cy + 1, 1150139999);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.ARMOR, "Armor", config.hud.movableArmorHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.POTION, "Potions", config.hud.movablePotionHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.OVERLAY, "FPS/Ping", config.hud.minimalFpsPingOverlay);
@@ -324,54 +320,44 @@ public final class HudEditorFeature {
    }
 
    private static void drawAnchor(class_332 context, class_310 client, TurtModConfig config, Anchor anchor, String name, boolean enabled) {
-      if (enabled) {
-         int x = getX(anchor, client, config);
-         int y = getY(anchor, client, config);
-         int w = getWidth(anchor, client, config);
-         int h = getHeight(anchor, client, config);
-         int baseColor;
-         int borderColor;
-         if (anchor == selected) {
-            baseColor = -2003976609;
-            borderColor = -7487905;
-         } else if (anchor == dragging) {
-            baseColor = -2006213051;
-            borderColor = -7487905;
-         } else {
-            baseColor = 1145022061;
-            borderColor = 1720565343;
-         }
-
-         context.method_25294(x, y, x + w, y + h, baseColor);
-         if (anchor == selected || anchor == dragging) {
-            context.method_73198(x, y, w, h, borderColor);
-            if (anchor == selected) {
-               int cs = 4;
-               context.method_25294(x, y, x + cs, y + 1, borderColor);
-               context.method_25294(x, y, x + 1, y + cs, borderColor);
-               context.method_25294(x + w - cs, y, x + w, y + 1, borderColor);
-               context.method_25294(x + w - 1, y, x + w, y + cs, borderColor);
-               context.method_25294(x, y + h - 1, x + cs, y + h, borderColor);
-               context.method_25294(x, y + h - cs, x + 1, y + h, borderColor);
-               context.method_25294(x + w - cs, y + h - 1, x + w, y + h, borderColor);
-               context.method_25294(x + w - 1, y + h - cs, x + w, y + h, borderColor);
-            }
-         }
-
-         context.method_25300(client.field_1772, name, x + w / 2, y + h / 2 - 8, -1);
-         context.method_25300(client.field_1772, getElementScalePercent(anchor, config) + "%", x + w / 2, y + h / 2 + 2, -7487905);
-
-         // [x] disable button in the top-right corner — themed in the mod's accent pink.
-         int pink = -25170; // 0xFFFF9DAE
-         int bx = x + w - CLOSE_SIZE;
-         context.method_25294(bx, y, bx + CLOSE_SIZE, y + CLOSE_SIZE, -1308622848);
-         context.method_73198(bx, y, CLOSE_SIZE, CLOSE_SIZE, pink);
-         String mark = "x";
-         int tw = client.field_1772.method_1727(mark);
-         int tx = bx + (CLOSE_SIZE - tw + 1) / 2;
-         int ty = y + (CLOSE_SIZE - client.field_1772.field_2000) / 2 + 1;
-         context.method_51433(client.field_1772, mark, tx, ty, pink, false);
+      if (!enabled) {
+         return;
       }
+      int x = getX(anchor, client, config);
+      int y = getY(anchor, client, config);
+      int w = getWidth(anchor, client, config);
+      int h = getHeight(anchor, client, config);
+      if (w <= 0 || h <= 0) {
+         return;
+      }
+      boolean sel = anchor == selected;
+      boolean active = sel || anchor == dragging;
+      int accent = -7487905;   // green
+
+      // Just a faint footprint so you can see the real HUD size (the screen draws the card + name chip).
+      context.method_25294(x, y, x + w, y + h, active ? 0x2600E676 : 0x12FFFFFF);
+      if (sel) {
+         int cs = 4;
+         context.method_25294(x, y, x + cs, y + 1, accent);
+         context.method_25294(x, y, x + 1, y + cs, accent);
+         context.method_25294(x + w - cs, y, x + w, y + 1, accent);
+         context.method_25294(x + w - 1, y, x + w, y + cs, accent);
+         context.method_25294(x, y + h - 1, x + cs, y + h, accent);
+         context.method_25294(x, y + h - cs, x + 1, y + h, accent);
+         context.method_25294(x + w - cs, y + h - 1, x + w, y + h, accent);
+         context.method_25294(x + w - 1, y + h - cs, x + w, y + h, accent);
+      }
+
+      // [x] disable button in the top-right corner — soft red (no pink, no duplicate name/scale text).
+      int red = 0xFFE06A6A;
+      int bx = x + w - CLOSE_SIZE;
+      context.method_25294(bx, y, bx + CLOSE_SIZE, y + CLOSE_SIZE, -1308622848);
+      context.method_73198(bx, y, CLOSE_SIZE, CLOSE_SIZE, red);
+      String mark = "x";
+      int tw = client.field_1772.method_1727(mark);
+      int tx = bx + (CLOSE_SIZE - tw + 1) / 2;
+      int ty = y + (CLOSE_SIZE - client.field_1772.field_2000) / 2 + 1;
+      context.method_51433(client.field_1772, mark, tx, ty, red, false);
    }
 
    public static int getX(Anchor anchor, class_310 client, TurtModConfig config) {
