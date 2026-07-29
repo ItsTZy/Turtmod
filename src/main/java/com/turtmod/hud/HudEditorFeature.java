@@ -52,6 +52,8 @@ public final class HudEditorFeature {
       drawAnchor(context, client, config, HudEditorFeature.Anchor.COORDINATES, "Coordinates", config.hud.coordinatesHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.HEALTH, "Health", config.combat.showExactHealthNumber);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.SCOREBOARD, "Scoreboard", !config.visual.hideScoreboard);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.TITLE, "Title", config.hud.titleTweaksEnabled);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.BOSSBAR, "Bossbar", config.hud.bossbarTweaksEnabled);
       context.method_25303(client.field_1772, "Left drag: move | Click [x]: disable | Mouse wheel: scale | [+/-]: scale | [R]: reset", 6, sh - 20, -7487905);
       if (selected != null) {
          int x = getX(selected, client, config);
@@ -116,6 +118,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = "Health";
          case 13 -> var10000 = "Scoreboard";
          case 14 -> var10000 = "Pots";
+         case 15 -> var10000 = "Title";
+         case 16 -> var10000 = "Bossbar";
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -180,6 +184,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.showExactHealthNumber;
          case 13 -> var10000 = !config.visual.hideScoreboard;
          case 14 -> var10000 = false;
+         case 15 -> var10000 = config.hud.titleTweaksEnabled;
+         case 16 -> var10000 = config.hud.bossbarTweaksEnabled;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -204,6 +210,8 @@ public final class HudEditorFeature {
          case 12 -> config.combat.showExactHealthNumber = enabled;
          case 13 -> config.visual.hideScoreboard = !enabled;
          case 14 -> config.combat.potionThrowCounterHud = enabled;
+         case 15 -> config.hud.titleTweaksEnabled = enabled;
+         case 16 -> config.hud.bossbarTweaksEnabled = enabled;
       }
    }
 
@@ -315,6 +323,14 @@ public final class HudEditorFeature {
          case 14:
             config.hud.potionThrowHudX = x;
             config.hud.potionThrowHudY = y;
+            break;
+         case 15:
+            config.hud.titleOffsetX = x - (client.method_22683().method_4489() / 2 - 60);
+            config.hud.titleOffsetY = y - (client.method_22683().method_4507() / 2 - 15);
+            break;
+         case 16:
+            config.hud.bossbarOffsetX = x - (client.method_22683().method_4489() / 2 - 91);
+            config.hud.bossbarOffsetY = y - 12;
       }
 
    }
@@ -378,6 +394,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getX(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudX;
+         case 15 -> var10000 = client.method_22683().method_4489() / 2 - 60 + config.hud.titleOffsetX;
+         case 16 -> var10000 = client.method_22683().method_4489() / 2 - 91 + config.hud.bossbarOffsetX;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -402,6 +420,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getY(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudY;
+         case 15 -> var10000 = client.method_22683().method_4507() / 2 - 15 + config.hud.titleOffsetY;
+         case 16 -> var10000 = 12 + config.hud.bossbarOffsetY;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -426,6 +446,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
          case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
+         case 15 -> var10000 = 120; // TITLE placeholder handle
+         case 16 -> var10000 = 182; // BOSSBAR placeholder handle
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -450,6 +472,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
+         case 15 -> var10000 = 30;  // TITLE placeholder handle
+         case 16 -> var10000 = 20;  // BOSSBAR placeholder handle
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -526,6 +550,8 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.healthScalePercent;
          case 13 -> var10000 = config.visual.scoreboardScalePercent <= 0 ? 100 : config.visual.scoreboardScalePercent;
          case 14 -> var10000 = config.hud.potionThrowHudScalePercent;
+         case 15 -> var10000 = config.hud.titleScalePercent;
+         case 16 -> var10000 = config.hud.bossbarScalePercent;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -551,6 +577,8 @@ public final class HudEditorFeature {
          case 12 -> config.combat.healthScalePercent = next;
          case 13 -> config.visual.scoreboardScalePercent = next;
          case 14 -> config.hud.potionThrowHudScalePercent = next;
+         case 15 -> config.hud.titleScalePercent = next;
+         case 16 -> config.hud.bossbarScalePercent = next;
       }
 
    }
@@ -608,11 +636,13 @@ public final class HudEditorFeature {
       COORDINATES,
       HEALTH,
       SCOREBOARD,
-      POTS;
+      POTS,
+      TITLE,
+      BOSSBAR;
 
       // $FF: synthetic method
       private static Anchor[] $values() {
-         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS};
+         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS, TITLE, BOSSBAR};
       }
    }
 }

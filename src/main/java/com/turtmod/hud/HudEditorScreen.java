@@ -288,6 +288,8 @@ public class HudEditorScreen extends class_437 {
          case INVENTORY     -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.INVENTORY_HUD;
          case COORDINATES   -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.COORDINATES_HUD;
          case ZOOM          -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.ZOOM;
+         case TITLE         -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.TITLE_TWEAKS;
+         case BOSSBAR       -> com.turtmod.config.TurtModConfigScreenFactory.ModuleKind.BOSSBAR_TWEAKS;
          default            -> null;
       };
    }
@@ -313,6 +315,8 @@ public class HudEditorScreen extends class_437 {
          case CPS_COUNTER   -> "CPS";
          case INVENTORY     -> "Inventory";
          case COORDINATES   -> "Coords";
+         case TITLE         -> "Title";
+         case BOSSBAR       -> "Bossbar";
          default            -> a.name();
       };
    }
