@@ -475,7 +475,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
-         case 15 -> var10000 = 68;  // TITLE handle (title + subtitle span)
+         case 15 -> var10000 = 40;  // TITLE handle sized to the title text itself, so box == title
          case 16 -> var10000 = 26;  // BOSSBAR handle (title text + bar)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
