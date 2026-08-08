@@ -99,8 +99,9 @@ public class HudEditorScreen extends class_437 {
       int sw = this.field_22787.method_22683().method_4486();
       int sh = this.field_22787.method_22683().method_4502();
 
-      // ── 1. Light, mostly-transparent dim so you can still see the game/HUDs you're placing.
-      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x55000000);
+      // ── 1. Barely-there dim so the REAL HUD (scoreboard, potions, etc.) stays clearly visible behind
+      // the editor — you're positioning the actual HUD, so it must show through.
+      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x1A000000);
 
       // ── 4. Per-element cards (group backgrounds + labels)
       renderElementCards(ctx, mx, my, dt);
@@ -238,10 +239,6 @@ public class HudEditorScreen extends class_437 {
             ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, new Color(255, 255, 255, (int) (g * 110)).getRGB());
          }
 
-         // Main-menu preview: no live HUD to show, so draw a mock so you can see what/where it is.
-         if (client.field_1724 == null) {
-            HudPreviewRenderer.draw(ctx, client.field_1772, anchor, ex, ey, ew, eh);
-         }
 
          // Name label chip above element
          String name = getAnchorName(anchor);

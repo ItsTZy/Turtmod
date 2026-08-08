@@ -325,8 +325,8 @@ public final class HudEditorFeature {
             config.hud.potionThrowHudY = y;
             break;
          case 15:
-            config.hud.titleOffsetX = x - (client.method_22683().method_4489() / 2 - 60);
-            config.hud.titleOffsetY = y - (client.method_22683().method_4507() / 2 - 15);
+            config.hud.titleOffsetX = x - (client.method_22683().method_4489() / 2 - 80);
+            config.hud.titleOffsetY = y - (client.method_22683().method_4507() / 2 - 40);
             break;
          case 16:
             config.hud.bossbarOffsetX = x - (client.method_22683().method_4489() / 2 - 91);
@@ -371,8 +371,12 @@ public final class HudEditorFeature {
       int bx = x + w - CLOSE_SIZE;
       context.method_25294(bx, y, bx + CLOSE_SIZE, y + CLOSE_SIZE, -1308622848);
       context.method_73198(bx, y, CLOSE_SIZE, CLOSE_SIZE, red);
-      // Centre the "x" in the square (method_25300 centres horizontally; +1 vertical centres an 8px glyph in 10px).
-      context.method_25300(client.field_1772, "x", bx + CLOSE_SIZE / 2, y + (CLOSE_SIZE - 8) / 2, red);
+      // Draw the "x" as pixels crossing at the exact centre — no font baseline/centring quirks.
+      int mcx = bx + CLOSE_SIZE / 2, mcy = y + CLOSE_SIZE / 2;
+      for (int i = -2; i <= 2; i++) {
+         context.method_25294(mcx + i, mcy + i, mcx + i + 1, mcy + i + 1, red);
+         context.method_25294(mcx + i, mcy - i, mcx + i + 1, mcy - i + 1, red);
+      }
    }
 
    public static int getX(Anchor anchor, class_310 client, TurtModConfig config) {
@@ -393,7 +397,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getX(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudX;
-         case 15 -> var10000 = client.method_22683().method_4489() / 2 - 60 + config.hud.titleOffsetX;
+         case 15 -> var10000 = client.method_22683().method_4489() / 2 - 80 + config.hud.titleOffsetX;
          case 16 -> var10000 = client.method_22683().method_4489() / 2 - 91 + config.hud.bossbarOffsetX;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
@@ -419,7 +423,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getY(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudY;
-         case 15 -> var10000 = client.method_22683().method_4507() / 2 - 15 + config.hud.titleOffsetY;
+         case 15 -> var10000 = client.method_22683().method_4507() / 2 - 40 + config.hud.titleOffsetY;   // title text starts ~40px above center
          case 16 -> var10000 = 3 + config.hud.bossbarOffsetY;   // boss title text sits ~9px above the bar (y=12)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
@@ -445,7 +449,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
          case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
-         case 15 -> var10000 = 120; // TITLE placeholder handle
+         case 15 -> var10000 = 160; // TITLE handle (title text is large/centred)
          case 16 -> var10000 = 182; // BOSSBAR placeholder handle
          default -> throw new MatchException((String)null, (Throwable)null);
       }
@@ -471,7 +475,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
-         case 15 -> var10000 = 30;  // TITLE placeholder handle
+         case 15 -> var10000 = 68;  // TITLE handle (title + subtitle span)
          case 16 -> var10000 = 26;  // BOSSBAR handle (title text + bar)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
