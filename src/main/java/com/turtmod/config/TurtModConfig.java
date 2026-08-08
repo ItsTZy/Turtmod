@@ -637,9 +637,9 @@ public static final class Combat {
       public boolean hudTextBold = false;
       public int shadowSize = 4;
       public int cornerRadius = 4;
-      // Menu-card styling for HUD panels: a bright top hairline and a 2px accent bar on the left.
-      public boolean hudGlass = true;
-      public boolean hudAccentBar = true;
+      // Extras off by default for a clean look — no glass sheen, no left accent line. Toggle in Theme.
+      public boolean hudGlass = false;
+      public boolean hudAccentBar = false;
       public int themeAlphaPercent = 100;
       public int keyBackgroundColor = -14799074;
       public int keyActiveColor = -9724347;

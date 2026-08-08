@@ -29,6 +29,12 @@ public final class CustomThemeRenderer {
     * hairline border. Geometry (x/y/w/h) is unchanged so HUD-editor hitboxes stay aligned.
     */
    public static void renderThemedBox(class_332 context, int x, int y, int w, int h, TurtModConfig config) {
+      // Clean text-only mode: when the background is (near) off, draw NOTHING — no panel, border,
+      // accent line, or glass. Just the HUD's own text, like Lunar/Feather. This is what "no background"
+      // should mean, and it kills the stray border/accent "line" that used to draw even with bg off.
+      if (isTransparentTextMode(config)) {
+         return;
+      }
       int bg = getBackground(config);
       boolean bordered = config.theme.hudShowBorders && config.theme.hudBorderThickness > 0;
       if (bg >>> 24 == 0 && !bordered) {
