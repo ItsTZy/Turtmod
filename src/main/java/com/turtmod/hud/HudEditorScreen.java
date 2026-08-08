@@ -99,9 +99,8 @@ public class HudEditorScreen extends class_437 {
       int sw = this.field_22787.method_22683().method_4486();
       int sh = this.field_22787.method_22683().method_4502();
 
-      // ── 1. Barely-there dim so the REAL HUD (scoreboard, potions, etc.) stays clearly visible behind
-      // the editor — you're positioning the actual HUD, so it must show through.
-      ctx.method_25294(0, 0, this.field_22789, this.field_22790, 0x1A000000);
+      // ── 1. No dim at all — you're positioning the REAL HUD, so it must be fully visible. The element
+      // boxes + toolbar make it obvious you're in the editor without darkening the game/HUD.
 
       // ── 4. Per-element cards (group backgrounds + labels)
       renderElementCards(ctx, mx, my, dt);
