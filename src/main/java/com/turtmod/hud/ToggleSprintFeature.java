@@ -78,7 +78,7 @@ public final class ToggleSprintFeature {
 
       int maxW = 0;
       for (String s : lines) {
-         maxW = Math.max(maxW, CustomThemeRenderer.textWidth(font, transparentText ? s : s.toUpperCase(), config));
+         maxW = Math.max(maxW, CustomThemeRenderer.textWidth(font, s, config));   // proper case in both modes
       }
       int boxW = maxW + (transparentText ? 0 : 12);
       int textLocalH = lines.size() * LINE_H + (transparentText ? 0 : 4);
@@ -98,7 +98,7 @@ public final class ToggleSprintFeature {
          // Centre the stack vertically, then centre each line horizontally.
          int ly = y + Math.max(0, (textLocalH - lines.size() * LINE_H) / 2);
          for (int i = 0; i < lines.size(); i++) {
-            String lineText = lines.get(i).toUpperCase();
+            String lineText = lines.get(i);   // proper case (no forced UPPERCASE), centered like the clean mode
             CustomThemeRenderer.drawHudLabel(context, font, lineText,
                CustomThemeRenderer.centeredTextX(font, lineText, x, boxW, config), ly, colors.get(i), config);
             ly += LINE_H;
