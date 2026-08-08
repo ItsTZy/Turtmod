@@ -624,20 +624,22 @@ public static final class Combat {
    }
 
    public static final class CustomTheme {
-      // Menu-card look: the same surface as the mod's UI cards, a readable fill, white hairline border.
+      // Clean, Lunar-style look: the user-facing theme is just background (colour + opacity), text colour,
+      // accent colour, and a text shadow. Everything below marked "removed" is no longer user-facing and is
+      // hard-forced to a clean value by forceCleanTheme() so old configs can't keep the HUD cluttered.
       public int hudBackgroundColor = 0xFF14181F;
       public int hudBackgroundAlpha = 170;
-      public int hudBorderColor = 0xFFFFFFFF;
-      public int hudBorderThickness = 1;
-      public boolean hudShowBorders = true;
-      public boolean slotOutlines = true;
       public int hudTextColor = -1;
       public int hudAccentColor = -11296965;
       public boolean enableShadows = true;
+      // ── removed from the UI (kept for code refs, forced clean) ──
+      public int hudBorderColor = 0xFFFFFFFF;
+      public int hudBorderThickness = 0;
+      public boolean hudShowBorders = false;
+      public boolean slotOutlines = false;
       public boolean hudTextBold = false;
       public int shadowSize = 4;
-      public int cornerRadius = 4;
-      // Extras off by default for a clean look — no glass sheen, no left accent line. Toggle in Theme.
+      public int cornerRadius = 3;
       public boolean hudGlass = false;
       public boolean hudAccentBar = false;
       public int themeAlphaPercent = 100;
@@ -645,6 +647,18 @@ public static final class Combat {
       public int keyActiveColor = -9724347;
       public int keyTextColor = -6704999;
       public int keyActiveTextColor = -1;
+
+      /** Force the removed decorative options to their clean values so pre-revamp configs load clean. */
+      public void forceCleanTheme() {
+         this.hudShowBorders = false;
+         this.slotOutlines = false;
+         this.hudGlass = false;
+         this.hudAccentBar = false;
+         this.hudTextBold = false;
+         this.hudBorderThickness = 0;
+         this.themeAlphaPercent = 100;
+         this.cornerRadius = 3;
+      }
    }
 
    public static final class DiscordRpc {

@@ -29,43 +29,21 @@ public final class CustomThemeRenderer {
     * hairline border. Geometry (x/y/w/h) is unchanged so HUD-editor hitboxes stay aligned.
     */
    public static void renderThemedBox(class_332 context, int x, int y, int w, int h, TurtModConfig config) {
-      // Clean text-only mode: when the background is (near) off, draw NOTHING — no panel, border,
-      // accent line, or glass. Just the HUD's own text, like Lunar/Feather. This is what "no background"
-      // should mean, and it kills the stray border/accent "line" that used to draw even with bg off.
+      // Lunar-clean: when the background is (near) off, draw NOTHING — just the HUD's own text. Otherwise
+      // draw a single plain rounded background fill. No border, glass, or accent line (all removed).
       if (isTransparentTextMode(config)) {
          return;
       }
       int bg = getBackground(config);
-      boolean bordered = config.theme.hudShowBorders && config.theme.hudBorderThickness > 0;
-      if (bg >>> 24 == 0 && !bordered) {
-         return;   // nothing visible - skip the work entirely
+      if (bg >>> 24 == 0) {
+         return;
       }
       int r = radiusFor(config, w, h);
-      boolean transparent = isTransparentTextMode(config);
-
-      if (bg >>> 24 > 0) {
-         if (r > 0) {
-            TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(bg));
-         } else {
-            context.method_25294(x, y, x + w, y + h, bg);
-         }
+      if (r > 0) {
+         TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(bg));
+      } else {
+         context.method_25294(x, y, x + w, y + h, bg);
       }
-
-      // Glass: a bright hairline along the top inside edge (same trick as TurtUIUtils.drawGlassPanel).
-      if (config.theme.hudGlass && !transparent && bg >>> 24 > 0 && w > 8 && h > 6) {
-         int highlight = applyHudOpacity(config, applyAlpha(16777215, 26));
-         context.method_25294(x + 1 + r, y + 1, x + w - 1 - r, y + 2, highlight);
-      }
-
-      // Accent bar down the left edge — the menu's "enabled" marker, sized to sit inside the padding.
-      if (config.theme.hudAccentBar && !transparent && h > 8) {
-         context.method_25294(x + 2, y + 3, x + 4, y + h - 3, getAccentColor(config));
-      }
-
-      if (config.theme.hudShowBorders && config.theme.hudBorderThickness > 0) {
-         renderSimpleBorder(context, x, y, w, h, config.theme, config);
-      }
-
    }
 
    private static void renderSimpleBorder(class_332 context, int x, int y, int w, int h, TurtModConfig.CustomTheme theme, TurtModConfig config) {
@@ -133,8 +111,9 @@ public final class CustomThemeRenderer {
       if (effectiveAlpha <= 0) {
          return 0;
       } else {
-         int idleAlpha = isTransparentTextMode(config) ? 16 : 54;
-         int activeAlpha = isTransparentTextMode(config) ? 54 : 94;
+         // Clean mode (no background): idle slots draw nothing; only a pressed/active slot gets a subtle fill.
+         int idleAlpha = isTransparentTextMode(config) ? 0 : 54;
+         int activeAlpha = isTransparentTextMode(config) ? 60 : 94;
          int color = active ? mix(config.theme.hudBackgroundColor, config.theme.hudAccentColor, 0.26F) : mix(config.theme.hudBackgroundColor, 16777215, 0.05F);
          return applyHudOpacity(config, applyAlpha(color, active ? activeAlpha : idleAlpha));
       }
@@ -181,7 +160,10 @@ public final class CustomThemeRenderer {
          context.method_25294(x, y, x + filled, y + h, applyHudOpacity(config, fillColor));
       }
 
-      context.method_73198(x, y, clampedWidth, h, getBorder(config));
+      // No hairline border in clean/no-background mode (it read as a stray line on every bar).
+      if (!isTransparentTextMode(config)) {
+         context.method_73198(x, y, clampedWidth, h, getBorder(config));
+      }
    }
 
    public static float getHudScale(TurtModConfig config, int localPercent) {

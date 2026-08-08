@@ -234,20 +234,12 @@ public final class TurtModConfigScreenFactory {
    private static Category buildThemeCategory(TurtModConfig cfg) {
       return Category.createBuilder("Theme")
          .group(OptionGroup.createBuilder("HUD Theme")
+            // Clean, Lunar-style theme: background, text, accent, shadow. Background Opacity 0 = text-only.
             .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v))
-            .addOption(intOpt("Background Alpha", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
-            .addOption(color("Border Color", () -> cfg.theme.hudBorderColor, v -> cfg.theme.hudBorderColor = v))
-            .addOption(bool("Show Borders & Lines", () -> cfg.theme.hudShowBorders, v -> cfg.theme.hudShowBorders = v))
-            .addOption(bool("Slot Outlines", () -> cfg.theme.slotOutlines, v -> cfg.theme.slotOutlines = v))
-            .addOption(intOpt("Border Thickness", () -> cfg.theme.hudBorderThickness, v -> cfg.theme.hudBorderThickness = v, 0, 4, 1))
-            .addOption(intOpt("Overall Opacity %", () -> cfg.theme.themeAlphaPercent, v -> cfg.theme.themeAlphaPercent = v, 0, 100, 5))
+            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
             .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v))
             .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v))
-            .addOption(bool("Text Shadows", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
-            .addOption(bool("Bold HUD Text", () -> cfg.theme.hudTextBold, v -> cfg.theme.hudTextBold = v))
-            .addOption(intOpt("Corner Radius", () -> cfg.theme.cornerRadius, v -> cfg.theme.cornerRadius = v, 0, 12, 1))
-            .addOption(bool("Glass Highlight", () -> cfg.theme.hudGlass, v -> cfg.theme.hudGlass = v))
-            .addOption(bool("Accent Bar", () -> cfg.theme.hudAccentBar, v -> cfg.theme.hudAccentBar = v))
+            .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
             .addOption(button("Reset Theme", () -> resetThemeDefaults(cfg)))
             .build())
          .build();
@@ -772,19 +764,10 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Hide Arms", () -> cfg.visual.zoomHideArms, v -> cfg.visual.zoomHideArms = v));
          case THEME_SETTINGS -> group
             .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v))
-            .addOption(intOpt("Background Alpha", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
-            .addOption(intOpt("Overall Opacity %", () -> cfg.theme.themeAlphaPercent, v -> cfg.theme.themeAlphaPercent = v, 0, 100, 5))
-            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v))
+            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
             .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v))
-            .addOption(color("Border Color", () -> cfg.theme.hudBorderColor, v -> cfg.theme.hudBorderColor = v))
-            .addOption(bool("Show Borders & Lines", () -> cfg.theme.hudShowBorders, v -> cfg.theme.hudShowBorders = v))
-            .addOption(bool("Slot Outlines", () -> cfg.theme.slotOutlines, v -> cfg.theme.slotOutlines = v))
-            .addOption(intOpt("Border Thickness", () -> cfg.theme.hudBorderThickness, v -> cfg.theme.hudBorderThickness = v, 0, 4, 1))
-            .addOption(intOpt("Corner Radius", () -> cfg.theme.cornerRadius, v -> cfg.theme.cornerRadius = v, 0, 12, 1))
-            .addOption(bool("Glass Highlight", () -> cfg.theme.hudGlass, v -> cfg.theme.hudGlass = v))
-            .addOption(bool("Accent Bar", () -> cfg.theme.hudAccentBar, v -> cfg.theme.hudAccentBar = v))
-            .addOption(bool("Text Shadows", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
-            .addOption(bool("Bold HUD Text", () -> cfg.theme.hudTextBold, v -> cfg.theme.hudTextBold = v));
+            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v))
+            .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v));
          case ELYTRA_HUD -> group
             .addOption(bool("Enabled", () -> cfg.visual.elytraPitchHud, v -> cfg.visual.elytraPitchHud = v))
             .addOption(bool("Show Yaw", () -> cfg.visual.elytraPitchShowYaw, v -> cfg.visual.elytraPitchShowYaw = v));

@@ -51,6 +51,9 @@ public final class ConfigManager {
          if (config.hud != null) {
             config.hud.ensureCleanF3();
          }
+         if (config.theme != null) {
+            config.theme.forceCleanTheme();   // strip pre-revamp decorative extras (borders/glass/accent bar)
+         }
       }
       return config;
    }
