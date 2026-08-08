@@ -663,6 +663,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Horizontal Layout", () -> cfg.hud.potionHudHorizontal, v -> cfg.hud.potionHudHorizontal = v))
             .addOption(intOpt("Columns", () -> cfg.hud.potionHudColumns, v -> cfg.hud.potionHudColumns = v, 1, 4, 1))
             .addOption(bool("Show Flags", () -> cfg.hud.potionShowFlags, v -> cfg.hud.potionShowFlags = v))
+            .addOption(bool("Compact Timer", () -> cfg.hud.potionTimerCompact, v -> cfg.hud.potionTimerCompact = v))
+            .addOption(bool("Clock Timer (1:30)", () -> cfg.hud.potionTimerClock, v -> cfg.hud.potionTimerClock = v))
             .addOption(intOpt("Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 5));
          case FPS_PING -> group
             .addOption(bool("Enabled", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))

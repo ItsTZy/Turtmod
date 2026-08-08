@@ -71,10 +71,10 @@ public class HudEditorScreen extends class_437 {
       }
       total += gap * (labels.length - 1);
 
-      // Centered on screen (both axes) — most people don't place HUDs dead-center,
-      // and the row is small enough to leave room if they do.
+      // Centered horizontally, pinned to the BOTTOM — the old dead-center spot sat on top of the
+      // Title element (which anchors at screen center), hiding it in the editor.
       int startX = (this.field_22789 - total) / 2;
-      int btnY = (this.field_22790 - btnH) / 2;
+      int btnY = this.field_22790 - btnH - 10;
 
       this.barW = total;
       this.barH = btnH;

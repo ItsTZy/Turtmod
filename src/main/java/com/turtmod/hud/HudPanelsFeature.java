@@ -725,6 +725,10 @@ public final class HudPanelsFeature {
       } else {
          int ticks = class_3532.method_15375((float)effect.method_5584());
          int seconds = ticks / 20;
+         TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
+         if (cfg != null && cfg.hud.potionTimerClock) {
+            return clockFormat(seconds);
+         }
          if (seconds >= 3600) {
             return seconds / 3600 + "h";
          } else {
@@ -753,12 +757,23 @@ public final class HudPanelsFeature {
          return "INF";
       } else {
          int seconds = Math.max(0, effect.method_5584() / 20);
+         if (config.hud.potionTimerClock) {
+            return clockFormat(seconds);   // "1:30" style
+         }
          if (seconds >= 3600) {
             return seconds / 3600 + "h";
          } else {
             return seconds >= 60 ? seconds / 60 + "m" : Integer.toString(seconds);
          }
       }
+   }
+
+   /** m:ss (or h:mm:ss past an hour) clock format, e.g. 90s -> "1:30". */
+   private static String clockFormat(int seconds) {
+      if (seconds >= 3600) {
+         return String.format("%d:%02d:%02d", seconds / 3600, seconds % 3600 / 60, seconds % 60);
+      }
+      return String.format("%d:%02d", seconds / 60, seconds % 60);
    }
 
    private static String trim(String value, int maxChars) {

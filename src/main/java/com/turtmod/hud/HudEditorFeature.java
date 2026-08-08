@@ -330,7 +330,7 @@ public final class HudEditorFeature {
             break;
          case 16:
             config.hud.bossbarOffsetX = x - (client.method_22683().method_4489() / 2 - 91);
-            config.hud.bossbarOffsetY = y - 12;
+            config.hud.bossbarOffsetY = y - 3;
       }
 
    }
@@ -369,11 +369,8 @@ public final class HudEditorFeature {
       int bx = x + w - CLOSE_SIZE;
       context.method_25294(bx, y, bx + CLOSE_SIZE, y + CLOSE_SIZE, -1308622848);
       context.method_73198(bx, y, CLOSE_SIZE, CLOSE_SIZE, red);
-      String mark = "x";
-      int tw = client.field_1772.method_1727(mark);
-      int tx = bx + (CLOSE_SIZE - tw + 1) / 2;
-      int ty = y + (CLOSE_SIZE - client.field_1772.field_2000) / 2 + 1;
-      context.method_51433(client.field_1772, mark, tx, ty, red, false);
+      // Centre the "x" in the square (method_25300 centres horizontally; +1 vertical centres an 8px glyph in 10px).
+      context.method_25300(client.field_1772, "x", bx + CLOSE_SIZE / 2, y + (CLOSE_SIZE - 8) / 2, red);
    }
 
    public static int getX(Anchor anchor, class_310 client, TurtModConfig config) {
@@ -421,7 +418,7 @@ public final class HudEditorFeature {
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudY;
          case 15 -> var10000 = client.method_22683().method_4507() / 2 - 15 + config.hud.titleOffsetY;
-         case 16 -> var10000 = 12 + config.hud.bossbarOffsetY;
+         case 16 -> var10000 = 3 + config.hud.bossbarOffsetY;   // boss title text sits ~9px above the bar (y=12)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -473,7 +470,7 @@ public final class HudEditorFeature {
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
          case 15 -> var10000 = 30;  // TITLE placeholder handle
-         case 16 -> var10000 = 20;  // BOSSBAR placeholder handle
+         case 16 -> var10000 = 26;  // BOSSBAR handle (title text + bar)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 

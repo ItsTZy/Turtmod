@@ -391,6 +391,7 @@ public static final class Combat {
       public int potionRowSpacing = 28;
       public boolean potionShowFlags = true;
       public boolean potionTimerCompact = true;
+      public boolean potionTimerClock = false;   // true = "1:30" (m:ss) instead of "1m"/"30"
       public boolean potionTimerShowAmplifier = true;
       public boolean hideVanillaPotionHud = true;
       public PotionSortMode potionSortMode;
