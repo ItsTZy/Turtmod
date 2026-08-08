@@ -88,8 +88,6 @@ public final class TurtModConfigScreenFactory {
          case MUTE_SOUNDS -> "Mute Sounds";
          case HIDE_PARTICLES -> "Hide Particles";
          case CLEAR_VIEW -> "Clear View";
-         case TITLE_TWEAKS -> "Title Tweaks";
-         case BOSSBAR_TWEAKS -> "Bossbar Tweaks";
          case CHAT_TWEAKS -> "Chat Tweaks";
          case COMMAND_KEYS -> "Command Keys";
          case KIT_LOADER -> "Kit Loader";
@@ -475,21 +473,6 @@ public final class TurtModConfigScreenFactory {
             cfg.misc.clearViewReduceEatingParticles = dm.clearViewReduceEatingParticles;
             cfg.misc.clearViewHideEatingParticles = dm.clearViewHideEatingParticles;
          }
-         case TITLE_TWEAKS -> {
-            cfg.hud.titleTweaksEnabled = dh.titleTweaksEnabled;
-            cfg.hud.titleHide = dh.titleHide;
-            cfg.hud.titleScalePercent = dh.titleScalePercent;
-            cfg.hud.titleOffsetX = dh.titleOffsetX;
-            cfg.hud.titleOffsetY = dh.titleOffsetY;
-         }
-         case BOSSBAR_TWEAKS -> {
-            cfg.hud.bossbarTweaksEnabled = dh.bossbarTweaksEnabled;
-            cfg.hud.bossbarHide = dh.bossbarHide;
-            cfg.hud.bossbarHideInF3 = dh.bossbarHideInF3;
-            cfg.hud.bossbarScalePercent = dh.bossbarScalePercent;
-            cfg.hud.bossbarOffsetX = dh.bossbarOffsetX;
-            cfg.hud.bossbarOffsetY = dh.bossbarOffsetY;
-         }
          case CHAT_TWEAKS -> {
             cfg.hud.chatTweaksEnabled = dh.chatTweaksEnabled;
             cfg.hud.chatHistoryLength = dh.chatHistoryLength;
@@ -811,19 +794,6 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Hide Own Potion Particles", () -> cfg.misc.clearViewHidePotionParticles, v -> cfg.misc.clearViewHidePotionParticles = v))
             .addOption(bool("Shrink Eating Particles", () -> cfg.misc.clearViewReduceEatingParticles, v -> cfg.misc.clearViewReduceEatingParticles = v))
             .addOption(bool("Hide Eating Particles", () -> cfg.misc.clearViewHideEatingParticles, v -> cfg.misc.clearViewHideEatingParticles = v));
-         case TITLE_TWEAKS -> group
-            .addOption(bool("Enabled", () -> cfg.hud.titleTweaksEnabled, v -> cfg.hud.titleTweaksEnabled = v))
-            .addOption(bool("Hide Title", () -> cfg.hud.titleHide, v -> cfg.hud.titleHide = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.titleScalePercent, v -> cfg.hud.titleScalePercent = v, 25, 300, 5))
-            .addOption(intOpt("Offset X", () -> cfg.hud.titleOffsetX, v -> cfg.hud.titleOffsetX = v, -400, 400, 2))
-            .addOption(intOpt("Offset Y", () -> cfg.hud.titleOffsetY, v -> cfg.hud.titleOffsetY = v, -300, 300, 2));
-         case BOSSBAR_TWEAKS -> group
-            .addOption(bool("Enabled", () -> cfg.hud.bossbarTweaksEnabled, v -> cfg.hud.bossbarTweaksEnabled = v))
-            .addOption(bool("Hide Boss Bars", () -> cfg.hud.bossbarHide, v -> cfg.hud.bossbarHide = v))
-            .addOption(bool("Hide While F3 Open", () -> cfg.hud.bossbarHideInF3, v -> cfg.hud.bossbarHideInF3 = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.bossbarScalePercent, v -> cfg.hud.bossbarScalePercent = v, 25, 300, 5))
-            .addOption(intOpt("Offset X", () -> cfg.hud.bossbarOffsetX, v -> cfg.hud.bossbarOffsetX = v, -400, 400, 2))
-            .addOption(intOpt("Offset Y", () -> cfg.hud.bossbarOffsetY, v -> cfg.hud.bossbarOffsetY = v, -100, 300, 2));
          case CHAT_TWEAKS -> group
             .addOption(bool("Enabled", () -> cfg.hud.chatTweaksEnabled, v -> cfg.hud.chatTweaksEnabled = v))
             .addOption(intOpt("Chat History", () -> cfg.hud.chatHistoryLength, v -> cfg.hud.chatHistoryLength = v, 100, 1000, 50));
@@ -1168,8 +1138,6 @@ public final class TurtModConfigScreenFactory {
       MUTE_SOUNDS,
       HIDE_PARTICLES,
       CLEAR_VIEW,
-      TITLE_TWEAKS,
-      BOSSBAR_TWEAKS,
       CHAT_TWEAKS,
       COMMAND_KEYS,
       KIT_LOADER,

@@ -52,8 +52,6 @@ public final class HudEditorFeature {
       drawAnchor(context, client, config, HudEditorFeature.Anchor.COORDINATES, "Coordinates", config.hud.coordinatesHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.HEALTH, "Health", config.combat.showExactHealthNumber);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.SCOREBOARD, "Scoreboard", !config.visual.hideScoreboard);
-      drawAnchor(context, client, config, HudEditorFeature.Anchor.TITLE, "Title", config.hud.titleTweaksEnabled);
-      drawAnchor(context, client, config, HudEditorFeature.Anchor.BOSSBAR, "Bossbar", config.hud.bossbarTweaksEnabled);
       context.method_25303(client.field_1772, "Left drag: move | Click [x]: disable | Mouse wheel: scale | [+/-]: scale | [R]: reset", 6, sh - 20, -7487905);
       if (selected != null) {
          int x = getX(selected, client, config);
@@ -118,8 +116,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = "Health";
          case 13 -> var10000 = "Scoreboard";
          case 14 -> var10000 = "Pots";
-         case 15 -> var10000 = "Title";
-         case 16 -> var10000 = "Bossbar";
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -184,8 +180,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.showExactHealthNumber;
          case 13 -> var10000 = !config.visual.hideScoreboard;
          case 14 -> var10000 = false;
-         case 15 -> var10000 = config.hud.titleTweaksEnabled;
-         case 16 -> var10000 = config.hud.bossbarTweaksEnabled;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -210,8 +204,6 @@ public final class HudEditorFeature {
          case 12 -> config.combat.showExactHealthNumber = enabled;
          case 13 -> config.visual.hideScoreboard = !enabled;
          case 14 -> config.combat.potionThrowCounterHud = enabled;
-         case 15 -> config.hud.titleTweaksEnabled = enabled;
-         case 16 -> config.hud.bossbarTweaksEnabled = enabled;
       }
    }
 
@@ -324,13 +316,6 @@ public final class HudEditorFeature {
             config.hud.potionThrowHudX = x;
             config.hud.potionThrowHudY = y;
             break;
-         case 15:
-            config.hud.titleOffsetX = x - (client.method_22683().method_4489() / 2 - 80);
-            config.hud.titleOffsetY = y - (client.method_22683().method_4507() / 2 - 40);
-            break;
-         case 16:
-            config.hud.bossbarOffsetX = x - (client.method_22683().method_4489() / 2 - 91);
-            config.hud.bossbarOffsetY = y - 3;
       }
 
    }
@@ -349,29 +334,6 @@ public final class HudEditorFeature {
       boolean sel = anchor == selected;
       boolean active = sel || anchor == dragging;
       int accent = -7487905;   // green
-
-      // WYSIWYG previews: the title + bossbar don't render while a screen is open, so draw a realistic
-      // mock at the EXACT position/size they'll appear in-game (same getX/getY the mixins mirror), instead
-      // of an empty box you can't line up.
-      if (anchor == Anchor.TITLE) {
-         String sample = "Title";
-         float ts = 2.4f;
-         int tw = client.field_1772.method_1727(sample);
-         float tx = x + w / 2f - (tw * ts) / 2f;
-         float ty = y + (h - 9 * ts) / 2f;
-         context.method_51448().pushMatrix();
-         context.method_51448().translate(tx, ty);
-         context.method_51448().scale(ts, ts);
-         context.method_51433(client.field_1772, sample, 0, 0, -1, true);
-         context.method_51448().popMatrix();
-      } else if (anchor == Anchor.BOSSBAR) {
-         int barY = y + 9;   // box top is at boss-title y(3); the bar sits at y(12), i.e. +9
-         context.method_25294(x, barY, x + w, barY + 5, 0xFF2B0A2B);         // empty bar track
-         context.method_25294(x, barY, x + w * 3 / 4, barY + 5, 0xFFC03CE0);   // filled (pink/purple)
-         String boss = "Boss";
-         int bw = client.field_1772.method_1727(boss);
-         context.method_51433(client.field_1772, boss, x + w / 2 - bw / 2, y, -1, true);
-      }
 
       // Only tint the footprint when active — idle elements get no fill so the real HUD shows through.
       if (active) {
@@ -420,8 +382,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getX(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudX;
-         case 15 -> var10000 = client.method_22683().method_4489() / 2 - 80 + config.hud.titleOffsetX;
-         case 16 -> var10000 = client.method_22683().method_4489() / 2 - 91 + config.hud.bossbarOffsetX;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -446,8 +406,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getY(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudY;
-         case 15 -> var10000 = client.method_22683().method_4507() / 2 - 40 + config.hud.titleOffsetY;   // title text starts ~40px above center
-         case 16 -> var10000 = 3 + config.hud.bossbarOffsetY;   // boss title text sits ~9px above the bar (y=12)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -472,8 +430,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
          case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
-         case 15 -> var10000 = 160; // TITLE handle (title text is large/centred)
-         case 16 -> var10000 = 182; // BOSSBAR placeholder handle
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -498,8 +454,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
-         case 15 -> var10000 = 40;  // TITLE handle sized to the title text itself, so box == title
-         case 16 -> var10000 = 26;  // BOSSBAR handle (title text + bar)
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -576,8 +530,6 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.healthScalePercent;
          case 13 -> var10000 = config.visual.scoreboardScalePercent <= 0 ? 100 : config.visual.scoreboardScalePercent;
          case 14 -> var10000 = config.hud.potionThrowHudScalePercent;
-         case 15 -> var10000 = config.hud.titleScalePercent;
-         case 16 -> var10000 = config.hud.bossbarScalePercent;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -603,8 +555,6 @@ public final class HudEditorFeature {
          case 12 -> config.combat.healthScalePercent = next;
          case 13 -> config.visual.scoreboardScalePercent = next;
          case 14 -> config.hud.potionThrowHudScalePercent = next;
-         case 15 -> config.hud.titleScalePercent = next;
-         case 16 -> config.hud.bossbarScalePercent = next;
       }
 
    }
@@ -662,13 +612,11 @@ public final class HudEditorFeature {
       COORDINATES,
       HEALTH,
       SCOREBOARD,
-      POTS,
-      TITLE,
-      BOSSBAR;
+      POTS;
 
       // $FF: synthetic method
       private static Anchor[] $values() {
-         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS, TITLE, BOSSBAR};
+         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS};
       }
    }
 }

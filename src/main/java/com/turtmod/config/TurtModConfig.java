@@ -430,24 +430,9 @@ public static final class Combat {
       public int cleanF3Y;
       public int cleanF3ScalePercent;
 
-      // Title Tweaks: reposition / scale / hide the server on-screen Title + Subtitle.
-      public boolean titleTweaksEnabled = true;
-      public boolean titleHide = false;
-      public int titleScalePercent = 100;
-      public int titleOffsetX = 0;
-      public int titleOffsetY = 0;
-
       // Chat Tweaks: keep more chat history than vanilla's 100-message cap.
       public boolean chatTweaksEnabled = true;
       public int chatHistoryLength = 250;
-
-      // Bossbar Tweaks: hide / hide-in-F3 / scale / offset the server boss bars.
-      public boolean bossbarTweaksEnabled = true;
-      public boolean bossbarHide = false;
-      public boolean bossbarHideInF3 = false;
-      public int bossbarScalePercent = 100;
-      public int bossbarOffsetX = 0;
-      public int bossbarOffsetY = 0;
 
       /** Fills in Clean F3 fields that GSON left unset (older configs) so colours/order are valid. */
       public void ensureCleanF3() {
