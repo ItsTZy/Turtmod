@@ -458,22 +458,23 @@ public class TurtNativeConfigScreen extends class_437 {
 
    private void renderColorPicker(class_332 ctx, int mx, int my) {
       ctx.method_25294(-2000, -2000, LOGICAL_W + 2000, LOGICAL_H + 2000, 0xB0000000);
-      this.pickW = 200;
-      this.pickH = 252;
+      this.pickW = 244;
+      this.pickH = 306;
       this.pickX = (LOGICAL_W - this.pickW) / 2;
       this.pickY = (LOGICAL_H - this.pickH) / 2;
       // Soft accent halo + panel.
       TurtUIUtils.drawHoverGlow(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, 1f, Palette.alpha(Palette.PINK, 120));
       TurtUIUtils.drawRoundedRect(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, new Color(13, 16, 23, 252));
       TurtUIUtils.drawRoundedBorder(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, Palette.alpha(Palette.GREEN, 140));
-      TurtUIUtils.drawGradientText(ctx, this.field_22793, this.pickerOpt.getName(), this.pickX + 12, this.pickY + 10,
+      TurtUIUtils.drawGradientText(ctx, this.field_22793, this.pickerOpt.getName(), this.pickX + 14, this.pickY + 11,
          Palette.GREEN, Palette.PINK, false, true);
-      ctx.method_25294(this.pickX + 10, this.pickY + 22, this.pickX + this.pickW - 10, this.pickY + 23, Palette.alpha(Palette.GREEN, 40).getRGB());
+      ctx.method_25294(this.pickX + 12, this.pickY + 24, this.pickX + this.pickW - 12, this.pickY + 25, Palette.alpha(Palette.GREEN, 40).getRGB());
 
-      this.svX = this.pickX + 12;
-      this.svY = this.pickY + 30;
-      this.svW = 130;
-      this.svH = 96;
+      // Big SV square.
+      this.svX = this.pickX + 14;
+      this.svY = this.pickY + 32;
+      this.svW = 172;
+      this.svH = 140;
       int hueRgb = ConfigColor.HSBtoRGB(this.pH, 1f, 1f);
       TurtUIUtils.drawHorizontalGradient(ctx, this.svX, this.svY, this.svW, this.svH, Color.WHITE, new Color(hueRgb));
       TurtUIUtils.drawGradientRectangle(ctx, this.svX, this.svY, this.svW, this.svH, new Color(0, 0, 0, 0), new Color(0, 0, 0, 255));
@@ -482,9 +483,9 @@ public class TurtNativeConfigScreen extends class_437 {
       int selY = this.svY + Math.round((1f - this.pB) * this.svH);
       this.drawRing(ctx, selX, selY, 4);
 
-      // Hue bar (rounded ends).
-      this.hueX = this.svX + this.svW + 8;
-      this.hueW = 12;
+      // Hue bar to the right of the SV square.
+      this.hueX = this.svX + this.svW + 10;
+      this.hueW = 16;
       for (int i = 0; i < this.svH; i++) {
          int rgb = ConfigColor.HSBtoRGB((float) i / this.svH, 1f, 1f);
          ctx.method_25294(this.hueX, this.svY + i, this.hueX + this.hueW, this.svY + i + 1, 0xFF000000 | rgb);
@@ -493,41 +494,45 @@ public class TurtNativeConfigScreen extends class_437 {
       int hy = this.svY + Math.round(this.pH * this.svH);
       this.drawMarkerH(ctx, this.hueX, hy, this.hueW);
 
-      // Alpha slider with a transparency checkerboard behind it.
-      this.alphaY = this.svY + this.svH + 12;
-      this.alphaH = 12;
+      // Alpha slider (full width under the SV square) with a transparency checkerboard behind it.
+      int fullW = this.hueX + this.hueW - this.svX;
+      this.alphaY = this.svY + this.svH + 14;
+      this.alphaH = 14;
       int baseRgb = ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF;
+      ctx.method_51433(this.field_22793, "Alpha", this.svX, this.alphaY - 10, Palette.TEXT_MUTED.getRGB(), false);
       this.drawChecker(ctx, this.svX, this.alphaY, this.svW, this.alphaH);
       TurtUIUtils.drawHorizontalGradient(ctx, this.svX, this.alphaY, this.svW, this.alphaH, new Color(baseRgb & 0xFFFFFF, false), new Color(0xFF000000 | baseRgb));
       TurtUIUtils.drawBorder(ctx, this.svX, this.alphaY, this.svW, this.alphaH, new Color(0, 0, 0, 120));
       int ax = this.svX + Math.round(this.pA / 255f * this.svW);
       this.drawMarkerV(ctx, ax, this.alphaY, this.alphaH);
+      // Live alpha readout next to the bar.
+      ctx.method_51433(this.field_22793, Math.round(this.pA / 255f * 100f) + "%", this.hueX - 2, this.alphaY + 3, Palette.TEXT.getRGB(), false);
 
       // Preview chip (checkerboard behind for alpha) + editable hex field.
       int argb = (this.pA << 24) | baseRgb;
-      int chipY = this.alphaY + this.alphaH + 8;
-      this.drawChecker(ctx, this.svX, chipY, 28, 14);
-      TurtUIUtils.drawRoundedRect(ctx, this.svX, chipY, 28, 14, 3, new Color(argb, true));
-      TurtUIUtils.drawRoundedBorder(ctx, this.svX, chipY, 28, 14, 3, new Color(255, 255, 255, 90));
-      this.hexFieldX = this.svX + 32;
+      int chipY = this.alphaY + this.alphaH + 10;
+      this.drawChecker(ctx, this.svX, chipY, 34, 16);
+      TurtUIUtils.drawRoundedRect(ctx, this.svX, chipY, 34, 16, 3, new Color(argb, true));
+      TurtUIUtils.drawRoundedBorder(ctx, this.svX, chipY, 34, 16, 3, new Color(255, 255, 255, 90));
+      this.hexFieldX = this.svX + 40;
       this.hexFieldY = chipY;
-      this.hexFieldW = 74;
-      this.hexFieldH = 14;
+      this.hexFieldW = fullW - 40;
+      this.hexFieldH = 16;
       TurtUIUtils.drawRoundedRect(ctx, this.hexFieldX, this.hexFieldY, this.hexFieldW, this.hexFieldH, 3, Palette.SEARCH_BG);
       TurtUIUtils.drawRoundedBorder(ctx, this.hexFieldX, this.hexFieldY, this.hexFieldW, this.hexFieldH, 3,
          this.editingHex ? Palette.PINK : Palette.alpha(Palette.GREEN, 60));
       String hexLabel = this.editingHex ? ("#" + this.hexBuf) : String.format("#%08X", argb);
-      ctx.method_51433(this.field_22793, hexLabel, this.hexFieldX + 4, this.hexFieldY + 3, Palette.TEXT.getRGB(), false);
+      ctx.method_51433(this.field_22793, hexLabel, this.hexFieldX + 5, this.hexFieldY + 4, Palette.TEXT.getRGB(), false);
       if (this.editingHex && System.currentTimeMillis() / 500L % 2L == 0L) {
-         int cx = this.hexFieldX + 4 + this.field_22793.method_1727("#" + this.hexBuf);
-         ctx.method_25294(cx, this.hexFieldY + 3, cx + 1, this.hexFieldY + 11, -1);
+         int cx = this.hexFieldX + 5 + this.field_22793.method_1727("#" + this.hexBuf);
+         ctx.method_25294(cx, this.hexFieldY + 4, cx + 1, this.hexFieldY + 13, -1);
       }
 
       // Preset swatches.
-      this.presetSize = 14;
-      this.presetGap = 3;
+      this.presetSize = 16;
+      this.presetGap = 4;
       this.presetX0 = this.svX;
-      this.presetY = chipY + 20;
+      this.presetY = chipY + 24;
       for (int i = 0; i < PRESETS.length; i++) {
          int px = this.presetX0 + i * (this.presetSize + this.presetGap);
          boolean ph = TurtUIUtils.isHovered(mx, my, px, this.presetY, this.presetSize, this.presetSize);
