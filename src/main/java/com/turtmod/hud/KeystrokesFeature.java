@@ -100,14 +100,14 @@ public final class KeystrokesFeature {
       // instead of the rounded per-key cells that left gaps. In clean/no-background mode idle keys draw
       // nothing (just the letter) and only a pressed key gets a subtle fill.
       int fill = pressed && config.hud.keystrokesUsePressedColor
-         ? CustomThemeRenderer.applyHudOpacity(config, -16777216 | config.hud.keystrokesPressedColor & 16777215)
+         ? CustomThemeRenderer.applyHudOpacity(config, CustomThemeRenderer.pickedArgb(config.hud.keystrokesPressedColor))
          : CustomThemeRenderer.getKeyBackground(config, pressed);
       if (fill >>> 24 > 0) {
          context.method_25294(x, y, x + width, y + 16, fill);
       }
 
       int textColor = pressed && config.hud.keystrokesUsePressedColor
-         ? CustomThemeRenderer.applyHudOpacity(config, -16777216 | config.hud.keystrokesPressedTextColor & 16777215)
+         ? CustomThemeRenderer.applyHudOpacity(config, CustomThemeRenderer.pickedArgb(config.hud.keystrokesPressedTextColor))
          : CustomThemeRenderer.getKeyTextColor(config, pressed);
       int textWidth = CustomThemeRenderer.textWidth(client.field_1772, label, config);
       int textX = x + Math.max(0, (width - textWidth) / 2);

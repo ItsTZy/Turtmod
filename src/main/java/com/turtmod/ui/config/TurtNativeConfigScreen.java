@@ -1025,6 +1025,7 @@ public class TurtNativeConfigScreen extends class_437 {
       this.editingHex = false;
       int argb = currentArgb(opt);
       this.pA = (argb >>> 24) & 0xFF;
+      if (this.pA == 0) this.pA = 255;   // legacy RGB-only colours stored alpha 0 → show opaque, not invisible
       float[] hsb = ConfigColor.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, null);
       this.pH = hsb[0];
       this.pS = hsb[1];

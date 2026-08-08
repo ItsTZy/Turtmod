@@ -229,6 +229,16 @@ public final class CustomThemeRenderer {
       return alpha << 24 | color & 16777215;
    }
 
+   /**
+    * Respect the alpha the user picked in the colour picker. Old configs stored colours as pure RGB
+    * (alpha byte 0); treat that as fully opaque so nothing silently vanishes, but honour any real
+    * picked alpha (1–255) so the picker's alpha slider actually affects the rendered colour.
+    */
+   public static int pickedArgb(int color) {
+      int a = color >>> 24 & 255;
+      return (a == 0 ? 0xFF000000 : a << 24) | color & 16777215;
+   }
+
    public static int mix(int a, int b, float t) {
       float c = Math.max(0.0F, Math.min(1.0F, t));
       int ar = a >> 16 & 255;

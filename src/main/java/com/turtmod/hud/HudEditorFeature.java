@@ -237,8 +237,8 @@ public final class HudEditorFeature {
          boolean sx = false;
          boolean sy = false;
          if (config.hud.snapToCenter) {
-            int cx = client.method_22683().method_4486() / 2;
-            int cy = client.method_22683().method_4502() / 2;
+            int cx = client.method_22683().method_4489() / 2;   // scaled (must match getX/getY space)
+            int cy = client.method_22683().method_4507() / 2;
             if (Math.abs(newX - cx) < config.hud.centerSnapRange) {
                newX = cx;
                sx = true;
@@ -257,8 +257,8 @@ public final class HudEditorFeature {
          snappedX = sx;
          snappedY = sy;
 
-         int maxX = client.method_22683().method_4486() - getWidth(dragging, client, config);
-         int maxY = client.method_22683().method_4502() - getHeight(dragging, client, config);
+         int maxX = client.method_22683().method_4489() - getWidth(dragging, client, config);   // scaled
+         int maxY = client.method_22683().method_4507() - getHeight(dragging, client, config);  // scaled
          newX = Math.max(0, Math.min(maxX, newX));
          newY = Math.max(0, Math.min(maxY, newY));
          moveAnchor(dragging, newX, newY, client, config);
@@ -349,6 +349,29 @@ public final class HudEditorFeature {
       boolean sel = anchor == selected;
       boolean active = sel || anchor == dragging;
       int accent = -7487905;   // green
+
+      // WYSIWYG previews: the title + bossbar don't render while a screen is open, so draw a realistic
+      // mock at the EXACT position/size they'll appear in-game (same getX/getY the mixins mirror), instead
+      // of an empty box you can't line up.
+      if (anchor == Anchor.TITLE) {
+         String sample = "Title";
+         float ts = 2.4f;
+         int tw = client.field_1772.method_1727(sample);
+         float tx = x + w / 2f - (tw * ts) / 2f;
+         float ty = y + (h - 9 * ts) / 2f;
+         context.method_51448().pushMatrix();
+         context.method_51448().translate(tx, ty);
+         context.method_51448().scale(ts, ts);
+         context.method_51433(client.field_1772, sample, 0, 0, -1, true);
+         context.method_51448().popMatrix();
+      } else if (anchor == Anchor.BOSSBAR) {
+         int barY = y + 9;   // box top is at boss-title y(3); the bar sits at y(12), i.e. +9
+         context.method_25294(x, barY, x + w, barY + 5, 0xFF2B0A2B);         // empty bar track
+         context.method_25294(x, barY, x + w * 3 / 4, barY + 5, 0xFFC03CE0);   // filled (pink/purple)
+         String boss = "Boss";
+         int bw = client.field_1772.method_1727(boss);
+         context.method_51433(client.field_1772, boss, x + w / 2 - bw / 2, y, -1, true);
+      }
 
       // Only tint the footprint when active — idle elements get no fill so the real HUD shows through.
       if (active) {
