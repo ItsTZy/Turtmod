@@ -350,8 +350,10 @@ public final class HudEditorFeature {
       boolean active = sel || anchor == dragging;
       int accent = -7487905;   // green
 
-      // Just a faint footprint so you can see the real HUD size (the screen draws the card + name chip).
-      context.method_25294(x, y, x + w, y + h, active ? 0x2600E676 : 0x12FFFFFF);
+      // Only tint the footprint when active — idle elements get no fill so the real HUD shows through.
+      if (active) {
+         context.method_25294(x, y, x + w, y + h, 0x2200E676);
+      }
       if (sel) {
          int cs = 4;
          context.method_25294(x, y, x + cs, y + 1, accent);

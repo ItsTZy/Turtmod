@@ -229,15 +229,18 @@ public class HudEditorScreen extends class_437 {
          elemGlow[i] = TurtUIUtils.lerp01(elemGlow[i], (hov || sel) ? 1f : 0f, dt, 10f);
          float g = elemGlow[i];
 
-         // Subtle card background.
-         int bg = sel ? 0x55000000 : (hov ? 0x38000000 : 0x22000000);
-         TurtUIUtils.drawRoundedRect(ctx, ex - 6, ey - 6, ew + 12, eh + 12, 4, new Color(bg, true));
-
-         // Clean border: green when selected, faint white on hover, nothing otherwise.
+         // Card background ONLY when hovered/selected, so an idle box never hides the real HUD behind it.
          if (sel) {
+            TurtUIUtils.drawRoundedRect(ctx, ex - 6, ey - 6, ew + 12, eh + 12, 4, new Color(0x33000000, true));
             ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, ACCENT_GREEN.getRGB());
          } else if (g > 0.02f) {
+            TurtUIUtils.drawRoundedRect(ctx, ex - 6, ey - 6, ew + 12, eh + 12, 4, new Color((int) (g * 0x28) << 24, true));
             ctx.method_73198(ex - 4, ey - 4, ew + 8, eh + 8, new Color(255, 255, 255, (int) (g * 110)).getRGB());
+         }
+
+         // Main-menu preview: no live HUD to show, so draw a mock so you can see what/where it is.
+         if (client.field_1724 == null) {
+            HudPreviewRenderer.draw(ctx, client.field_1772, anchor, ex, ey, ew, eh);
          }
 
          // Name label chip above element
