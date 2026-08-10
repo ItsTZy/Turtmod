@@ -91,8 +91,8 @@ public final class HudPanelsFeature {
    }
 
    private static void renderArmorHud(class_332 context, class_310 client, TurtModConfig config) {
-      int x = config.hud.armorHudX;
-      int y = config.hud.armorHudY;
+      int x = HudEditorFeature.clampToScreenX(client, config.hud.armorHudX, getArmorHudScaledWidth(config));
+      int y = HudEditorFeature.clampToScreenY(client, config.hud.armorHudY, getArmorHudScaledHeight(config));
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.armorHudScalePercent);
       boolean vertical = config.hud.armorHudVertical;
       List<class_1799> stacks = getArmorHudStacks(client, config);
@@ -563,12 +563,40 @@ public final class HudPanelsFeature {
          int rowH = style == TurtModConfig.PotionHudStyle.FULL ? POTION_FULL_ROW_H : POTION_COMPACT_ROW_H;
          return new PanelSize(cols * colW, rowsPerColumn * rowH + 8);
       }
-      // Inv-HUD-style: N slots on a 20px pitch (last slot has no trailing gap) + 4px padding each side.
-      int run = count * POTION_SLOT_PITCH - (POTION_SLOT_PITCH - POTION_SLOT); // e.g. 3 pots -> 58
-      int line = POTION_SLOT + 2 * POTION_PAD;                                 // 18 + 8 = 26
-      return config.hud.potionHudHorizontal
-         ? new PanelSize(run + 2 * POTION_PAD, line)
-         : new PanelSize(line, run + 2 * POTION_PAD);
+      // Inv-HUD-style icons: slots on a 20px pitch + 4px padding. The grid WRAPS into extra columns/rows
+      // so the panel can never be bigger than the screen (see potionIconGrid).
+      int[] grid = potionIconGrid(config, count);
+      int cols = grid[0], rows = grid[1];
+      int w = 2 * POTION_PAD + cols * POTION_SLOT_PITCH - (POTION_SLOT_PITCH - POTION_SLOT);
+      int h = 2 * POTION_PAD + rows * POTION_SLOT_PITCH - (POTION_SLOT_PITCH - POTION_SLOT);
+      return new PanelSize(w, h);
+   }
+
+   /** Icons-only grid {cols, rows} for `count` effects. Wraps along the growth axis so the (base, unscaled)
+    *  panel fits the current screen: vertical fills a column top-to-bottom then starts a new column when it
+    *  would exceed the screen height; horizontal mirrors that across the width. Uses scaled screen dims
+    *  divided by the HUD scale (the panel is drawn under the scale matrix). */
+   private static int[] potionIconGrid(TurtModConfig config, int count) {
+      count = Math.max(1, Math.min(count, POTION_MAX_SIMPLE_EFFECTS));
+      class_310 mc = class_310.method_1551();
+      float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent);
+      int margin = 4;
+      int slack = POTION_SLOT_PITCH - POTION_SLOT; // trailing gap the last slot doesn't use
+      if (config.hud.potionHudHorizontal) {
+         int availW = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4489() : 10000;
+         int usable = Math.max(POTION_SLOT_PITCH, Math.round(availW / Math.max(0.01F, scale)) - 2 * margin - 2 * POTION_PAD);
+         int maxCols = Math.max(1, (usable + slack) / POTION_SLOT_PITCH);
+         int cols = Math.min(count, maxCols);
+         int rows = (int) Math.ceil((double) count / cols);
+         return new int[]{cols, rows};
+      } else {
+         int availH = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4507() : 10000;
+         int usable = Math.max(POTION_SLOT_PITCH, Math.round(availH / Math.max(0.01F, scale)) - 2 * margin - 2 * POTION_PAD);
+         int maxRows = Math.max(1, (usable + slack) / POTION_SLOT_PITCH);
+         int rows = Math.min(count, maxRows);
+         int cols = (int) Math.ceil((double) count / rows);
+         return new int[]{cols, rows};
+      }
    }
 
    private static void renderPotionFull(class_332 context, class_310 client, TurtModConfig config, int x, int y, int panelWidth, int columns, List<class_1293> effects) {
@@ -626,20 +654,24 @@ public final class HudPanelsFeature {
    }
 
    private static void renderPotionIconsOnly(class_332 context, class_310 client, TurtModConfig config, int x, int y, List<class_1293> effects) {
-      int columns = config.hud.potionHudHorizontal ? Math.max(1, effects.size()) : 1;
       // Same geometry as the Inventory HUD: 4px padding, 18px slot cells on a 20px pitch, icon at +1,+1.
+      // Wrap using the SAME grid the panel size is computed from, so the box == the drawn HUD exactly.
+      int[] grid = potionIconGrid(config, effects.size());
+      int cols = grid[0], rows = grid[1];
+      boolean horizontal = config.hud.potionHudHorizontal;
       int startX = x + POTION_PAD;
       int startY = y + POTION_PAD;
 
       for(int i = 0; i < effects.size(); ++i) {
          class_1293 effect = (class_1293)effects.get(i);
-         int col = i % columns;
-         int row = i / columns;
+         // Horizontal fills across-then-down; vertical fills down-then-across.
+         int col = horizontal ? (i % cols) : (i / rows);
+         int row = horizontal ? (i / cols) : (i % rows);
          int slotX = startX + col * POTION_SLOT_PITCH;
          int slotY = startY + row * POTION_SLOT_PITCH;
          CustomThemeRenderer.renderSlotCell(context, slotX, slotY, POTION_SLOT, POTION_SLOT, config, true);
          drawEffectIcon(context, effect, slotX + 1, slotY + 1);
-         drawIconOverlay(context, client, effect, slotX + 1, slotY + 1);
+         drawIconOverlay(context, client, config, effect, slotX + 1, slotY + 1);
       }
 
    }
@@ -648,16 +680,17 @@ public final class HudPanelsFeature {
       context.method_52706(class_10799.field_56883, class_329.method_71644(effect.method_5579()), x, y, 16, 16);
    }
 
-   private static void drawIconOverlay(class_332 context, class_310 client, class_1293 effect, int x, int y) {
+   private static void drawIconOverlay(class_332 context, class_310 client, TurtModConfig config, class_1293 effect, int x, int y) {
       // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
       // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
       float ts = 0.66F;
+      int textColor = CustomThemeRenderer.getTextColor(config); // follow the theme's Text Color setting
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)(x + 8), (float)(y + 12));
       context.method_51448().scale(ts, ts);
-      context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, -1);
+      context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, textColor);
       context.method_51448().popMatrix();
       if (effect.method_5578() > 0) {
          String amp = getAmplifierText(effect.method_5578() + 1);
@@ -665,7 +698,7 @@ public final class HudPanelsFeature {
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)(x + 15), (float)(y - 1));
          context.method_51448().scale(ts, ts);
-         context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, -1);
+         context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, textColor);
          context.method_51448().popMatrix();
       }
 

@@ -209,10 +209,13 @@ public final class CleanF3Feature {
          return;
       }
       class_327 font = client.field_1772;
-      int x = config.hud.cleanF3X;
-      int y = config.hud.cleanF3Y;
-      int sep = font.method_1727(": ");
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent);
+      // Non-destructive on-screen clamp (matches the editor's DEBUG footprint math).
+      int scaledW = Math.round(Math.max(80, boxWidth(client, lines)) * scale);
+      int scaledH = Math.round(Math.max(20, boxHeight(lines)) * scale);
+      int x = HudEditorFeature.clampToScreenX(client, config.hud.cleanF3X, scaledW);
+      int y = HudEditorFeature.clampToScreenY(client, config.hud.cleanF3Y, scaledH);
+      int sep = font.method_1727(": ");
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)x, (float)y);
       context.method_51448().scale(scale, scale);

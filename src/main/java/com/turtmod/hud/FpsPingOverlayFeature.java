@@ -21,15 +21,11 @@ public final class FpsPingOverlayFeature {
             }
          }
 
-         int x = config.hud.minimalOverlayX;
-         int y = config.hud.minimalOverlayY;
+         // Non-destructive on-screen clamp in SCALED gui space (matches the HUD editor + GuiGraphics).
+         // The old clamp used RAW window dims, which let the overlay sit off-screen at GUI scale != 1.
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.minimalOverlayX, getScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.minimalOverlayY, getScaledHeight(config));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent);
-         int scaledWidth = client.method_22683().method_4486();
-         int scaledHeight = client.method_22683().method_4502();
-         int hudWidth = Math.round((float)getBaseWidth(client, config) * scale);
-         int hudHeight = Math.round(40.0F * scale);
-         x = Math.max(0, Math.min(x, scaledWidth - hudWidth));
-         y = Math.max(0, Math.min(y, scaledHeight - hudHeight));
          boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.fpsPingShowBackground;
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);

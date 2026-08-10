@@ -17,8 +17,8 @@ public final class CpsCounterFeature {
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (client.field_1724 != null && config.misc.enabled && config.hud.cpsCounterHud) {
-         int x = config.hud.cpsCounterX;
-         int y = config.hud.cpsCounterY;
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.cpsCounterX, getScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.cpsCounterY, getScaledHeight(config));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.cpsCounterScalePercent);
          int leftCps = CPSTracker.getLeftCPS();
          int rightCps = CPSTracker.getRightCPS();

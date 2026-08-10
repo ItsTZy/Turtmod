@@ -11,7 +11,7 @@ public final class KeystrokesFeature {
    private static final String CPS_BOTH_SAMPLE = "20 | 20";
    private static final int PANEL_PADDING = 3;
    private static final int KEY_SIZE = 16;
-   private static final int GAP = 0;
+   private static final int GAP = 2; // small gap between keys (was 0 = keys touched edge-to-edge)
    private static final int KEY_HEIGHT = 16;
    private static int leftCps = 0;
    private static int rightCps = 0;
@@ -44,14 +44,14 @@ public final class KeystrokesFeature {
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (client.field_1724 != null && config.misc.enabled && config.hud.keystrokesHud) {
-         int x = config.hud.keystrokesHudX;
-         int y = config.hud.keystrokesHudY;
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.keystrokesHudX, getScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.keystrokesHudY, getScaledHeight(config));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.keystrokesHudScalePercent);
          PanelSize size = getPanelBaseSize(client, config);
          boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
-         int clusterWidth = 48;
-         int mouseKeyWidth = (clusterWidth - 0) / 2;
-         int clusterHeight = config.hud.keystrokesHud ? 64 : 0;
+         int clusterWidth = 3 * KEY_SIZE + 2 * GAP;
+         int mouseKeyWidth = (clusterWidth - GAP) / 2;
+         int clusterHeight = config.hud.keystrokesHud ? (4 * KEY_HEIGHT + 3 * GAP) : 0;
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
@@ -64,17 +64,19 @@ public final class KeystrokesFeature {
          int contentX = x + 3;
          int contentY = y + 3;
          if (config.hud.keystrokesHud) {
-            int wX = contentX + 16 + 0;
-            renderKey(context, client, config, "W", wPressed, wX, contentY, 16);
-            int row2Y = contentY + 16 + 0;
-            renderKey(context, client, config, "A", aPressed, contentX, row2Y, 16);
-            renderKey(context, client, config, "S", sPressed, contentX + 16 + 0, row2Y, 16);
-            renderKey(context, client, config, "D", dPressed, contentX + 32, row2Y, 16);
-            int row3Y = contentY + 32;
+            int step = KEY_SIZE + GAP;
+            int rowStep = KEY_HEIGHT + GAP;
+            int wX = contentX + step;
+            renderKey(context, client, config, "W", wPressed, wX, contentY, KEY_SIZE);
+            int row2Y = contentY + rowStep;
+            renderKey(context, client, config, "A", aPressed, contentX, row2Y, KEY_SIZE);
+            renderKey(context, client, config, "S", sPressed, contentX + step, row2Y, KEY_SIZE);
+            renderKey(context, client, config, "D", dPressed, contentX + 2 * step, row2Y, KEY_SIZE);
+            int row3Y = contentY + 2 * rowStep;
             renderKey(context, client, config, "Space", spacePressed, contentX, row3Y, clusterWidth);
-            int row4Y = contentY + 48;
+            int row4Y = contentY + 3 * rowStep;
             renderKey(context, client, config, "LMB", leftMousePressed, contentX, row4Y, mouseKeyWidth);
-            renderKey(context, client, config, "RMB", rightMousePressed, contentX + mouseKeyWidth + 0, row4Y, mouseKeyWidth);
+            renderKey(context, client, config, "RMB", rightMousePressed, contentX + mouseKeyWidth + GAP, row4Y, mouseKeyWidth);
          }
 
          if (config.hud.keystrokesShowCps) {
@@ -127,8 +129,8 @@ public final class KeystrokesFeature {
    }
 
    private static PanelSize getPanelBaseSize(class_310 client, TurtModConfig config) {
-      int clusterWidth = 48;
-      int clusterHeight = config.hud.keystrokesHud ? 64 : 0;
+      int clusterWidth = 3 * KEY_SIZE + 2 * GAP;
+      int clusterHeight = config.hud.keystrokesHud ? (4 * KEY_HEIGHT + 3 * GAP) : 0;
       String cpsText = buildCpsSampleText(config);
       if (client != null && client.field_1772 != null) {
          int var9 = client.field_1772.method_1727(cpsText) + 8;
@@ -136,7 +138,7 @@ public final class KeystrokesFeature {
          boolean var10000 = true;
       }
 
-      int panelWidth = clusterWidth + 6;
+      int panelWidth = clusterWidth + 2 * PANEL_PADDING;
       int cpsHeight = config.hud.keystrokesShowCps ? 14 : 0;
       int panelHeight = clusterHeight + (config.hud.keystrokesShowCps && config.hud.keystrokesHud ? 6 : 0) + cpsHeight + 6;
       return new PanelSize(panelWidth, Math.max(panelHeight, 20));

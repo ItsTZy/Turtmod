@@ -70,8 +70,8 @@ public final class ReachDisplayFeature {
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (client.field_1724 != null && config.misc.enabled && config.hud.reachDisplay) {
-         int x = config.hud.reachHudX;
-         int y = config.hud.reachHudY;
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.reachHudX, getScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.reachHudY, getScaledHeight(config));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.reachHudScalePercent);
          boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.reachShowBackground;
          context.method_51448().pushMatrix();

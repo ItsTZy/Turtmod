@@ -16,8 +16,8 @@ public final class InventoryHudFeature {
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (config.hud.inventoryHudEnabled && client.field_1724 != null) {
-         int x = config.hud.inventoryHudX;
-         int y = config.hud.inventoryHudY;
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.inventoryHudX, getScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.inventoryHudY, getScaledHeight(config));
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.inventoryHudScalePercent);
          PanelSize size = getBaseSize();
          context.method_51448().pushMatrix();

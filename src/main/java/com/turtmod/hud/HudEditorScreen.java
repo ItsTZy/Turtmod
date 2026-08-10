@@ -203,11 +203,13 @@ public class HudEditorScreen extends class_437 {
          }
 
 
-         // Name label chip above element
+         // Name label chip above the element — but flip BELOW it when the element is near the top, so a
+         // top-anchored HUD's name isn't drawn off-screen. Keep the chip on-screen horizontally too.
          String name = getAnchorName(anchor);
          int chipW = client.field_1772.method_1727(name) + 8;
          int chipX = ex - 4 + (ew + 8) / 2 - chipW / 2;
-         int chipY = ey - 17;
+         chipX = Math.max(2, Math.min(chipX, this.field_22789 - chipW - 2));
+         int chipY = (ey - 17 >= 2) ? ey - 17 : ey + eh + 2;
          // Selected = dark chip with a green name (not a green chip with black text, which read as "black").
          int chipBg = sel ? 0xE00E1A12 : (hov ? 0xBB333333 : 0x88222222);
          TurtUIUtils.drawRoundedRect(ctx, chipX, chipY, chipW, 11, 2, new Color(chipBg, true));

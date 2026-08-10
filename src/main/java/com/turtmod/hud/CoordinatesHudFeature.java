@@ -80,8 +80,8 @@ public final class CoordinatesHudFeature {
          return;
       }
 
-      int x = config.hud.coordinatesHudX;
-      int y = config.hud.coordinatesHudY;
+      int x = HudEditorFeature.clampToScreenX(client, config.hud.coordinatesHudX, getScaledWidth(config));
+      int y = HudEditorFeature.clampToScreenY(client, config.hud.coordinatesHudY, getScaledHeight(config));
       int pad = 5;
       int panelW = 0;
       for (String[] pair : lines) {

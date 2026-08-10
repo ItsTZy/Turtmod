@@ -35,10 +35,9 @@ public final class HudEditorFeature {
          dragging = null;
       }
 
-      // When the resolution or GUI scale changes, an element's stored X/Y can fall outside the new
-      // screen bounds, leaving it off-screen and impossible to grab. Pull every enabled element back
-      // on-screen so it's always reachable in the editor.
-      clampAllToScreen(client, config, sw, sh);
+      // Positions are kept on-screen NON-destructively: getX/getY return a clamped DISPLAY position each
+      // frame (see clampToScreenX/Y) so every box is drawn/grabbable on-screen after a resize, WITHOUT
+      // ever rewriting the saved config. The old clampAllToScreen that overwrote config is gone.
 
       drawAnchor(context, client, config, HudEditorFeature.Anchor.ARMOR, "Armor", config.hud.movableArmorHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.POTION, "Potions", config.hud.movablePotionHud);
@@ -71,44 +70,24 @@ public final class HudEditorFeature {
 
    }
 
-   /** Clamp every enabled HUD element on-screen using the CURRENT scaled screen size. Safe to call every
-    *  frame during normal play (not just in the editor) — this is what guarantees no HUD ever leaves the
-    *  screen and that positions re-fit automatically after a window resize or GUI-scale change. */
-   public static void clampAllToScreen(class_310 client, TurtModConfig config) {
-      if (client == null || config == null || client.method_22683() == null) {
-         return;
+   /** Non-destructive on-screen clamp for a DISPLAY x. Returns the stored x pulled just inside the current
+    *  scaled screen width, WITHOUT writing config. This is how HUDs stay on-screen after a window resize /
+    *  GUI-scale change while their saved position is preserved (resize back → they return to where they were). */
+   public static int clampToScreenX(class_310 client, int x, int scaledWidth) {
+      if (client == null || client.method_22683() == null) {
+         return x;
       }
-      // Scaled (gui) dimensions — the space every HUD element and the editor live in.
-      clampAllToScreen(client, config, client.method_22683().method_4489(), client.method_22683().method_4507());
+      int sw = client.method_22683().method_4489();
+      return Math.max(0, Math.min(Math.max(0, sw - scaledWidth), x));
    }
 
-   /** Clamp every enabled, movable element so it stays fully inside the current screen bounds.
-    *  Runs each frame the editor is open; saves only when a position actually changed. */
-   private static void clampAllToScreen(class_310 client, TurtModConfig config, int sw, int sh) {
-      boolean changed = false;
-      for (Anchor anchor : Anchor.values()) {
-         // ZOOM has no movable position; skip non-positionable / disabled anchors. Also skip the anchor
-         // being actively dragged — mouseDragged already clamps it, and re-clamping it here (via a lossy
-         // anchor round-trip for potion/scoreboard) is exactly what made a dragged HUD jitter.
-         if (anchor == Anchor.ZOOM || anchor == dragging || !isEnabled(anchor, config)) {
-            continue;
-         }
-         int w = getWidth(anchor, client, config);
-         int h = getHeight(anchor, client, config);
-         int x = getX(anchor, client, config);
-         int y = getY(anchor, client, config);
-         int maxX = Math.max(0, sw - w);
-         int maxY = Math.max(0, sh - h);
-         int cx = Math.max(0, Math.min(maxX, x));
-         int cy = Math.max(0, Math.min(maxY, y));
-         if (cx != x || cy != y) {
-            moveAnchor(anchor, cx, cy, client, config);
-            changed = true;
-         }
+   /** Non-destructive on-screen clamp for a DISPLAY y (scaled screen height). See {@link #clampToScreenX}. */
+   public static int clampToScreenY(class_310 client, int y, int scaledHeight) {
+      if (client == null || client.method_22683() == null) {
+         return y;
       }
-      if (changed) {
-         ConfigManager.save(config);
-      }
+      int sh = client.method_22683().method_4507();
+      return Math.max(0, Math.min(Math.max(0, sh - scaledHeight), y));
    }
 
    private static String getSelectedName(Anchor selected) {
@@ -240,9 +219,8 @@ public final class HudEditorFeature {
          }
 
          // Follow the mouse 1:1 (no center-snapping — it caused a snap-back/release oscillation near the
-         // middle) and clamp the element FULLY on-screen. This must match clampAllToScreen()'s bounds
-         // exactly: if the drag let an element go off-screen, clampAllToScreen would pull it back on the
-         // very next frame, so the HUD would jitter out-and-back the whole time you dragged near an edge.
+         // middle) and clamp the element FULLY on-screen (scaled bounds), so a drag stores an on-screen
+         // position that getX/getY will read back unchanged.
          int w = getWidth(dragging, client, config);
          int h = getHeight(dragging, client, config);
          int sw = client.method_22683().method_4489();
@@ -381,7 +359,22 @@ public final class HudEditorFeature {
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
+      // Direct-store anchors return the raw saved X — clamp the DISPLAY value on-screen (non-destructive).
+      // POTION/SCOREBOARD already return clamped values from their own getters; HEALTH is intentionally
+      // left in its own (raw) space; TOTEM/ZOOM/POTS have no footprint.
+      if (isDirectStore(anchor)) {
+         return clampToScreenX(client, var10000, getWidth(anchor, client, config));
+      }
       return var10000;
+   }
+
+   /** Anchors whose X/Y are stored as a plain top-left (so their DISPLAY position must be clamped here).
+    *  Excludes POTION/SCOREBOARD (self-clamping getters), HEALTH (own space), and TOTEM/ZOOM/POTS (no size). */
+   private static boolean isDirectStore(Anchor anchor) {
+      return switch (anchor.ordinal()) {
+         case 0, 3, 4, 5, 6, 7, 8, 10, 11 -> true;
+         default -> false;
+      };
    }
 
    public static int getY(Anchor anchor, class_310 client, TurtModConfig config) {
@@ -405,6 +398,10 @@ public final class HudEditorFeature {
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
+      // See getX: clamp the DISPLAY Y of direct-store anchors on-screen without touching the saved value.
+      if (isDirectStore(anchor)) {
+         return clampToScreenY(client, var10000, getHeight(anchor, client, config));
+      }
       return var10000;
    }
 

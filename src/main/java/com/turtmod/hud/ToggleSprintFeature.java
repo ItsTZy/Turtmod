@@ -71,8 +71,8 @@ public final class ToggleSprintFeature {
          return;
       }
 
-      int x = config.hud.toggleSprintHudX;
-      int y = config.hud.toggleSprintHudY;
+      int x = HudEditorFeature.clampToScreenX(client, config.hud.toggleSprintHudX, getScaledWidth(config));
+      int y = HudEditorFeature.clampToScreenY(client, config.hud.toggleSprintHudY, getScaledHeight(config));
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.toggleSprintHudScalePercent);
       class_327 font = client.field_1772;
 
