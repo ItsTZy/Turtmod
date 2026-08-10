@@ -226,33 +226,16 @@ public final class HudEditorFeature {
             newY = newY / config.hud.gridSize * config.hud.gridSize;
          }
 
-         boolean sx = false;
-         boolean sy = false;
-         if (config.hud.snapToCenter) {
-            int cx = client.method_22683().method_4489() / 2;   // scaled (must match getX/getY space)
-            int cy = client.method_22683().method_4507() / 2;
-            if (Math.abs(newX - cx) < config.hud.centerSnapRange) {
-               newX = cx;
-               sx = true;
-            }
-
-            if (Math.abs(newY - cy) < config.hud.centerSnapRange) {
-               newY = cy;
-               sy = true;
-            }
-         }
-         // Pulse + tick only when a snap is freshly entered (not every dragged frame).
-         if ((sx && !snappedX) || (sy && !snappedY)) {
-            snapPulseNs = System.nanoTime();
-            com.turtmod.ui.TurtSounds.tick();
-         }
-         snappedX = sx;
-         snappedY = sy;
-
-         int maxX = client.method_22683().method_4489() - getWidth(dragging, client, config);   // scaled
-         int maxY = client.method_22683().method_4507() - getHeight(dragging, client, config);  // scaled
-         newX = Math.max(0, Math.min(maxX, newX));
-         newY = Math.max(0, Math.min(maxY, newY));
+         // Follow the mouse 1:1 (no center-snapping — it caused a snap-back/release oscillation near the
+         // middle). Allow moving a HUD (almost) off screen on purpose, but keep a small sliver on screen so
+         // it can always be grabbed again.
+         int w = getWidth(dragging, client, config);
+         int h = getHeight(dragging, client, config);
+         int sw = client.method_22683().method_4489();
+         int sh = client.method_22683().method_4507();
+         int margin = 6;
+         newX = Math.max(margin - w, Math.min(sw - margin, newX));
+         newY = Math.max(margin - h, Math.min(sh - margin, newY));
          moveAnchor(dragging, newX, newY, client, config);
          ConfigManager.save(config);
       }

@@ -164,43 +164,7 @@ public class HudEditorScreen extends class_437 {
       int dy = HudEditorFeature.getY(d, c, this.cfg);
       int dw = HudEditorFeature.getWidth(d, c, this.cfg);
       int dh = HudEditorFeature.getHeight(d, c, this.cfg);
-      int[] dXs = { dx, dx + dw / 2, dx + dw };
-      int[] dYs = { dy, dy + dh / 2, dy + dh };
-      int guide = 0x88FFFFFF;   // subtle white alignment guides (was pink)
-
-      for (HudEditorFeature.Anchor o : HudEditorFeature.Anchor.values()) {
-         if (o == d || o == HudEditorFeature.Anchor.ZOOM || !HudEditorFeature.isEnabled(o, this.cfg)) {
-            continue;
-         }
-         int ox = HudEditorFeature.getX(o, c, this.cfg);
-         int oy = HudEditorFeature.getY(o, c, this.cfg);
-         int ow = HudEditorFeature.getWidth(o, c, this.cfg);
-         int oh = HudEditorFeature.getHeight(o, c, this.cfg);
-         int[] oXs = { ox, ox + ow / 2, ox + ow };
-         int[] oYs = { oy, oy + oh / 2, oy + oh };
-         for (int a : dXs) {
-            for (int b : oXs) {
-               if (Math.abs(a - b) <= 4) {
-                  ctx.method_25294(b, Math.min(dy, oy) - 4, b + 1, Math.max(dy + dh, oy + oh) + 4, guide);
-               }
-            }
-         }
-         for (int a : dYs) {
-            for (int b : oYs) {
-               if (Math.abs(a - b) <= 4) {
-                  ctx.method_25294(Math.min(dx, ox) - 4, b, Math.max(dx + dw, ox + ow) + 4, b + 1, guide);
-               }
-            }
-         }
-      }
-
-      // Snap pulse: an expanding white border flash shortly after a center-snap.
-      long age = System.nanoTime() - HudEditorFeature.snapPulseNs;
-      if (age >= 0L && age < 220_000_000L) {
-         float p = 1f - age / 220_000_000f;
-         int exp = (int) (6 * (1f - p));
-         ctx.method_73198(dx - 2 - exp, dy - 2 - exp, dw + 4 + exp * 2, dh + 4 + exp * 2, ((int) (220 * p) << 24) | 0xFFFFFF);
-      }
+      // (Alignment guide lines removed — user found the "matches another HUD" lines distracting.)
 
       // Live position chip near the dragged element.
       String pos = dx + ", " + dy + "  (" + dw + "×" + dh + ")";

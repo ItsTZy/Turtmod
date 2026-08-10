@@ -458,6 +458,9 @@ public final class HudPanelsFeature {
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
          context.method_51448().translate((float)(-x), (float)(-y));
+         // Full-panel themed background so the potion HUD matches every other HUD + the theme settings
+         // (draws nothing in the no-background/transparent theme, same as the others).
+         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
          // Honour the chosen style (FULL / COMPACT / ICONS_ONLY) — previously only icons rendered.
          int cols = potionTextColumns(config, visibleEffects.size());
          switch (config.hud.potionHudStyle) {
