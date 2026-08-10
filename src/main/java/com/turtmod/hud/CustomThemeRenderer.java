@@ -152,6 +152,22 @@ public final class CustomThemeRenderer {
       }
    }
 
+   /** Rounded fill honouring a caller-supplied ARGB colour, using the same corner radius as slot cells.
+    *  Lets the keystrokes keys round their corners like every other HUD while still applying the user's
+    *  custom pressed colour. Draws nothing for a fully-transparent fill. */
+   public static void renderKeyCell(class_332 context, int x, int y, int w, int h, TurtModConfig config, int fillArgb) {
+      if (fillArgb >>> 24 == 0) {
+         return;
+      }
+      int r = (w < 16 || h < 16) ? 0
+         : Math.max(0, Math.min(Math.min(3, config.theme.cornerRadius), Math.min(w, h) / 2 - 1));
+      if (r > 0) {
+         TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(fillArgb));
+      } else {
+         context.method_25294(x, y, x + w, y + h, fillArgb);
+      }
+   }
+
    public static void renderBar(class_332 context, int x, int y, int w, int h, float progress, int fillColor, TurtModConfig config) {
       int clampedWidth = Math.max(1, w);
       context.method_25294(x, y, x + clampedWidth, y + h, applyHudOpacity(config, applyAlpha(0, 64)));

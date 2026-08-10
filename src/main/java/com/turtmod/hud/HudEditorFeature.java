@@ -71,6 +71,17 @@ public final class HudEditorFeature {
 
    }
 
+   /** Clamp every enabled HUD element on-screen using the CURRENT scaled screen size. Safe to call every
+    *  frame during normal play (not just in the editor) — this is what guarantees no HUD ever leaves the
+    *  screen and that positions re-fit automatically after a window resize or GUI-scale change. */
+   public static void clampAllToScreen(class_310 client, TurtModConfig config) {
+      if (client == null || config == null || client.method_22683() == null) {
+         return;
+      }
+      // Scaled (gui) dimensions — the space every HUD element and the editor live in.
+      clampAllToScreen(client, config, client.method_22683().method_4489(), client.method_22683().method_4507());
+   }
+
    /** Clamp every enabled, movable element so it stays fully inside the current screen bounds.
     *  Runs each frame the editor is open; saves only when a position actually changed. */
    private static void clampAllToScreen(class_310 client, TurtModConfig config, int sw, int sh) {

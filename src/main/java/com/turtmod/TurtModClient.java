@@ -359,6 +359,10 @@ public final class TurtModClient implements ClientModInitializer {
       // Defensive: never let a single TurtMod HUD feature's exception take down the whole game.
       // Each render runs in isolation so one failure can't skip the rest or crash the render thread.
       if (client.field_1724 != null && !client.field_1690.field_1842) {
+         // Keep EVERY HUD on-screen every frame (not just while the editor is open). This re-fits all
+         // element positions to the current scaled screen size, so nothing ever spills off-screen after a
+         // window resize / GUI-scale change / an element growing. Only writes to disk when a pos changes.
+         safeRender("hudClamp", () -> com.turtmod.hud.HudEditorFeature.clampAllToScreen(client, config));
          safeRender("health", () -> HealthNumberFeature.render(context, client, config));
          safeRender("fpsPing", () -> FpsPingOverlayFeature.render(context, client, config));
          safeRender("panels", () -> HudPanelsFeature.render(context, client, config));

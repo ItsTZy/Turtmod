@@ -96,15 +96,13 @@ public final class KeystrokesFeature {
    }
 
    private static void renderKey(class_332 context, class_310 client, TurtModConfig config, String label, boolean pressed, int x, int y, int width) {
-      // Sharp-cornered fills so adjacent keys TILE and connect edge-to-edge (like the inventory HUD),
-      // instead of the rounded per-key cells that left gaps. In clean/no-background mode idle keys draw
-      // nothing (just the letter) and only a pressed key gets a subtle fill.
+      // Rounded key cells so each key matches the rounded look of every other HUD (was sharp tiled
+      // rectangles). In clean/no-background mode idle keys draw nothing (just the letter); a pressed key
+      // gets a subtle rounded fill (or the user's custom pressed colour).
       int fill = pressed && config.hud.keystrokesUsePressedColor
          ? CustomThemeRenderer.applyHudOpacity(config, CustomThemeRenderer.pickedArgb(config.hud.keystrokesPressedColor))
          : CustomThemeRenderer.getKeyBackground(config, pressed);
-      if (fill >>> 24 > 0) {
-         context.method_25294(x, y, x + width, y + 16, fill);
-      }
+      CustomThemeRenderer.renderKeyCell(context, x, y, width, 16, config, fill);
 
       int textColor = pressed && config.hud.keystrokesUsePressedColor
          ? CustomThemeRenderer.applyHudOpacity(config, CustomThemeRenderer.pickedArgb(config.hud.keystrokesPressedTextColor))
