@@ -26,10 +26,15 @@ public final class HudPanelsFeature {
    private static final int TITLE_HEIGHT = 0;
    private static final int ARMOR_TEXT_WIDTH = 24;
    private static final int ARMOR_DURABILITY_GAP = 4;
-   // Icons-only cell pitch. Each pot is a 16px icon inside a 20px slot bubble; a 22px pitch leaves a
-   // tight, even 2px gap between bubbles (was 26/24 → a loose ~6px gap the user disliked).
-   private static final int POTION_CELL_WIDTH = 22;
-   private static final int POTION_CELL_HEIGHT = 22;
+   // Icons-only layout mirrors the Inventory HUD exactly for a clean, consistent look: an 18px slot on
+   // a 20px pitch (a neat 2px gap), 4px panel padding, the 16px icon drawn at slot+1,+1, and a themed
+   // panel background behind it. (Was a bespoke 22px bubble offset outside the panel — it never lined up
+   // with the panel edge/screen corner.)
+   private static final int POTION_SLOT = 18;
+   private static final int POTION_SLOT_PITCH = 20;
+   private static final int POTION_PAD = 4;
+   private static final int POTION_CELL_WIDTH = POTION_SLOT_PITCH;
+   private static final int POTION_CELL_HEIGHT = POTION_SLOT_PITCH;
    private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
    private static final int POTION_FULL_COL_WIDTH = 132;
    private static final int POTION_FULL_ROW_H = 22;
@@ -462,12 +467,10 @@ public final class HudPanelsFeature {
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
          context.method_51448().translate((float)(-x), (float)(-y));
-         // Full-panel themed background for the TEXT styles (FULL/COMPACT), which read as a panel. The
-         // ICONS_ONLY style is vanilla-like — each pot gets its own slot bubble instead (drawn per-icon
-         // in renderPotionIconsOnly), so a single wrapping box there just looks like an odd blob.
-         if (config.hud.potionHudStyle != TurtModConfig.PotionHudStyle.ICONS_ONLY) {
-            CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
-         }
+         // Full-panel themed background behind every style (draws nothing in the transparent theme),
+         // exactly like the Inventory HUD — so it reaches the panel edge / screen corner and each pot
+         // still sits in its own slot cell (drawn per-icon below), matching the inv-HUD look.
+         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
          // Honour the chosen style (FULL / COMPACT / ICONS_ONLY) — previously only icons rendered.
          int cols = potionTextColumns(config, visibleEffects.size());
          switch (config.hud.potionHudStyle) {
@@ -559,9 +562,12 @@ public final class HudPanelsFeature {
          int rowH = style == TurtModConfig.PotionHudStyle.FULL ? POTION_FULL_ROW_H : POTION_COMPACT_ROW_H;
          return new PanelSize(cols * colW, rowsPerColumn * rowH + 8);
       }
+      // Inv-HUD-style: N slots on a 20px pitch (last slot has no trailing gap) + 4px padding each side.
+      int run = count * POTION_SLOT_PITCH - (POTION_SLOT_PITCH - POTION_SLOT); // e.g. 3 pots -> 58
+      int line = POTION_SLOT + 2 * POTION_PAD;                                 // 18 + 8 = 26
       return config.hud.potionHudHorizontal
-         ? new PanelSize(count * POTION_CELL_WIDTH, POTION_CELL_HEIGHT)
-         : new PanelSize(POTION_CELL_WIDTH, count * POTION_CELL_HEIGHT);
+         ? new PanelSize(run + 2 * POTION_PAD, line)
+         : new PanelSize(line, run + 2 * POTION_PAD);
    }
 
    private static void renderPotionFull(class_332 context, class_310 client, TurtModConfig config, int x, int y, int panelWidth, int columns, List<class_1293> effects) {
@@ -620,18 +626,19 @@ public final class HudPanelsFeature {
 
    private static void renderPotionIconsOnly(class_332 context, class_310 client, TurtModConfig config, int x, int y, List<class_1293> effects) {
       int columns = config.hud.potionHudHorizontal ? Math.max(1, effects.size()) : 1;
+      // Same geometry as the Inventory HUD: 4px padding, 18px slot cells on a 20px pitch, icon at +1,+1.
+      int startX = x + POTION_PAD;
+      int startY = y + POTION_PAD;
 
       for(int i = 0; i < effects.size(); ++i) {
          class_1293 effect = (class_1293)effects.get(i);
          int col = i % columns;
          int row = i / columns;
-         int cellX = x + col * POTION_CELL_WIDTH;
-         int cellY = y + row * POTION_CELL_HEIGHT;
-         // Vanilla-like: each pot gets its own slot bubble (padded around the 16x16 icon), instead of
-         // one big box wrapping the whole HUD. Draws nothing in the no-background/transparent theme.
-         CustomThemeRenderer.renderSlotCell(context, cellX - 2, cellY - 2, 20, 20, config, true);
-         drawEffectIcon(context, effect, cellX, cellY);
-         drawIconOverlay(context, client, effect, cellX, cellY);
+         int slotX = startX + col * POTION_SLOT_PITCH;
+         int slotY = startY + row * POTION_SLOT_PITCH;
+         CustomThemeRenderer.renderSlotCell(context, slotX, slotY, POTION_SLOT, POTION_SLOT, config, true);
+         drawEffectIcon(context, effect, slotX + 1, slotY + 1);
+         drawIconOverlay(context, client, effect, slotX + 1, slotY + 1);
       }
 
    }
