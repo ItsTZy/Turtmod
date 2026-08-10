@@ -93,6 +93,7 @@ public final class TurtModConfigScreenFactory {
          case KIT_LOADER -> "Kit Loader";
          case GAMEMODE_SWITCHER -> "Gamemode Switcher";
          case MODULE_TOASTS -> "Module Notifications";
+         case FISHING_LINE -> "Fishing Line";
       };
    }
 
@@ -481,6 +482,11 @@ public final class TurtModConfigScreenFactory {
             cfg.misc.commandKeysEnabled = dm.commandKeysEnabled;
             cfg.misc.commandKeys = new String[]{"", "", "", "", ""};
          }
+         case FISHING_LINE -> {
+            cfg.visual.fishingRodOverlay = dv.fishingRodOverlay;
+            cfg.visual.fishingRodOverlayColor = dv.fishingRodOverlayColor;
+            cfg.visual.fishingRodOverlayAlpha = dv.fishingRodOverlayAlpha;
+         }
       }
       ConfigManager.save(cfg);
    }
@@ -817,6 +823,10 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.misc.noOpGamemodeSwitcher, v -> cfg.misc.noOpGamemodeSwitcher = v))
             .addOption(button("F3+F4 opens the switcher even without local op.", () -> {}))
             .addOption(button("Applies via /gamemode — you still need server permission.", () -> {}));
+         case FISHING_LINE -> group
+            .addOption(bool("Enabled", () -> cfg.visual.fishingRodOverlay, v -> cfg.visual.fishingRodOverlay = v))
+            .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v))
+            .addOption(numOpt("Line Opacity", () -> cfg.visual.fishingRodOverlayAlpha, v -> cfg.visual.fishingRodOverlayAlpha = v, 0.1F, 1.0F, 0.05F));
       }
 
       // Modules that have a keybind get an in-config rebind button (also listed in MC Controls).
@@ -1142,6 +1152,7 @@ public final class TurtModConfigScreenFactory {
       COMMAND_KEYS,
       KIT_LOADER,
       GAMEMODE_SWITCHER,
-      MODULE_TOASTS
+      MODULE_TOASTS,
+      FISHING_LINE
    }
 }

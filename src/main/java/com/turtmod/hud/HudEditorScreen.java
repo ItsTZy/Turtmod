@@ -184,6 +184,9 @@ public class HudEditorScreen extends class_437 {
          int ey = HudEditorFeature.getY(anchor, client, this.cfg);
          int ew = HudEditorFeature.getWidth(anchor, client, this.cfg);
          int eh = HudEditorFeature.getHeight(anchor, client, this.cfg);
+         // Skip anchors with no on-screen footprint (ZOOM/TOTEM/POTS): they aren't positionable HUDs and
+         // otherwise show up as a stray zero-size chip+gear in the top-left corner of the editor.
+         if (ew <= 0 || eh <= 0) continue;
          boolean hov = mx >= ex - 6 && mx <= ex + ew + 6 && my >= ey - 6 && my <= ey + eh + 6;
          boolean sel = HudEditorFeature.isSelected(anchor);
 
