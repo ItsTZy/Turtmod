@@ -76,8 +76,10 @@ public final class HudEditorFeature {
    private static void clampAllToScreen(class_310 client, TurtModConfig config, int sw, int sh) {
       boolean changed = false;
       for (Anchor anchor : Anchor.values()) {
-         // ZOOM has no movable position; skip non-positionable / disabled anchors.
-         if (anchor == Anchor.ZOOM || !isEnabled(anchor, config)) {
+         // ZOOM has no movable position; skip non-positionable / disabled anchors. Also skip the anchor
+         // being actively dragged — mouseDragged already clamps it, and re-clamping it here (via a lossy
+         // anchor round-trip for potion/scoreboard) is exactly what made a dragged HUD jitter.
+         if (anchor == Anchor.ZOOM || anchor == dragging || !isEnabled(anchor, config)) {
             continue;
          }
          int w = getWidth(anchor, client, config);

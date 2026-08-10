@@ -26,8 +26,10 @@ public final class HudPanelsFeature {
    private static final int TITLE_HEIGHT = 0;
    private static final int ARMOR_TEXT_WIDTH = 24;
    private static final int ARMOR_DURABILITY_GAP = 4;
-   private static final int POTION_CELL_WIDTH = 26;
-   private static final int POTION_CELL_HEIGHT = 24;
+   // Icons-only cell pitch. Each pot is a 16px icon inside a 20px slot bubble; a 22px pitch leaves a
+   // tight, even 2px gap between bubbles (was 26/24 → a loose ~6px gap the user disliked).
+   private static final int POTION_CELL_WIDTH = 22;
+   private static final int POTION_CELL_HEIGHT = 22;
    private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
    private static final int POTION_FULL_COL_WIDTH = 132;
    private static final int POTION_FULL_ROW_H = 22;
@@ -409,23 +411,25 @@ public final class HudPanelsFeature {
    public static int scoreboardEditorHeight(TurtModConfig c) { return Math.round((sbValid ? sbB - sbT : 90) * sbScale(c)); }
 
    public static int scoreboardEditorX(class_310 mc, TurtModConfig c) {
+      // SCALED width — sbL/sbR are captured from the sidebar's GuiGraphics fills (scaled gui space), so
+      // mixing them with the RAW window width put the box/clamp in the wrong space at GUI scale != 1.
       float s = sbScale(c);
-      int sw = mc.method_22683().method_4486();
+      int sw = mc.method_22683().method_4489();
       int ox = c.visual.scoreboardOffsetX;
       return sbValid ? Math.round(sw + ox + (sbL - sw) * s) : (sw - 103 + ox);
    }
 
    public static int scoreboardEditorY(class_310 mc, TurtModConfig c) {
       float s = sbScale(c);
-      int sh = mc.method_22683().method_4502();
+      int sh = mc.method_22683().method_4507();
       int oy = c.visual.scoreboardOffsetY;
       return sbValid ? Math.round(oy + sbT * s) : (sh / 2 - 45 + oy);
    }
 
    public static void scoreboardApplyMove(class_310 mc, TurtModConfig c, int x, int y) {
       float s = sbScale(c);
-      int sw = mc.method_22683().method_4486();
-      int sh = mc.method_22683().method_4502();
+      int sw = mc.method_22683().method_4489();
+      int sh = mc.method_22683().method_4507();
       if (sbValid) {
          c.visual.scoreboardOffsetX = Math.round(x - sw - (sbL - sw) * s);
          c.visual.scoreboardOffsetY = Math.round(y - sbT * s);
@@ -516,7 +520,10 @@ public final class HudPanelsFeature {
 
    /** Screen-space top-left of the panel, derived from the anchored edge + the live size. */
    public static int potionEditorX(class_310 mc, TurtModConfig config) {
-      int sw = mc.method_22683().method_4486();
+      // SCALED gui width — must match the HUD editor + GuiGraphics space. Using raw width here made the
+      // panel's own clamp disagree with the editor's per-frame clamp at any GUI scale != 1, so the two
+      // fought each other and the HUD jittered.
+      int sw = mc.method_22683().method_4489();
       int w = potionScaledLiveSize(config).width;
       int ax = config.hud.potionHudX;
       int left = ax > sw / 2 ? ax - w : ax; // right-anchored → ax is the right edge; else the left edge
@@ -524,7 +531,7 @@ public final class HudPanelsFeature {
    }
 
    public static int potionEditorY(class_310 mc, TurtModConfig config) {
-      int sh = mc.method_22683().method_4502();
+      int sh = mc.method_22683().method_4507();
       int h = potionScaledLiveSize(config).height;
       int ay = config.hud.potionHudY;
       int top = ay > sh / 2 ? ay - h : ay; // bottom-anchored → ay is the bottom edge; else the top edge
@@ -533,8 +540,8 @@ public final class HudPanelsFeature {
 
    /** Convert a dragged top-left back into the anchored corner, picking the edge nearest to it. */
    public static void potionApplyMove(class_310 mc, TurtModConfig config, int x, int y) {
-      int sw = mc.method_22683().method_4486();
-      int sh = mc.method_22683().method_4502();
+      int sw = mc.method_22683().method_4489();
+      int sh = mc.method_22683().method_4507();
       PanelSize sz = potionScaledLiveSize(config);
       int cx = x + sz.width / 2;
       int cy = y + sz.height / 2;
@@ -634,13 +641,15 @@ public final class HudPanelsFeature {
    }
 
    private static void drawIconOverlay(class_332 context, class_310 client, class_1293 effect, int x, int y) {
+      // Icon is 16px at (x,y); its slot bubble spans x-2..x+18 / y-2..y+18. Keep the timer + level text
+      // INSIDE that bubble (centred over the icon, near the bottom) instead of spilling below it.
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
-      context.method_27535(client.field_1772, class_2561.method_43470(duration), x + 13 - durationWidth / 2, y + 14, -1711276033);
+      context.method_27535(client.field_1772, class_2561.method_43470(duration), x + 8 - durationWidth / 2, y + 11, -1711276033);
       if (effect.method_5578() > 0) {
          String amp = getAmplifierText(effect.method_5578() + 1);
          int ampWidth = client.field_1772.method_1727(amp);
-         context.method_27535(client.field_1772, class_2561.method_43470(amp), x + 22 - ampWidth, y + 3, -1711276033);
+         context.method_27535(client.field_1772, class_2561.method_43470(amp), x + 16 - ampWidth, y - 1, -1711276033);
       }
 
    }
