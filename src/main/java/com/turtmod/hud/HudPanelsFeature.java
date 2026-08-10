@@ -31,8 +31,9 @@ public final class HudPanelsFeature {
    // panel background behind it. (Was a bespoke 22px bubble offset outside the panel — it never lined up
    // with the panel edge/screen corner.)
    private static final int POTION_SLOT = 18;
-   private static final int POTION_SLOT_PITCH = 20;
-   private static final int POTION_PAD = 4;
+   private static final int POTION_SLOT_PITCH = 19; // tight 1px gap between slots (was 20 = looser 2px)
+   private static final int POTION_PAD = 1;         // 1px edge ring = same as the inter-slot gap -> a clean,
+                                                    // uniform tight grid (was 4 = the fat "outline")
    private static final int POTION_CELL_WIDTH = POTION_SLOT_PITCH;
    private static final int POTION_CELL_HEIGHT = POTION_SLOT_PITCH;
    private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
@@ -648,15 +649,24 @@ public final class HudPanelsFeature {
    }
 
    private static void drawIconOverlay(class_332 context, class_310 client, class_1293 effect, int x, int y) {
-      // Icon is 16px at (x,y); its slot bubble spans x-2..x+18 / y-2..y+18. Keep the timer + level text
-      // INSIDE that bubble (centred over the icon, near the bottom) instead of spilling below it.
+      // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
+      // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
+      float ts = 0.66F;
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
-      context.method_27535(client.field_1772, class_2561.method_43470(duration), x + 8 - durationWidth / 2, y + 11, -1711276033);
+      context.method_51448().pushMatrix();
+      context.method_51448().translate((float)(x + 8), (float)(y + 12));
+      context.method_51448().scale(ts, ts);
+      context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, -1);
+      context.method_51448().popMatrix();
       if (effect.method_5578() > 0) {
          String amp = getAmplifierText(effect.method_5578() + 1);
          int ampWidth = client.field_1772.method_1727(amp);
-         context.method_27535(client.field_1772, class_2561.method_43470(amp), x + 16 - ampWidth, y - 1, -1711276033);
+         context.method_51448().pushMatrix();
+         context.method_51448().translate((float)(x + 15), (float)(y - 1));
+         context.method_51448().scale(ts, ts);
+         context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, -1);
+         context.method_51448().popMatrix();
       }
 
    }
