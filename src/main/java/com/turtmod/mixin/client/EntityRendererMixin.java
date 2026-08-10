@@ -25,12 +25,8 @@ public abstract class EntityRendererMixin {
    private void turtmod$setHeartsLine(class_11890 player, class_10055 state, float tickDelta, CallbackInfo ci) {
       TurtModConfig config = TurtModClient.getConfig();
       if (config != null && config.misc.enabled && config.combat.playerHealthIndicator) {
-         class_310 armorClient = class_310.method_1551();
-         // "Only With Armor": for OTHER players, drop the indicator (but keep their nametag) unless armored.
-         if (config.combat.playerHealthIndicatorArmorOnly && armorClient != null && player != armorClient.field_1724 && !turtmod$hasVisibleArmor(player)) {
-            PlayerHeartSpriteRenderer.clear(state);
-            return;
-         }
+         // Note: the armor check applies ONLY to INVISIBLE players (see turtmod$showHealthForInvisible) —
+         // visible players always show their health here.
          if (config.combat.playerHealthIndicatorStyle == TurtModConfig.PlayerHealthIndicatorStyle.SPRITE) {
             class_310 client = class_310.method_1551();
             if (client != null && player != client.field_1724) {
@@ -66,15 +62,9 @@ public abstract class EntityRendererMixin {
          return true;
       }
       if (config.combat.playerHealthIndicator && player != client.field_1724 && player.method_5767()) {
-         // "Only Players With Armor" is an independent switch: reveal an invisible player's health whenever
-         // they're wearing armour, and hide it again once they take it off.
-         if (config.combat.playerHealthIndicatorArmorOnly) {
-            return turtmod$hasVisibleArmor(player);
-         }
-         // "Show Invisible Players": reveal every invisible player's health.
-         if (config.combat.playerHealthIndicatorInvisible) {
-            return true;
-         }
+         // Invisible players: reveal health ONLY while wearing armour (armored-invisible reveal, via the
+         // "Only Players With Armor" mode). The old "show every invisible player" toggle was removed.
+         return config.combat.playerHealthIndicatorArmorOnly && turtmod$hasVisibleArmor(player);
       }
       return false;
    }

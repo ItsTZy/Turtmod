@@ -212,7 +212,6 @@ public final class TurtModConfigScreenFactory {
       return Category.createBuilder("Combat")
          .group(OptionGroup.createBuilder("Health Indicator")
             .addOption(bool("Player Health Indicator", () -> cfg.combat.playerHealthIndicator, v -> cfg.combat.playerHealthIndicator = v))
-            .addOption(bool("Show Invisible Players", () -> cfg.combat.playerHealthIndicatorInvisible, v -> cfg.combat.playerHealthIndicatorInvisible = v))
             .addOption(enumOpt("Health Indicator Style", () -> cfg.combat.playerHealthIndicatorStyle, v -> cfg.combat.playerHealthIndicatorStyle = v, TurtModConfig.PlayerHealthIndicatorStyle.class))
             .addOption(intOpt("Health Indicator Max Hearts", () -> cfg.combat.playerHealthIndicatorMaxHearts, v -> cfg.combat.playerHealthIndicatorMaxHearts = v, 1, 40, 1))
             .addOption(bool("Exact Health Number", () -> cfg.combat.showExactHealthNumber, v -> cfg.combat.showExactHealthNumber = v))
@@ -731,8 +730,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Show Looking At", () -> cfg.hud.cleanF3ShowLookingAt, v -> cfg.hud.cleanF3ShowLookingAt = v));
          case HEALTH_INDICATOR -> group
             .addOption(bool("Enabled", () -> cfg.combat.playerHealthIndicator, v -> cfg.combat.playerHealthIndicator = v))
-            .addOption(bool("Show Invisible Players", () -> cfg.combat.playerHealthIndicatorInvisible, v -> cfg.combat.playerHealthIndicatorInvisible = v))
-            .addOption(bool("Only Players With Armor", () -> cfg.combat.playerHealthIndicatorArmorOnly, v -> cfg.combat.playerHealthIndicatorArmorOnly = v))
+            .addOption(bool("Show Invisible Armored Players", () -> cfg.combat.playerHealthIndicatorArmorOnly, v -> cfg.combat.playerHealthIndicatorArmorOnly = v))
             .addOption(enumOpt("Style", () -> cfg.combat.playerHealthIndicatorStyle, v -> cfg.combat.playerHealthIndicatorStyle = v, TurtModConfig.PlayerHealthIndicatorStyle.class))
             .addOption(intOpt("Max Hearts", () -> cfg.combat.playerHealthIndicatorMaxHearts, v -> cfg.combat.playerHealthIndicatorMaxHearts = v, 1, 40, 1))
             .addOption(numOpt("Vertical Offset", () -> cfg.combat.playerHealthIndicatorYOffset, v -> cfg.combat.playerHealthIndicatorYOffset = v, -2.0F, 3.0F, 0.1F))
@@ -1044,7 +1042,6 @@ public final class TurtModConfigScreenFactory {
 
    private static void resetHealthIndicatorDefaults(TurtModConfig cfg) {
       cfg.combat.playerHealthIndicator = false;
-      cfg.combat.playerHealthIndicatorInvisible = true;
       cfg.combat.playerHealthIndicatorArmorOnly = false;
       cfg.combat.playerHealthIndicatorStyle = TurtModConfig.PlayerHealthIndicatorStyle.SPRITE;
       cfg.combat.playerHealthIndicatorMaxHearts = 40;

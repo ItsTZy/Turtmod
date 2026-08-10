@@ -285,7 +285,6 @@ public static final class Combat {
        public boolean potionThrowShowPotCounter = false;
        public boolean potionThrowColorByCount = true;
        public boolean playerHealthIndicator;
-       public boolean playerHealthIndicatorInvisible;
        public boolean playerHealthIndicatorArmorOnly = false;
        public PlayerHealthIndicatorStyle playerHealthIndicatorStyle;
        public int playerHealthIndicatorMaxHearts;
@@ -300,7 +299,6 @@ public static final class Combat {
        public Combat() {
           this.totemLabelStyle = TurtModConfig.TotemLabelStyle.TOTEMS;
           this.playerHealthIndicator = false;
-          this.playerHealthIndicatorInvisible = true;
           this.playerHealthIndicatorStyle = TurtModConfig.PlayerHealthIndicatorStyle.SPRITE;
           this.playerHealthIndicatorMaxHearts = 40;
           this.showExactHealthNumber = false;
