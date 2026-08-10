@@ -227,15 +227,15 @@ public final class HudEditorFeature {
          }
 
          // Follow the mouse 1:1 (no center-snapping — it caused a snap-back/release oscillation near the
-         // middle). Allow moving a HUD (almost) off screen on purpose, but keep a small sliver on screen so
-         // it can always be grabbed again.
+         // middle) and clamp the element FULLY on-screen. This must match clampAllToScreen()'s bounds
+         // exactly: if the drag let an element go off-screen, clampAllToScreen would pull it back on the
+         // very next frame, so the HUD would jitter out-and-back the whole time you dragged near an edge.
          int w = getWidth(dragging, client, config);
          int h = getHeight(dragging, client, config);
          int sw = client.method_22683().method_4489();
          int sh = client.method_22683().method_4507();
-         int margin = 6;
-         newX = Math.max(margin - w, Math.min(sw - margin, newX));
-         newY = Math.max(margin - h, Math.min(sh - margin, newY));
+         newX = Math.max(0, Math.min(Math.max(0, sw - w), newX));
+         newY = Math.max(0, Math.min(Math.max(0, sh - h), newY));
          moveAnchor(dragging, newX, newY, client, config);
          ConfigManager.save(config);
       }

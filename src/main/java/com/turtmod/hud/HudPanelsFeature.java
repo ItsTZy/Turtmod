@@ -458,9 +458,12 @@ public final class HudPanelsFeature {
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
          context.method_51448().translate((float)(-x), (float)(-y));
-         // Full-panel themed background so the potion HUD matches every other HUD + the theme settings
-         // (draws nothing in the no-background/transparent theme, same as the others).
-         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+         // Full-panel themed background for the TEXT styles (FULL/COMPACT), which read as a panel. The
+         // ICONS_ONLY style is vanilla-like — each pot gets its own slot bubble instead (drawn per-icon
+         // in renderPotionIconsOnly), so a single wrapping box there just looks like an odd blob.
+         if (config.hud.potionHudStyle != TurtModConfig.PotionHudStyle.ICONS_ONLY) {
+            CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+         }
          // Honour the chosen style (FULL / COMPACT / ICONS_ONLY) — previously only icons rendered.
          int cols = potionTextColumns(config, visibleEffects.size());
          switch (config.hud.potionHudStyle) {
@@ -617,6 +620,9 @@ public final class HudPanelsFeature {
          int row = i / columns;
          int cellX = x + col * POTION_CELL_WIDTH;
          int cellY = y + row * POTION_CELL_HEIGHT;
+         // Vanilla-like: each pot gets its own slot bubble (padded around the 16x16 icon), instead of
+         // one big box wrapping the whole HUD. Draws nothing in the no-background/transparent theme.
+         CustomThemeRenderer.renderSlotCell(context, cellX - 2, cellY - 2, 20, 20, config, true);
          drawEffectIcon(context, effect, cellX, cellY);
          drawIconOverlay(context, client, effect, cellX, cellY);
       }
