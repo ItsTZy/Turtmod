@@ -48,8 +48,8 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       int x1 = cx - BODY_W / 2, x2 = cx + BODY_W / 2;
 
       class_310 mc = class_310.method_1551();
-      int sw = mc.method_22683().method_4489();
-      int sh = mc.method_22683().method_4507();
+      int sw = mc.method_22683().method_4486(); // SCALED gui width (method_4489 is raw framebuffer)
+      int sh = mc.method_22683().method_4502(); // SCALED gui height
       if (x1 < 2) { int d = 2 - x1; x1 += d; x2 += d; }
       if (x2 > sw - 2) { int d = x2 - (sw - 2); x1 -= d; x2 -= d; }
       if (y1 < 2) { int d = 2 - y1; y1 += d; y2 += d; }

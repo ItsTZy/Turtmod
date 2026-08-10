@@ -77,7 +77,10 @@ public final class HudEditorFeature {
       if (client == null || client.method_22683() == null) {
          return x;
       }
-      int sw = client.method_22683().method_4489();
+      // method_4486() = SCALED gui width (== GuiGraphics.method_51421). NOTE: method_4489() is the RAW
+      // framebuffer width (~2x at GUI scale 2) — using it here made the clamp never engage (HUDs dragged
+      // off-screen). See turtmod-mc-sources memory.
+      int sw = client.method_22683().method_4486();
       return Math.max(0, Math.min(Math.max(0, sw - scaledWidth), x));
    }
 
@@ -86,7 +89,7 @@ public final class HudEditorFeature {
       if (client == null || client.method_22683() == null) {
          return y;
       }
-      int sh = client.method_22683().method_4507();
+      int sh = client.method_22683().method_4502(); // SCALED gui height (method_4507 is raw window height)
       return Math.max(0, Math.min(Math.max(0, sh - scaledHeight), y));
    }
 
@@ -223,8 +226,8 @@ public final class HudEditorFeature {
          // position that getX/getY will read back unchanged.
          int w = getWidth(dragging, client, config);
          int h = getHeight(dragging, client, config);
-         int sw = client.method_22683().method_4489();
-         int sh = client.method_22683().method_4507();
+         int sw = client.method_22683().method_4486(); // SCALED gui width (NOT method_4489 = raw framebuffer)
+         int sh = client.method_22683().method_4502(); // SCALED gui height
          newX = Math.max(0, Math.min(Math.max(0, sw - w), newX));
          newY = Math.max(0, Math.min(Math.max(0, sh - h), newY));
          moveAnchor(dragging, newX, newY, client, config);
@@ -471,16 +474,16 @@ public final class HudEditorFeature {
                resetSelectedScale(config);
                break;
             case 262:
-               moveAnchor(selected, getX(selected, class_310.method_1551(), config) + moveAmount, getY(selected, class_310.method_1551(), config), class_310.method_1551(), config);
+               nudgeSelected(moveAmount, 0, config);
                break;
             case 263:
-               moveAnchor(selected, getX(selected, class_310.method_1551(), config) - moveAmount, getY(selected, class_310.method_1551(), config), class_310.method_1551(), config);
+               nudgeSelected(-moveAmount, 0, config);
                break;
             case 264:
-               moveAnchor(selected, getX(selected, class_310.method_1551(), config), getY(selected, class_310.method_1551(), config) + moveAmount, class_310.method_1551(), config);
+               nudgeSelected(0, moveAmount, config);
                break;
             case 265:
-               moveAnchor(selected, getX(selected, class_310.method_1551(), config), getY(selected, class_310.method_1551(), config) - moveAmount, class_310.method_1551(), config);
+               nudgeSelected(0, -moveAmount, config);
                break;
             default:
                return false;
@@ -489,6 +492,16 @@ public final class HudEditorFeature {
          ConfigManager.save(config);
          return true;
       }
+   }
+
+   /** Arrow-key nudge that stays on-screen (clamped to scaled bounds, same as mouse drag). */
+   private static void nudgeSelected(int dx, int dy, TurtModConfig config) {
+      class_310 client = class_310.method_1551();
+      int w = getWidth(selected, client, config);
+      int h = getHeight(selected, client, config);
+      int nx = clampToScreenX(client, getX(selected, client, config) + dx, w);
+      int ny = clampToScreenY(client, getY(selected, client, config) + dy, h);
+      moveAnchor(selected, nx, ny, client, config);
    }
 
    public static boolean mouseScrolled(double mouseX, double mouseY, double amount, TurtModConfig config) {

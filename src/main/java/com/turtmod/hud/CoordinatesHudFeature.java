@@ -80,8 +80,8 @@ public final class CoordinatesHudFeature {
          return;
       }
 
-      int x = HudEditorFeature.clampToScreenX(client, config.hud.coordinatesHudX, getScaledWidth(config));
-      int y = HudEditorFeature.clampToScreenY(client, config.hud.coordinatesHudY, getScaledHeight(config));
+      // Compute the panel size for THIS frame first, so the on-screen clamp uses the current footprint
+      // (not last frame's cached value — which was 0 on the first frame and let it start off-screen).
       int pad = 5;
       int panelW = 0;
       for (String[] pair : lines) {
@@ -93,6 +93,9 @@ public final class CoordinatesHudFeature {
       float scale = CustomThemeRenderer.getHudScale(config, config.hud.coordinatesHudScalePercent);
       lastWidth = Math.round(panelW * scale);
       lastHeight = Math.round(panelH * scale);
+
+      int x = HudEditorFeature.clampToScreenX(client, config.hud.coordinatesHudX, lastWidth);
+      int y = HudEditorFeature.clampToScreenY(client, config.hud.coordinatesHudY, lastHeight);
 
       int muted = CustomThemeRenderer.getMutedTextColor(config);
       int main = CustomThemeRenderer.getTextColor(config);

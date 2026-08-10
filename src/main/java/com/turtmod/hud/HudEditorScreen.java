@@ -96,8 +96,6 @@ public class HudEditorScreen extends class_437 {
       this.resetFlash = TurtUIUtils.lerp01(this.resetFlash, 0f, dt, 3.5f);
 
       TurtUIUtils.update();
-      int sw = this.field_22787.method_22683().method_4486();
-      int sh = this.field_22787.method_22683().method_4502();
 
       // ── 1. No dim at all — you're positioning the REAL HUD, so it must be fully visible. The element
       // boxes + toolbar make it obvious you're in the editor without darkening the game/HUD.

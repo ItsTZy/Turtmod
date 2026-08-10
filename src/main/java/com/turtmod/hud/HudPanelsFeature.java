@@ -420,22 +420,22 @@ public final class HudPanelsFeature {
       // SCALED width — sbL/sbR are captured from the sidebar's GuiGraphics fills (scaled gui space), so
       // mixing them with the RAW window width put the box/clamp in the wrong space at GUI scale != 1.
       float s = sbScale(c);
-      int sw = mc.method_22683().method_4489();
+      int sw = mc.method_22683().method_4486();
       int ox = c.visual.scoreboardOffsetX;
       return sbValid ? Math.round(sw + ox + (sbL - sw) * s) : (sw - 103 + ox);
    }
 
    public static int scoreboardEditorY(class_310 mc, TurtModConfig c) {
       float s = sbScale(c);
-      int sh = mc.method_22683().method_4507();
+      int sh = mc.method_22683().method_4502();
       int oy = c.visual.scoreboardOffsetY;
       return sbValid ? Math.round(oy + sbT * s) : (sh / 2 - 45 + oy);
    }
 
    public static void scoreboardApplyMove(class_310 mc, TurtModConfig c, int x, int y) {
       float s = sbScale(c);
-      int sw = mc.method_22683().method_4489();
-      int sh = mc.method_22683().method_4507();
+      int sw = mc.method_22683().method_4486();
+      int sh = mc.method_22683().method_4502();
       if (sbValid) {
          c.visual.scoreboardOffsetX = Math.round(x - sw - (sbL - sw) * s);
          c.visual.scoreboardOffsetY = Math.round(y - sbT * s);
@@ -527,7 +527,7 @@ public final class HudPanelsFeature {
       // SCALED gui width — must match the HUD editor + GuiGraphics space. Using raw width here made the
       // panel's own clamp disagree with the editor's per-frame clamp at any GUI scale != 1, so the two
       // fought each other and the HUD jittered.
-      int sw = mc.method_22683().method_4489();
+      int sw = mc.method_22683().method_4486();
       int w = potionScaledLiveSize(config).width;
       int ax = config.hud.potionHudX;
       int left = ax > sw / 2 ? ax - w : ax; // right-anchored → ax is the right edge; else the left edge
@@ -535,7 +535,7 @@ public final class HudPanelsFeature {
    }
 
    public static int potionEditorY(class_310 mc, TurtModConfig config) {
-      int sh = mc.method_22683().method_4507();
+      int sh = mc.method_22683().method_4502();
       int h = potionScaledLiveSize(config).height;
       int ay = config.hud.potionHudY;
       int top = ay > sh / 2 ? ay - h : ay; // bottom-anchored → ay is the bottom edge; else the top edge
@@ -544,8 +544,8 @@ public final class HudPanelsFeature {
 
    /** Convert a dragged top-left back into the anchored corner, picking the edge nearest to it. */
    public static void potionApplyMove(class_310 mc, TurtModConfig config, int x, int y) {
-      int sw = mc.method_22683().method_4489();
-      int sh = mc.method_22683().method_4507();
+      int sw = mc.method_22683().method_4486();
+      int sh = mc.method_22683().method_4502();
       PanelSize sz = potionScaledLiveSize(config);
       int cx = x + sz.width / 2;
       int cy = y + sz.height / 2;
@@ -583,14 +583,14 @@ public final class HudPanelsFeature {
       int margin = 4;
       int slack = POTION_SLOT_PITCH - POTION_SLOT; // trailing gap the last slot doesn't use
       if (config.hud.potionHudHorizontal) {
-         int availW = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4489() : 10000;
+         int availW = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4486() : 10000;
          int usable = Math.max(POTION_SLOT_PITCH, Math.round(availW / Math.max(0.01F, scale)) - 2 * margin - 2 * POTION_PAD);
          int maxCols = Math.max(1, (usable + slack) / POTION_SLOT_PITCH);
          int cols = Math.min(count, maxCols);
          int rows = (int) Math.ceil((double) count / cols);
          return new int[]{cols, rows};
       } else {
-         int availH = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4507() : 10000;
+         int availH = (mc != null && mc.method_22683() != null) ? mc.method_22683().method_4502() : 10000;
          int usable = Math.max(POTION_SLOT_PITCH, Math.round(availH / Math.max(0.01F, scale)) - 2 * margin - 2 * POTION_PAD);
          int maxRows = Math.max(1, (usable + slack) / POTION_SLOT_PITCH);
          int rows = Math.min(count, maxRows);
