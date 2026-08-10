@@ -65,6 +65,12 @@ public abstract class HitColorMixin implements OverlayReloadListener {
          this.hitColorConfig = config.visual.hitColor;
       }
 
+      // Respect the feature's own on/off switch: when Hit Color is disabled, leave the shared overlay
+      // texture as vanilla so nothing else that samples it (e.g. the TNT/minecart white flash) is touched.
+      if (!this.hitColorConfig.enabled) {
+         return;
+      }
+
       class_1011 nativeImage = this.field_21013 != null ? this.field_21013.method_4525() : null;
       if (nativeImage == null) {
          TurtLogger.info("[turtmod] HitColor reload skipped: nativeImage=null (texture=" + (this.field_21013 != null) + ")");
