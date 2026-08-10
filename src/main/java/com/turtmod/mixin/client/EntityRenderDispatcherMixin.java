@@ -58,9 +58,10 @@ public abstract class EntityRenderDispatcherMixin {
 
    /**
     * The debug-hitbox loop ({@code class_12155.method_23109}) skips any entity whose {@code method_5767()}
-    * (isInvisible) is true. When "Show On Invisible" is on we make that check report invisible PLAYERS as
-    * visible, so their hitbox is rendered (and the recolor injector above still colours it). Other
-    * call-effects of isInvisible are unaffected because the redirect is scoped to this method only.
+    * (isInvisible) is true. "Show Invisible Armored Players" reveals an invisible PLAYER's hitbox ONLY while
+    * they are wearing armour (armour already gives them away, and it hides again the moment they strip) —
+    * mirrors the Health Indicator's armored-invisible reveal. Non-player entities and unarmoured invisible
+    * players stay hidden. The recolor injector above still colours whatever this reveals.
     */
    @Redirect(
       method = "method_23109",
@@ -72,25 +73,11 @@ public abstract class EntityRenderDispatcherMixin {
       if (!invisible || cfg == null || !cfg.misc.enabled || !cfg.hud.customHitboxes) {
          return invisible;
       }
-      if (entity instanceof class_1657 player) {
-         if (!cfg.hud.hitboxPlayers) {
-            return invisible;
-         }
-         // "Armor Only" is an INDEPENDENT switch: reveal an invisible player's hitbox whenever they're
-         // wearing armour (armour already gives them away), and hide it again the moment they take it off.
-         if (cfg.hud.hitboxShowInvisibleArmorOnly && turtmod$hasVisibleArmor(player)) {
-            return false;
-         }
-         // "Show On Invisible Players": reveal every invisible player.
-         if (cfg.hud.hitboxShowInvisible) {
-            return false;
-         }
-         return invisible;
-      }
-      // Non-player entities: only with the full "Show On Invisible" + "Include Mobs". The recolor injector's
-      // per-type filters (hostile/passive/others/distance) still apply by zeroing the colour of unwanted types.
-      if (cfg.hud.hitboxShowInvisible && cfg.hud.hitboxShowInvisibleEntities) {
-         return false;
+      if (entity instanceof class_1657 player
+            && cfg.hud.hitboxPlayers
+            && cfg.hud.hitboxShowInvisible
+            && turtmod$hasVisibleArmor(player)) {
+         return false; // report as visible so the hitbox renders
       }
       return invisible;
    }

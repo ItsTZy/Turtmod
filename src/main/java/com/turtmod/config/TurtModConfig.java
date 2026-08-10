@@ -466,9 +466,8 @@ public static final class Combat {
       public boolean hitboxHurtColorEnabled;
       public int hitboxHurtColor;
       public boolean hitboxHideFireworks;
+      // Reveal an invisible player's hitbox ONLY while they wear armour (armored-invisible reveal).
       public boolean hitboxShowInvisible = false;
-      public boolean hitboxShowInvisibleArmorOnly = false;
-      public boolean hitboxShowInvisibleEntities = false;
       public boolean cleanDebugHitboxes = false;
       // User-picked per-entity hitbox colours: entity-type id (e.g. "minecraft:zombie") -> ARGB colour.
       // Any entity in this map draws its hitbox in the chosen colour instead of the default one.

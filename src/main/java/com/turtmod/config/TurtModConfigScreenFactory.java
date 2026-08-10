@@ -194,9 +194,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v))
             .addOption(bool("Hurt Color", () -> cfg.hud.hitboxHurtColorEnabled, v -> cfg.hud.hitboxHurtColorEnabled = v))
             .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v))
-            .addOption(bool("Show On Invisible Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
-            .addOption(bool("Invisible: Armor Only", () -> cfg.hud.hitboxShowInvisibleArmorOnly, v -> cfg.hud.hitboxShowInvisibleArmorOnly = v))
-            .addOption(bool("Invisible: Include Mobs", () -> cfg.hud.hitboxShowInvisibleEntities, v -> cfg.hud.hitboxShowInvisibleEntities = v))
+            .addOption(bool("Show Invisible Armored Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
             .addOption(bool("Hide Fireworks", () -> cfg.hud.hitboxHideFireworks, v -> cfg.hud.hitboxHideFireworks = v))
             .build())
          .group(OptionGroup.createBuilder("Clean F3")
@@ -387,8 +385,6 @@ public final class TurtModConfigScreenFactory {
             cfg.hud.hitboxHurtColor = dh.hitboxHurtColor;
             cfg.hud.hitboxHideFireworks = dh.hitboxHideFireworks;
             cfg.hud.hitboxShowInvisible = dh.hitboxShowInvisible;
-            cfg.hud.hitboxShowInvisibleArmorOnly = dh.hitboxShowInvisibleArmorOnly;
-            cfg.hud.hitboxShowInvisibleEntities = dh.hitboxShowInvisibleEntities;
          }
          case SCOREBOARD -> {
             cfg.visual.hideScoreboard = dv.hideScoreboard;
@@ -856,9 +852,7 @@ public final class TurtModConfigScreenFactory {
          .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v))
          .addOption(bool("Hurt Color", () -> cfg.hud.hitboxHurtColorEnabled, v -> cfg.hud.hitboxHurtColorEnabled = v))
          .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v))
-         .addOption(bool("Show On Invisible Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
-         .addOption(bool("Invisible: Armor Only", () -> cfg.hud.hitboxShowInvisibleArmorOnly, v -> cfg.hud.hitboxShowInvisibleArmorOnly = v))
-         .addOption(bool("Invisible: Include Mobs", () -> cfg.hud.hitboxShowInvisibleEntities, v -> cfg.hud.hitboxShowInvisibleEntities = v))
+         .addOption(bool("Show Invisible Armored Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
          .addOption(bool("Hide Fireworks", () -> cfg.hud.hitboxHideFireworks, v -> cfg.hud.hitboxHideFireworks = v));
    }
 
