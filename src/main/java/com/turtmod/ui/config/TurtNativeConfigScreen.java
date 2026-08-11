@@ -695,16 +695,11 @@ public class TurtNativeConfigScreen extends class_437 {
       TurtUIUtils.drawRoundedBorder(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize, 3, Palette.alpha(Palette.GREEN, 150));
       drawCentered(ctx, "+", sx + this.gStopSize / 2, this.gStopY + 4, Palette.GREEN);
 
-      // Animate checkbox + remove hint.
+      // Static gradient — no animation. Hints only.
       this.gAnimX = this.svX;
       this.gAnimY = this.gStopY + this.gStopSize + 9;
-      TurtUIUtils.drawRoundedRect(ctx, this.gAnimX, this.gAnimY, 12, 12, 3, this.pickAnimate ? Palette.alpha(Palette.GREEN, 200) : Palette.alpha(Palette.BTN_BG, 180));
-      TurtUIUtils.drawRoundedBorder(ctx, this.gAnimX, this.gAnimY, 12, 12, 3, Palette.alpha(Palette.GREEN, 150));
-      if (this.pickAnimate) {
-         drawCentered(ctx, "x", this.gAnimX + 6, this.gAnimY + 2, new Color(8, 12, 10));
-      }
-      ctx.method_51433(this.field_22793, "Animate (flow)", this.gAnimX + 17, this.gAnimY + 2, Palette.TEXT.getRGB(), false);
-      ctx.method_51433(this.field_22793, "right-click a stop to remove", this.gAnimX, this.gAnimY + 16, Palette.alpha(Palette.TEXT_MUTED, 210).getRGB(), false);
+      ctx.method_51433(this.field_22793, "first stop = bottom · last = top", this.gAnimX, this.gAnimY + 2, Palette.alpha(Palette.TEXT_MUTED, 230).getRGB(), false);
+      ctx.method_51433(this.field_22793, "right-click a stop to remove", this.gAnimX, this.gAnimY + 14, Palette.alpha(Palette.TEXT_MUTED, 210).getRGB(), false);
    }
 
    private void applyPicker() {
@@ -725,7 +720,7 @@ public class TurtNativeConfigScreen extends class_437 {
          for (int i = 0; i < stops.length; i++) {
             stops[i] = this.pickStops.get(i);
          }
-         TurtModClient.getConfig().gradients.put(key, new TurtModConfig.GradientDef(stops, this.pickAnimate, 1.0f));
+         TurtModClient.getConfig().gradients.put(key, new TurtModConfig.GradientDef(stops, false, 1.0f)); // static — no animation
          setOption(this.pickerOpt, new ConfigColor(stops[0])); // flat fallback = first stop
          return;
       }
@@ -877,12 +872,6 @@ public class TurtNativeConfigScreen extends class_437 {
                   this.pickStops.add(cur);
                   this.pickStopSel = this.pickStops.size() - 1;
                   loadStopHsb(this.pickStopSel);
-                  this.applyPicker();
-                  TurtSounds.tick();
-                  return true;
-               }
-               if (TurtUIUtils.isHovered(mx, my, this.gAnimX, this.gAnimY, 12, 12)) {
-                  this.pickAnimate = !this.pickAnimate;
                   this.applyPicker();
                   TurtSounds.tick();
                   return true;
