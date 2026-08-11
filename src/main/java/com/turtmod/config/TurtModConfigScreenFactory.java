@@ -132,12 +132,12 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enable Small Totem", () -> cfg.visual.enableSmallTotem, v -> cfg.visual.enableSmallTotem = v))
             .addOption(intOpt("Totem Scale %", () -> Math.round(cfg.visual.totemScale * 100.0F), v -> cfg.visual.totemScale = (float)v / 100.0F, 25, 150, 5))
             .addOption(bool("Fishing Line Color", () -> cfg.visual.fishingRodOverlay, v -> cfg.visual.fishingRodOverlay = v))
-            .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v))
+            .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v, GradientKeys.FISHING_LINE))
             .addOption(numOpt("Line Opacity", () -> cfg.visual.fishingRodOverlayAlpha, v -> cfg.visual.fishingRodOverlayAlpha = v, 0.1F, 1.0F, 0.05F))
             .build())
          .group(OptionGroup.createBuilder("Block Outline")
             .addOption(bool("Recolor Block Outline", () -> cfg.visual.recolorBlockOutline, v -> cfg.visual.recolorBlockOutline = v))
-            .addOption(color("Block Outline Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v))
+            .addOption(color("Block Outline Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v, GradientKeys.BLOCK_OUTLINE))
             .addOption(intOpt("Block Outline Width", () -> cfg.visual.blockOutlineWidth, v -> cfg.visual.blockOutlineWidth = v, 1, 10, 1))
             .addOption(intOpt("Block Outline Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 5))
             .addOption(bool("Rainbow Block Outline", () -> cfg.visual.blockOutlineRainbow, v -> cfg.visual.blockOutlineRainbow = v))
@@ -192,12 +192,12 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Others", () -> cfg.hud.hitboxOthers, v -> cfg.hud.hitboxOthers = v))
             .addOption(bool("Self", () -> cfg.hud.hitboxSelf, v -> cfg.hud.hitboxSelf = v))
             .addOption(intOpt("Max Distance", () -> cfg.hud.hitboxMaxDistance, v -> cfg.hud.hitboxMaxDistance = v, 8, 256, 1))
-            .addOption(color("Hitbox Color", () -> cfg.hud.hitboxColor, v -> cfg.hud.hitboxColor = v))
+            .addOption(color("Hitbox Color", () -> cfg.hud.hitboxColor, v -> cfg.hud.hitboxColor = v, GradientKeys.HITBOX))
             .addOption(button("Entity Colors...", () -> class_310.method_1551().method_1507(new com.turtmod.hud.HitboxColorsScreen(class_310.method_1551().field_1755))))
             .addOption(bool("Target Color", () -> cfg.hud.hitboxChangeTargetColor, v -> cfg.hud.hitboxChangeTargetColor = v))
-            .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v))
+            .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v, GradientKeys.HITBOX_TARGET))
             .addOption(bool("Hurt Color", () -> cfg.hud.hitboxHurtColorEnabled, v -> cfg.hud.hitboxHurtColorEnabled = v))
-            .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v))
+            .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v, GradientKeys.HITBOX_HURT))
             .addOption(bool("Show Invisible Armored Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
             .addOption(bool("Hide Fireworks", () -> cfg.hud.hitboxHideFireworks, v -> cfg.hud.hitboxHideFireworks = v))
             .build())
@@ -223,7 +223,7 @@ public final class TurtModConfigScreenFactory {
             .build())
          .group(OptionGroup.createBuilder("Hit Color")
             .addOption(bool("Hit Color", () -> cfg.visual.hitColor.enabled, v -> cfg.visual.hitColor.enabled = v))
-            .addOption(color("Hit Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v)))
+            .addOption(color("Hit Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v), GradientKeys.HIT_COLOR))
             .addOption(intOpt("Hit Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 5))
             .addOption(bool("Armor Damage Tint", () -> cfg.visual.armorDamageTint, v -> cfg.visual.armorDamageTint = v))
             .addOption(bool("Armor Trim Tint", () -> cfg.visual.armorDamageTintTrim, v -> cfg.visual.armorDamageTintTrim = v))
@@ -551,7 +551,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Sensitivity %", () -> cfg.visual.freelookSensitivityPercent, v -> cfg.visual.freelookSensitivityPercent = v, 25, 200, 5));
          case HIT_COLOR -> group
             .addOption(bool("Enabled", () -> cfg.visual.hitColor.enabled, v -> cfg.visual.hitColor.enabled = v))
-            .addOption(color("Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v)))
+            .addOption(color("Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v), GradientKeys.HIT_COLOR))
             .addOption(intOpt("Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 5))
             .addOption(bool("Armor Damage Tint", () -> cfg.visual.armorDamageTint, v -> cfg.visual.armorDamageTint = v))
             .addOption(bool("Armor Trim Tint", () -> cfg.visual.armorDamageTintTrim, v -> cfg.visual.armorDamageTintTrim = v));
@@ -578,7 +578,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Shake %", () -> cfg.visual.hurtCameraShakePercent, v -> cfg.visual.hurtCameraShakePercent = v, 0, 150, 5));
          case BLOCK_OUTLINE -> group
             .addOption(bool("Enabled", () -> cfg.visual.recolorBlockOutline, v -> cfg.visual.recolorBlockOutline = v))
-            .addOption(color("Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v))
+            .addOption(color("Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v, GradientKeys.BLOCK_OUTLINE))
             .addOption(intOpt("Width", () -> cfg.visual.blockOutlineWidth, v -> cfg.visual.blockOutlineWidth = v, 1, 10, 1))
             .addOption(intOpt("Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 5))
             .addOption(bool("Rainbow", () -> cfg.visual.blockOutlineRainbow, v -> cfg.visual.blockOutlineRainbow = v));
@@ -664,8 +664,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.hud.keystrokesHud, v -> cfg.hud.keystrokesHud = v))
             .addOption(bool("Show CPS", () -> cfg.hud.keystrokesShowCps, v -> cfg.hud.keystrokesShowCps = v))
             .addOption(bool("Custom Pressed Color", () -> cfg.hud.keystrokesUsePressedColor, v -> cfg.hud.keystrokesUsePressedColor = v))
-            .addOption(color("Pressed Color", () -> cfg.hud.keystrokesPressedColor, v -> cfg.hud.keystrokesPressedColor = v))
-            .addOption(color("Pressed Text Color", () -> cfg.hud.keystrokesPressedTextColor, v -> cfg.hud.keystrokesPressedTextColor = v))
+            .addOption(color("Pressed Color", () -> cfg.hud.keystrokesPressedColor, v -> cfg.hud.keystrokesPressedColor = v, GradientKeys.KEYSTROKES_PRESSED))
+            .addOption(color("Pressed Text Color", () -> cfg.hud.keystrokesPressedTextColor, v -> cfg.hud.keystrokesPressedTextColor = v, GradientKeys.KEYSTROKES_PRESSED_TEXT))
             .addOption(intOpt("Scale %", () -> cfg.hud.keystrokesHudScalePercent, v -> cfg.hud.keystrokesHudScalePercent = v, 50, 300, 5));
          case CPS_COUNTER -> group
             .addOption(bool("Enabled", () -> cfg.hud.cpsCounterHud, v -> cfg.hud.cpsCounterHud = v))
@@ -714,8 +714,8 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Background", () -> cfg.hud.cleanF3ShowBackground, v -> cfg.hud.cleanF3ShowBackground = v))
             .addOption(bool("Right Column (system info)", () -> cfg.hud.cleanF3RightColumn, v -> cfg.hud.cleanF3RightColumn = v))
             .addOption(bool("Theme Colours", () -> cfg.hud.cleanF3ThemeColors, v -> cfg.hud.cleanF3ThemeColors = v))
-            .addOption(color("Label Color", () -> cfg.hud.cleanF3LabelColor, v -> cfg.hud.cleanF3LabelColor = v))
-            .addOption(color("Value Color", () -> cfg.hud.cleanF3ValueColor, v -> cfg.hud.cleanF3ValueColor = v))
+            .addOption(color("Label Color", () -> cfg.hud.cleanF3LabelColor, v -> cfg.hud.cleanF3LabelColor = v, GradientKeys.CLEAN_F3_LABEL))
+            .addOption(color("Value Color", () -> cfg.hud.cleanF3ValueColor, v -> cfg.hud.cleanF3ValueColor = v, GradientKeys.CLEAN_F3_VALUE))
             .addOption(button("Reorder Lines", () -> {
                class_310 mc = class_310.method_1551();
                if (mc != null) {
@@ -826,7 +826,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(button("Applies via /gamemode — you still need server permission.", () -> {}));
          case FISHING_LINE -> group
             .addOption(bool("Enabled", () -> cfg.visual.fishingRodOverlay, v -> cfg.visual.fishingRodOverlay = v))
-            .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v))
+            .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v, GradientKeys.FISHING_LINE))
             .addOption(numOpt("Line Opacity", () -> cfg.visual.fishingRodOverlayAlpha, v -> cfg.visual.fishingRodOverlayAlpha = v, 0.1F, 1.0F, 0.05F));
       }
 
@@ -851,12 +851,12 @@ public final class TurtModConfigScreenFactory {
          .addOption(bool("Others", () -> cfg.hud.hitboxOthers, v -> cfg.hud.hitboxOthers = v))
          .addOption(bool("Self", () -> cfg.hud.hitboxSelf, v -> cfg.hud.hitboxSelf = v))
          .addOption(intOpt("Max Distance", () -> cfg.hud.hitboxMaxDistance, v -> cfg.hud.hitboxMaxDistance = v, 8, 256, 1))
-         .addOption(color("Hitbox Color", () -> cfg.hud.hitboxColor, v -> cfg.hud.hitboxColor = v))
+         .addOption(color("Hitbox Color", () -> cfg.hud.hitboxColor, v -> cfg.hud.hitboxColor = v, GradientKeys.HITBOX))
          .addOption(button("Entity Colors...", () -> class_310.method_1551().method_1507(new com.turtmod.hud.HitboxColorsScreen(class_310.method_1551().field_1755))))
          .addOption(bool("Target Color", () -> cfg.hud.hitboxChangeTargetColor, v -> cfg.hud.hitboxChangeTargetColor = v))
-         .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v))
+         .addOption(color("Target Hitbox Color", () -> cfg.hud.hitboxTargetColor, v -> cfg.hud.hitboxTargetColor = v, GradientKeys.HITBOX_TARGET))
          .addOption(bool("Hurt Color", () -> cfg.hud.hitboxHurtColorEnabled, v -> cfg.hud.hitboxHurtColorEnabled = v))
-         .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v))
+         .addOption(color("Hurt Hitbox Color", () -> cfg.hud.hitboxHurtColor, v -> cfg.hud.hitboxHurtColor = v, GradientKeys.HITBOX_HURT))
          .addOption(bool("Show Invisible Armored Players", () -> cfg.hud.hitboxShowInvisible, v -> cfg.hud.hitboxShowInvisible = v))
          .addOption(bool("Hide Fireworks", () -> cfg.hud.hitboxHideFireworks, v -> cfg.hud.hitboxHideFireworks = v));
    }

@@ -350,6 +350,7 @@ public final class TurtModClient implements ClientModInitializer {
       safeRender("deathCoords.tick", () -> DeathCoordsFeature.tick(client, config));
       safeRender("kit.tick", () -> com.turtmod.kit.KitManager.tick());
       safeRender("shield.tick", () -> ShieldTracker.tick());
+      safeRender("gradient.tick", () -> com.turtmod.hud.GradientRuntime.tick(config));
       safeRender("discord.tick", () -> TurtDiscordRpcService.tick(client, config));
       safeRender("freelook.tick", () -> this.updateFreelook(client));
    }

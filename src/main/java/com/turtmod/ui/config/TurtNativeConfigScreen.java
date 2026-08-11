@@ -6,6 +6,8 @@ import com.turtmod.ui.TurtSounds;
 import com.turtmod.ui.TurtUIScale;
 import com.turtmod.ui.TurtUIUtils;
 import com.turtmod.ui.config.model.Category;
+import com.turtmod.TurtModClient;
+import com.turtmod.config.TurtModConfig;
 import com.turtmod.ui.config.model.ConfigColor;
 import com.turtmod.ui.config.model.LocalConfig;
 import com.turtmod.ui.config.model.Option;
@@ -136,6 +138,17 @@ public class TurtNativeConfigScreen extends class_437 {
    private int hexFieldH;
    private static final java.util.ArrayDeque<Integer> RECENT = new java.util.ArrayDeque<>();
    private int recentY;
+
+   // ── In-picker gradient editor (only when the colour option has a gradient key). ──
+   private boolean pickGradient;                              // Solid (false) vs Gradient (true) mode
+   private final java.util.List<Integer> pickStops = new java.util.ArrayList<>();
+   private int pickStopSel;                                   // which stop the SV/hue/alpha edits
+   private boolean pickAnimate;
+   // Hit rects (filled during render).
+   private int gSolidX, gGradX, gTogY, gTogW;                 // Solid|Gradient segmented toggle
+   private int gBarX, gBarY, gBarW, gBarH;                    // gradient preview bar
+   private final int[] gStopX = new int[24];
+   private int gStopN, gStopY, gStopSize, gAddX, gAnimX, gAnimY;
 
    private static void pushRecent(int argb) {
       RECENT.remove(argb);
@@ -491,7 +504,7 @@ public class TurtNativeConfigScreen extends class_437 {
    private void renderColorPicker(class_332 ctx, int mx, int my) {
       ctx.method_25294(-2000, -2000, LOGICAL_W + 2000, LOGICAL_H + 2000, 0xB0000000);
       this.pickW = 244;
-      this.pickH = 306;
+      this.pickH = this.pickGradient ? 344 : 306;
       this.pickX = (LOGICAL_W - this.pickW) / 2;
       this.pickY = (LOGICAL_H - this.pickH) / 2;
       // Soft accent halo + panel.
@@ -500,6 +513,15 @@ public class TurtNativeConfigScreen extends class_437 {
       TurtUIUtils.drawRoundedBorder(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, Palette.alpha(Palette.GREEN, 140));
       TurtUIUtils.drawGradientText(ctx, this.field_22793, this.pickerOpt.getName(), this.pickX + 14, this.pickY + 11,
          Palette.GREEN, Palette.PINK, false, true);
+      // Solid | Gradient segmented toggle (only for colours that support gradients).
+      if (this.pickerOpt.getGradientKey() != null) {
+         this.gTogW = 44;
+         this.gTogY = this.pickY + 6;
+         this.gGradX = this.pickX + this.pickW - 12 - this.gTogW;
+         this.gSolidX = this.gGradX - 4 - this.gTogW;
+         drawSeg(ctx, this.gSolidX, this.gTogY, this.gTogW, 15, "Solid", !this.pickGradient, mx, my);
+         drawSeg(ctx, this.gGradX, this.gTogY, this.gTogW, 15, "Gradient", this.pickGradient, mx, my);
+      }
       ctx.method_25294(this.pickX + 12, this.pickY + 24, this.pickX + this.pickW - 12, this.pickY + 25, Palette.alpha(Palette.GREEN, 40).getRGB());
 
       // Big SV square.
@@ -560,32 +582,35 @@ public class TurtNativeConfigScreen extends class_437 {
          ctx.method_25294(cx, this.hexFieldY + 4, cx + 1, this.hexFieldY + 13, -1);
       }
 
-      // Preset swatches.
       this.presetSize = 16;
       this.presetGap = 4;
       this.presetX0 = this.svX;
       this.presetY = chipY + 24;
-      for (int i = 0; i < PRESETS.length; i++) {
-         int px = this.presetX0 + i * (this.presetSize + this.presetGap);
-         boolean ph = TurtUIUtils.isHovered(mx, my, px, this.presetY, this.presetSize, this.presetSize);
-         TurtUIUtils.drawRoundedRect(ctx, px, this.presetY, this.presetSize, this.presetSize, 3, new Color(0xFF000000 | PRESETS[i]));
-         TurtUIUtils.drawRoundedBorder(ctx, px, this.presetY, this.presetSize, this.presetSize, 3,
-            ph ? Palette.PINK : new Color(255, 255, 255, 70));
-      }
-
-      // Recent colours (carry alpha → checkerboard behind each).
-      this.recentY = this.presetY + this.presetSize + 13;
-      if (!RECENT.isEmpty()) {
-         ctx.method_51433(this.field_22793, "Recent", this.svX, this.recentY - 9, Palette.TEXT_MUTED.getRGB(), false);
-         int i = 0;
-         for (Integer c : RECENT) {
+      if (this.pickGradient) {
+         this.renderGradientEditor(ctx, mx, my, this.hueX + this.hueW - this.svX);
+      } else {
+         // Preset swatches.
+         for (int i = 0; i < PRESETS.length; i++) {
             int px = this.presetX0 + i * (this.presetSize + this.presetGap);
-            boolean ph = TurtUIUtils.isHovered(mx, my, px, this.recentY, this.presetSize, this.presetSize);
-            this.drawChecker(ctx, px, this.recentY, this.presetSize, this.presetSize);
-            TurtUIUtils.drawRoundedRect(ctx, px, this.recentY, this.presetSize, this.presetSize, 3, new Color(c, true));
-            TurtUIUtils.drawRoundedBorder(ctx, px, this.recentY, this.presetSize, this.presetSize, 3,
+            boolean ph = TurtUIUtils.isHovered(mx, my, px, this.presetY, this.presetSize, this.presetSize);
+            TurtUIUtils.drawRoundedRect(ctx, px, this.presetY, this.presetSize, this.presetSize, 3, new Color(0xFF000000 | PRESETS[i]));
+            TurtUIUtils.drawRoundedBorder(ctx, px, this.presetY, this.presetSize, this.presetSize, 3,
                ph ? Palette.PINK : new Color(255, 255, 255, 70));
-            i++;
+         }
+         // Recent colours (carry alpha → checkerboard behind each).
+         this.recentY = this.presetY + this.presetSize + 13;
+         if (!RECENT.isEmpty()) {
+            ctx.method_51433(this.field_22793, "Recent", this.svX, this.recentY - 9, Palette.TEXT_MUTED.getRGB(), false);
+            int i = 0;
+            for (Integer c : RECENT) {
+               int px = this.presetX0 + i * (this.presetSize + this.presetGap);
+               boolean ph = TurtUIUtils.isHovered(mx, my, px, this.recentY, this.presetSize, this.presetSize);
+               this.drawChecker(ctx, px, this.recentY, this.presetSize, this.presetSize);
+               TurtUIUtils.drawRoundedRect(ctx, px, this.recentY, this.presetSize, this.presetSize, 3, new Color(c, true));
+               TurtUIUtils.drawRoundedBorder(ctx, px, this.recentY, this.presetSize, this.presetSize, 3,
+                  ph ? Palette.PINK : new Color(255, 255, 255, 70));
+               i++;
+            }
          }
       }
 
@@ -625,11 +650,88 @@ public class TurtNativeConfigScreen extends class_437 {
       }
    }
 
+   /** One segment of the Solid|Gradient toggle. */
+   private void drawSeg(class_332 ctx, int x, int y, int w, int h, String label, boolean active, int mx, int my) {
+      boolean hov = TurtUIUtils.isHovered(mx, my, x, y, w, h);
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, active ? Palette.alpha(Palette.GREEN, 70) : Palette.alpha(Palette.BTN_BG, hov ? 220 : 150));
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, active ? Palette.alpha(Palette.GREEN, 180) : Palette.alpha(Palette.PANEL_BORDER, 160));
+      drawCentered(ctx, label, x + w / 2, y + (h - 8) / 2, active ? Palette.GREEN : Palette.TEXT_MUTED);
+   }
+
+   /** The gradient editor block (preview bar + stop swatches + add + animate) shown in Gradient mode. */
+   private void renderGradientEditor(class_332 ctx, int mx, int my, int fullW) {
+      this.gBarX = this.svX;
+      this.gBarY = this.presetY;
+      this.gBarW = fullW;
+      this.gBarH = 16;
+      this.drawChecker(ctx, this.gBarX, this.gBarY, this.gBarW, this.gBarH);
+      TurtModConfig.GradientDef g = new TurtModConfig.GradientDef();
+      g.stops = new int[this.pickStops.size()];
+      for (int i = 0; i < g.stops.length; i++) {
+         g.stops[i] = this.pickStops.get(i);
+      }
+      for (int i = 0; i < this.gBarW; i++) {
+         float t = this.gBarW <= 1 ? 0 : (float) i / (this.gBarW - 1);
+         ctx.method_25294(this.gBarX + i, this.gBarY, this.gBarX + i + 1, this.gBarY + this.gBarH, g.colorAt(t));
+      }
+      TurtUIUtils.drawBorder(ctx, this.gBarX, this.gBarY, this.gBarW, this.gBarH, new Color(0, 0, 0, 120));
+
+      // Stop swatches (click to edit that stop, right-click to remove) + a "+" to add a stop.
+      this.gStopSize = 16;
+      this.gStopY = this.gBarY + this.gBarH + 8;
+      this.gStopN = this.pickStops.size();
+      int sx = this.svX;
+      for (int i = 0; i < this.gStopN && i < this.gStopX.length; i++) {
+         this.gStopX[i] = sx;
+         this.drawChecker(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize);
+         TurtUIUtils.drawRoundedRect(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize, 3, new Color(this.pickStops.get(i), true));
+         TurtUIUtils.drawRoundedBorder(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize, 3,
+            i == this.pickStopSel ? Palette.PINK : new Color(255, 255, 255, 70));
+         sx += this.gStopSize + 4;
+      }
+      this.gAddX = sx;
+      boolean ah = TurtUIUtils.isHovered(mx, my, sx, this.gStopY, this.gStopSize, this.gStopSize);
+      TurtUIUtils.drawRoundedRect(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize, 3, Palette.alpha(Palette.GREEN, ah ? 90 : 45));
+      TurtUIUtils.drawRoundedBorder(ctx, sx, this.gStopY, this.gStopSize, this.gStopSize, 3, Palette.alpha(Palette.GREEN, 150));
+      drawCentered(ctx, "+", sx + this.gStopSize / 2, this.gStopY + 4, Palette.GREEN);
+
+      // Animate checkbox + remove hint.
+      this.gAnimX = this.svX;
+      this.gAnimY = this.gStopY + this.gStopSize + 9;
+      TurtUIUtils.drawRoundedRect(ctx, this.gAnimX, this.gAnimY, 12, 12, 3, this.pickAnimate ? Palette.alpha(Palette.GREEN, 200) : Palette.alpha(Palette.BTN_BG, 180));
+      TurtUIUtils.drawRoundedBorder(ctx, this.gAnimX, this.gAnimY, 12, 12, 3, Palette.alpha(Palette.GREEN, 150));
+      if (this.pickAnimate) {
+         drawCentered(ctx, "x", this.gAnimX + 6, this.gAnimY + 2, new Color(8, 12, 10));
+      }
+      ctx.method_51433(this.field_22793, "Animate (flow)", this.gAnimX + 17, this.gAnimY + 2, Palette.TEXT.getRGB(), false);
+      ctx.method_51433(this.field_22793, "right-click a stop to remove", this.gAnimX, this.gAnimY + 16, Palette.alpha(Palette.TEXT_MUTED, 210).getRGB(), false);
+   }
+
    private void applyPicker() {
       if (this.pickerOpt == null) {
          return;
       }
       int rgb = ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF;
+      int argb = (this.pA << 24) | rgb;
+      String key = this.pickerOpt.getGradientKey();
+      if (this.pickGradient && key != null) {
+         // Gradient mode: the current SV/hue/alpha edits the selected stop; save all stops to the store.
+         if (this.pickStops.isEmpty()) {
+            this.pickStops.add(argb);
+         }
+         this.pickStopSel = Math.max(0, Math.min(this.pickStopSel, this.pickStops.size() - 1));
+         this.pickStops.set(this.pickStopSel, argb);
+         int[] stops = new int[this.pickStops.size()];
+         for (int i = 0; i < stops.length; i++) {
+            stops[i] = this.pickStops.get(i);
+         }
+         TurtModClient.getConfig().gradients.put(key, new TurtModConfig.GradientDef(stops, this.pickAnimate, 1.0f));
+         setOption(this.pickerOpt, new ConfigColor(stops[0])); // flat fallback = first stop
+         return;
+      }
+      if (key != null) {
+         TurtModClient.getConfig().gradients.remove(key); // solid mode: clear any gradient
+      }
       setOption(this.pickerOpt, new ConfigColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, this.pA));
    }
 
@@ -744,6 +846,63 @@ public class TurtNativeConfigScreen extends class_437 {
       }
 
       if (this.pickerOpt != null) {
+         // Gradient controls (only for colours that support gradients).
+         String gkey = this.pickerOpt.getGradientKey();
+         if (gkey != null) {
+            if (TurtUIUtils.isHovered(mx, my, this.gSolidX, this.gTogY, this.gTogW, 15)) {
+               if (this.pickGradient) { this.pickGradient = false; this.applyPicker(); }
+               TurtSounds.tick();
+               return true;
+            }
+            if (TurtUIUtils.isHovered(mx, my, this.gGradX, this.gTogY, this.gTogW, 15)) {
+               if (!this.pickGradient) {
+                  this.pickGradient = true;
+                  if (this.pickStops.size() < 2) {
+                     int cur = (this.pA << 24) | (ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF);
+                     this.pickStops.clear();
+                     this.pickStops.add(cur);
+                     this.pickStops.add(0xFF000000 | (ConfigColor.HSBtoRGB((this.pH + 0.5f) % 1f, this.pS, this.pB) & 0xFFFFFF));
+                  }
+                  this.pickStopSel = 0;
+                  loadStopHsb(0);
+                  this.applyPicker();
+               }
+               TurtSounds.tick();
+               return true;
+            }
+            if (this.pickGradient) {
+               if (TurtUIUtils.isHovered(mx, my, this.gAddX, this.gStopY, this.gStopSize, this.gStopSize)
+                     && this.pickStops.size() < this.gStopX.length) {
+                  int cur = (this.pA << 24) | (ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF);
+                  this.pickStops.add(cur);
+                  this.pickStopSel = this.pickStops.size() - 1;
+                  loadStopHsb(this.pickStopSel);
+                  this.applyPicker();
+                  TurtSounds.tick();
+                  return true;
+               }
+               if (TurtUIUtils.isHovered(mx, my, this.gAnimX, this.gAnimY, 12, 12)) {
+                  this.pickAnimate = !this.pickAnimate;
+                  this.applyPicker();
+                  TurtSounds.tick();
+                  return true;
+               }
+               for (int i = 0; i < this.gStopN; i++) {
+                  if (TurtUIUtils.isHovered(mx, my, this.gStopX[i], this.gStopY, this.gStopSize, this.gStopSize)) {
+                     if (button == 1 && this.pickStops.size() > 2) {
+                        this.pickStops.remove(i);
+                        this.pickStopSel = Math.min(this.pickStopSel, this.pickStops.size() - 1);
+                        loadStopHsb(this.pickStopSel);
+                        this.applyPicker();
+                     } else {
+                        loadStopHsb(i);
+                     }
+                     TurtSounds.tick();
+                     return true;
+                  }
+               }
+            }
+         }
          if (TurtUIUtils.isHovered(mx, my, this.hexFieldX, this.hexFieldY, this.hexFieldW, this.hexFieldH)) {
             this.startHexEdit();
             TurtSounds.click();
@@ -757,32 +916,34 @@ public class TurtNativeConfigScreen extends class_437 {
             TurtSounds.confirm();
             return true;
          }
-         int ri = 0;
-         for (Integer c : RECENT) {
-            int rpx = this.presetX0 + ri * (this.presetSize + this.presetGap);
-            if (TurtUIUtils.isHovered(mx, my, rpx, this.recentY, this.presetSize, this.presetSize)) {
-               int v = c;
-               this.pA = (v >>> 24) & 0xFF;
-               float[] hsb = ConfigColor.RGBtoHSB((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, null);
-               this.pH = hsb[0];
-               this.pS = hsb[1];
-               this.pB = hsb[2];
-               this.applyPicker();
-               TurtSounds.tick();
-               return true;
+         if (!this.pickGradient) {
+            int ri = 0;
+            for (Integer c : RECENT) {
+               int rpx = this.presetX0 + ri * (this.presetSize + this.presetGap);
+               if (TurtUIUtils.isHovered(mx, my, rpx, this.recentY, this.presetSize, this.presetSize)) {
+                  int v = c;
+                  this.pA = (v >>> 24) & 0xFF;
+                  float[] hsb = ConfigColor.RGBtoHSB((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, null);
+                  this.pH = hsb[0];
+                  this.pS = hsb[1];
+                  this.pB = hsb[2];
+                  this.applyPicker();
+                  TurtSounds.tick();
+                  return true;
+               }
+               ri++;
             }
-            ri++;
-         }
-         for (int i = 0; i < PRESETS.length; i++) {
-            int px = this.presetX0 + i * (this.presetSize + this.presetGap);
-            if (TurtUIUtils.isHovered(mx, my, px, this.presetY, this.presetSize, this.presetSize)) {
-               float[] hsb = ConfigColor.RGBtoHSB((PRESETS[i] >> 16) & 0xFF, (PRESETS[i] >> 8) & 0xFF, PRESETS[i] & 0xFF, null);
-               this.pH = hsb[0];
-               this.pS = hsb[1];
-               this.pB = hsb[2];
-               this.applyPicker();
-               TurtSounds.tick();
-               return true;
+            for (int i = 0; i < PRESETS.length; i++) {
+               int px = this.presetX0 + i * (this.presetSize + this.presetGap);
+               if (TurtUIUtils.isHovered(mx, my, px, this.presetY, this.presetSize, this.presetSize)) {
+                  float[] hsb = ConfigColor.RGBtoHSB((PRESETS[i] >> 16) & 0xFF, (PRESETS[i] >> 8) & 0xFF, PRESETS[i] & 0xFF, null);
+                  this.pH = hsb[0];
+                  this.pS = hsb[1];
+                  this.pB = hsb[2];
+                  this.applyPicker();
+                  TurtSounds.tick();
+                  return true;
+               }
             }
          }
          if (TurtUIUtils.isHovered(mx, my, this.svX, this.svY, this.svW, this.svH)) {
@@ -1059,6 +1220,41 @@ public class TurtNativeConfigScreen extends class_437 {
       this.pA = (argb >>> 24) & 0xFF;
       if (this.pA == 0) this.pA = 255;   // legacy RGB-only colours stored alpha 0 → show opaque, not invisible
       float[] hsb = ConfigColor.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, null);
+      this.pH = hsb[0];
+      this.pS = hsb[1];
+      this.pB = hsb[2];
+
+      // Gradient state: start from the current colour; load a saved gradient for this field if one exists.
+      this.pickGradient = false;
+      this.pickAnimate = false;
+      this.pickStopSel = 0;
+      this.pickStops.clear();
+      this.pickStops.add(argb);
+      String key = opt.getGradientKey();
+      if (key != null) {
+         TurtModConfig.GradientDef g = TurtModClient.getConfig().gradients.get(key);
+         if (g != null && g.isGradient()) {
+            this.pickGradient = true;
+            this.pickAnimate = g.animate;
+            this.pickStops.clear();
+            for (int s : g.stops) {
+               this.pickStops.add(s);
+            }
+            loadStopHsb(0);
+         }
+      }
+   }
+
+   /** Load stop {@code i}'s colour into the SV/hue/alpha editor. */
+   private void loadStopHsb(int i) {
+      if (i < 0 || i >= this.pickStops.size()) {
+         return;
+      }
+      this.pickStopSel = i;
+      int v = this.pickStops.get(i);
+      this.pA = (v >>> 24) & 0xFF;
+      if (this.pA == 0) this.pA = 255;
+      float[] hsb = ConfigColor.RGBtoHSB((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, null);
       this.pH = hsb[0];
       this.pS = hsb[1];
       this.pB = hsb[2];
