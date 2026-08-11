@@ -49,12 +49,9 @@ public final class TurtModConfigScreenFactory {
          .build();
       config.load();
       TurtNativeConfigScreen screen = new TurtNativeConfigScreen(parent, config);
-      // Live "preview box" for modules that have a visual HUD — updates as you edit the settings.
-      if (com.turtmod.hud.HudPreview.has(kind)) {
-         final ModuleKind k = kind;
-         screen.setPreview((ctx, x, y, w, h) ->
-            com.turtmod.hud.HudPreview.render(ctx, class_310.method_1551(), TurtModClient.getConfig(), k, x, y, w, h));
-      }
+      // (Live "preview box" disabled — the framed box wasn't the look wanted. The renderPreview() hooks
+      //  are kept for a future frameless "see your real HUDs live" pass, done properly. To re-enable the
+      //  box: attach screen.setPreview(...) with HudPreview.render for kinds where HudPreview.has(kind).)
       return screen;
    }
 
