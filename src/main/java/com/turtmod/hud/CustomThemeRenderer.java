@@ -38,6 +38,17 @@ public final class CustomThemeRenderer {
       if (bg >>> 24 == 0) {
          return;
       }
+      // Gradient background (clean Lunar look): a vertical fade from colour A to colour B at the panel alpha.
+      if (config.theme.hudBgGradient) {
+         int a = getEffectiveBackgroundAlpha(config);
+         if (a == 0) {
+            return;
+         }
+         int top = (a << 24) | (config.theme.hudBackgroundColor & 0xFFFFFF);
+         int bot = (a << 24) | (config.theme.hudBackgroundColor2 & 0xFFFFFF);
+         context.method_25296(x, y, x + w, y + h, top, bot);
+         return;
+      }
       int r = radiusFor(config, w, h);
       if (r > 0) {
          TurtUIUtils.drawRoundedRect(context, x, y, w, h, r, col(bg));
@@ -267,6 +278,20 @@ public final class CustomThemeRenderer {
    }
 
    private static void drawText(class_332 context, class_327 textRenderer, class_2561 text, int x, int y, int color, TurtModConfig config) {
+      // Clean gradients: text drawn in the theme's Text colour (or Accent colour) fades between its two
+      // gradient colours per-glyph when that gradient is enabled. Other colours (muted, custom) stay flat.
+      int rgb = color & 0xFFFFFF;
+      if (config.theme.hudTextGradient && rgb == (config.theme.hudTextColor & 0xFFFFFF)) {
+         drawGradientString(context, textRenderer, text.getString(), x, y, color,
+            config.theme.hudTextColor, config.theme.hudTextColor2, config);
+         return;
+      }
+      if (config.theme.hudAccentGradient && rgb == (config.theme.hudAccentColor & 0xFFFFFF)) {
+         drawGradientString(context, textRenderer, text.getString(), x, y, color,
+            config.theme.hudAccentColor, config.theme.hudAccentColor2, config);
+         return;
+      }
+
       class_5250 drawn = text.method_27661();
       if (config.theme.hudTextBold) {
          drawn.method_10862(drawn.method_10866().method_10982(true));
@@ -278,6 +303,35 @@ public final class CustomThemeRenderer {
          context.method_51439(textRenderer, drawn, x, y, color, false);
       }
 
+   }
+
+   /** Draw a string as a per-glyph horizontal gradient from colour A to B (keeping the base colour's alpha). */
+   private static void drawGradientString(class_332 context, class_327 tr, String s, int x, int y, int baseColor,
+                                          int colorA, int colorB, TurtModConfig config) {
+      int alpha = baseColor >>> 24 & 255;
+      int a = colorA & 0xFFFFFF;
+      int b = colorB & 0xFFFFFF;
+      int total = Math.max(1, tr.method_1727(s));
+      float phase = config.theme.hudGradientAnimate ? (System.currentTimeMillis() % 4000L) / 4000.0F : 0f;
+      boolean bold = config.theme.hudTextBold;
+      boolean shadow = config.theme.enableShadows;
+      int cx = x;
+      for (int i = 0; i < s.length(); i++) {
+         String ch = String.valueOf(s.charAt(i));
+         float t = (float)(cx - x) / total + phase;
+         t = t - (float)Math.floor(t);
+         int col = (alpha << 24) | mix(a, b, t);
+         class_5250 g = class_2561.method_43470(ch);
+         if (bold) {
+            g.method_10862(g.method_10866().method_10982(true));
+         }
+         if (shadow) {
+            context.method_27535(tr, g, cx, y, col);
+         } else {
+            context.method_51439(tr, g, cx, y, col, false);
+         }
+         cx += textWidth(tr, ch, config);
+      }
    }
 
    public static void drawHudLabel(class_332 context, class_327 textRenderer, String content, int x, int y, int color, TurtModConfig config) {

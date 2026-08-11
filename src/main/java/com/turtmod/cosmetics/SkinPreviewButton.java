@@ -31,12 +31,14 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    private int lastMx, lastMy;                // for computing drag delta in the render loop
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
-      super(x, y, w, h, class_2561.method_43470("🧍 Skin Changer"), onPress, field_40754);
+      super(x, y, w, h, class_2561.method_43470("  Skin Changer"), onPress, field_40754);
    }
 
    @Override
    protected void method_75752(class_332 ctx, int mouseX, int mouseY, float delta) {
       super.method_75752(ctx, mouseX, mouseY, delta);   // normal vanilla button
+      // Pixel shirt icon on the left of the button face (replaces the old 🧍 emoji in the label).
+      com.turtmod.ui.TurtIcons.drawFit(ctx, com.turtmod.ui.TurtIcons.shirt(), this.method_46426() + 4, this.method_46427() + 3, 14);
       class_8685 skin = currentSkin();
       if (skin == null) {
          return;

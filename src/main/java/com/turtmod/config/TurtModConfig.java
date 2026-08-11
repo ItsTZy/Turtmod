@@ -614,6 +614,15 @@ public static final class Combat {
       public int hudTextColor = -1;
       public int hudAccentColor = -11296965;
       public boolean enableShadows = true;
+      // Clean Lunar-style gradients: each colour can optionally fade to a second colour. All default OFF so
+      // the flat look is unchanged until the user opts in (Theme settings). Applied centrally in CustomThemeRenderer.
+      public boolean hudTextGradient = false;
+      public int hudTextColor2 = 0xFF7FE0A0;      // complementary green
+      public boolean hudAccentGradient = false;
+      public int hudAccentColor2 = 0xFFFF8FB0;    // pink
+      public boolean hudBgGradient = false;
+      public int hudBackgroundColor2 = 0xFF0E2A1E;
+      public boolean hudGradientAnimate = false;  // subtle slow flow when on
       // ── removed from the UI (kept for code refs, forced clean) ──
       public int hudBorderColor = 0xFFFFFFFF;
       public int hudBorderThickness = 0;
