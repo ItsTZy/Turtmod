@@ -152,36 +152,23 @@ public final class TurtUIUtils {
          context.method_25294(x, y, x + w, y + h, argb);
          return;
       }
-      int baseA = (argb >>> 24) & 0xFF;
-      int rgb = argb & 0xFFFFFF;
-      // Body between the two arc bands.
-      context.method_25294(x, y + r, x + w, y + h - r, argb);
+      // Crisp corners: each arc row is filled to a single integer inset (no fractional-alpha fringe, which
+      // smears/blurs once the UI is drawn inside a scaled matrix). Sharp at the small radii the mod uses.
+      context.method_25294(x, y + r, x + w, y + h - r, argb);   // body between the two arc bands
       for (int i = 0; i < r; i++) {
-         double dy = r - i - 0.5;
+         double dy = r - (i + 0.5);
          double dx = Math.sqrt((double) r * r - dy * dy);
-         double insetF = r - dx;
-         int solid = (int) Math.ceil(insetF);
-         int left = x + solid;
-         int right = x + w - solid;
+         int inset = (int) Math.round(r - dx);
+         int left = x + inset;
+         int right = x + w - inset;
          if (right > left) {
             context.method_25294(left, y + i, right, y + i + 1, argb);
             context.method_25294(left, y + h - i - 1, right, y + h - i, argb);
          }
-         double cov = solid - insetF;
-         if (cov > 0.004) {
-            int a = (int) Math.round(baseA * cov);
-            if (a > 0) {
-               int col = (a << 24) | rgb;
-               context.method_25294(left - 1, y + i, left, y + i + 1, col);
-               context.method_25294(right, y + i, right + 1, y + i + 1, col);
-               context.method_25294(left - 1, y + h - i - 1, left, y + h - i, col);
-               context.method_25294(right, y + h - i - 1, right + 1, y + h - i, col);
-            }
-         }
       }
    }
 
-   /** 1px border matching {@link #drawRoundedRect}, with the same O(radius) anti-aliased arcs. */
+   /** Crisp 1px border matching {@link #drawRoundedRect} — hard-edged arcs, no blurry alpha fringe. */
    public static void drawRoundedBorder(class_332 context, int x, int y, int w, int h, int radius, Color c) {
       int r = Math.min(radius, Math.min(w, h) / 2);
       int argb = c.getRGB();
@@ -189,39 +176,31 @@ public final class TurtUIUtils {
          context.method_73198(x, y, w, h, argb);
          return;
       }
-      int baseA = (argb >>> 24) & 0xFF;
-      int rgb = argb & 0xFFFFFF;
       // Straight edges between the corner arcs.
       context.method_25294(x + r, y, x + w - r, y + 1, argb);
       context.method_25294(x + r, y + h - 1, x + w - r, y + h, argb);
       context.method_25294(x, y + r, x + 1, y + h - r, argb);
       context.method_25294(x + w - 1, y + r, x + w, y + h - r, argb);
-      // Arc pixels: split the edge across the two pixels it straddles so it reads smooth.
+      // Corner arcs: draw a horizontal run per row that connects to the previous row's inset, so the staircase
+      // stays continuous (no diagonal gaps) and crisp — no fractional-alpha pixels to blur when scaled.
+      int prevInset = r;
       for (int i = 0; i < r; i++) {
-         double dy = r - i - 0.5;
+         double dy = r - (i + 0.5);
          double dx = Math.sqrt((double) r * r - dy * dy);
-         double insetF = r - dx;
-         int solid = (int) Math.ceil(insetF);
-         double cov = solid - insetF;
-         // Skip pixels that would be nearly invisible - saves fills with no visible difference.
-         int aIn = cov > 0.94 ? 0 : (int) Math.round(baseA * Math.max(0.0, 1.0 - cov));
-         int aOut = cov < 0.06 ? 0 : (int) Math.round(baseA * cov);
-         int left = x + solid;
-         int right = x + w - solid;
-         if (aIn > 0) {
-            int col = (aIn << 24) | rgb;
-            context.method_25294(left, y + i, left + 1, y + i + 1, col);
-            context.method_25294(right - 1, y + i, right, y + i + 1, col);
-            context.method_25294(left, y + h - i - 1, left + 1, y + h - i, col);
-            context.method_25294(right - 1, y + h - i - 1, right, y + h - i, col);
+         int inset = (int) Math.round(r - dx);
+         int runL = x + inset;
+         int runR = x + prevInset + 1;
+         int rMirrorL = x + w - prevInset - 1;
+         int rMirrorR = x + w - inset;
+         if (runR > runL) {
+            context.method_25294(runL, y + i, runR, y + i + 1, argb);            // top-left
+            context.method_25294(runL, y + h - i - 1, runR, y + h - i, argb);    // bottom-left
          }
-         if (aOut > 0) {
-            int col = (aOut << 24) | rgb;
-            context.method_25294(left - 1, y + i, left, y + i + 1, col);
-            context.method_25294(right, y + i, right + 1, y + i + 1, col);
-            context.method_25294(left - 1, y + h - i - 1, left, y + h - i, col);
-            context.method_25294(right, y + h - i - 1, right + 1, y + h - i, col);
+         if (rMirrorR > rMirrorL) {
+            context.method_25294(rMirrorL, y + i, rMirrorR, y + i + 1, argb);          // top-right
+            context.method_25294(rMirrorL, y + h - i - 1, rMirrorR, y + h - i, argb);  // bottom-right
          }
+         prevInset = inset;
       }
    }
 

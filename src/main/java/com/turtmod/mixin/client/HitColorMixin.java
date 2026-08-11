@@ -80,25 +80,11 @@ public abstract class HitColorMixin implements OverlayReloadListener {
       TurtLogger.info("[turtmod] HitColor reload: writing tint color=" + Integer.toHexString(this.hitColorConfig.getTintColor()));
       int color = this.hitColorConfig.getTintColor();
       int alpha = color >> 24 & 255;
-
-      // When Hit Color is a gradient, paint the 8 top rows as a clean vertical multi-stop blend.
-      // The gradient supplies the RGB per row; the flash's alpha stays whatever the tint computed.
-      TurtModConfig cfg = TurtModClient.getConfig();
-      TurtModConfig.GradientDef grad = (cfg != null && cfg.gradients != null)
-         ? cfg.gradients.get(com.turtmod.config.GradientKeys.HIT_COLOR) : null;
-      boolean gradient = grad != null && grad.isGradient();
+      int red = color >> 16 & 255;
+      int green = color >> 8 & 255;
+      int blue = color & 255;
 
       for (int i = 0; i < 8; ++i) {
-         int rgb;
-         if (gradient) {
-            // colorAt clamps, so i=7 → t=1.0 → the last stop (clean top→bottom blend, no wrap-around).
-            rgb = grad.colorAt((float) i / 7.0F);
-         } else {
-            rgb = color;
-         }
-         int red = rgb >> 16 & 255;
-         int green = rgb >> 8 & 255;
-         int blue = rgb & 255;
          for (int j = 0; j < 16; ++j) {
             nativeImage.method_4305(j, i, turtmod$getColorInt(red, green, blue, alpha));
          }
