@@ -12,6 +12,8 @@ public class TurtUIButton {
    public final String label;
    public final TurtUITheme theme;
    public final Runnable onClick;
+   /** Optional pixel icon (12x12 grid, see TurtIcons) drawn left of the label — or icon-only if it's tight. */
+   public String[] icon = null;
    private float glow = 0f;
    private float press = 0f;          // 1 on click, decays to 0 → tactile squish
    private long lastTickNs = System.nanoTime();
@@ -25,6 +27,12 @@ public class TurtUIButton {
       this.label = label;
       this.theme = theme;
       this.onClick = onClick;
+   }
+
+   /** Fluent icon setter: {@code new TurtUIButton(...).withIcon(TurtIcons.copy())}. */
+   public TurtUIButton withIcon(String[] ic) {
+      this.icon = ic;
+      return this;
    }
 
    public void render(class_332 context, int mouseX, int mouseY, class_327 textRenderer) {
@@ -67,9 +75,23 @@ public class TurtUIButton {
       TurtUIUtils.drawRoundedBorder(context, this.x, this.y, this.width, this.height, 4, border);
 
       int textWidth = textRenderer.method_1727(this.label);
-      int textX = this.x + (this.width - textWidth) / 2;
       int textY = this.y + (this.height - 8) / 2;
-      context.method_51433(textRenderer, this.label, textX, textY, text.getRGB(), glow > 0.5f);
+      if (this.icon == null) {
+         int textX = this.x + (this.width - textWidth) / 2;
+         context.method_51433(textRenderer, this.label, textX, textY, text.getRGB(), glow > 0.5f);
+      } else {
+         int isz = Math.min(14, this.height - 4);
+         int gap = 3;
+         int groupW = isz + gap + textWidth;
+         if (groupW > this.width - 4) {
+            // Too tight for icon + label — show the icon alone, centred.
+            TurtIcons.drawFit(context, this.icon, this.x + (this.width - isz) / 2, this.y + (this.height - isz) / 2, isz);
+         } else {
+            int gx = this.x + (this.width - groupW) / 2;
+            TurtIcons.drawFit(context, this.icon, gx, this.y + (this.height - isz) / 2, isz);
+            context.method_51433(textRenderer, this.label, gx + isz + gap, textY, text.getRGB(), glow > 0.5f);
+         }
+      }
 
       if (pressing) {
          context.method_51448().popMatrix();

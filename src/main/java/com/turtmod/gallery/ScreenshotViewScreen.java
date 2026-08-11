@@ -36,6 +36,10 @@ public class ScreenshotViewScreen extends class_437 {
    private final class_437 parent;
    private final List<File> screenshots = new ArrayList();
    private final List<TurtUIButton> buttons = new ArrayList();
+
+   /** Attach a pixel icon to a button and return it (for inline use when building the button row). */
+   private static TurtUIButton icon(TurtUIButton b, String[] ic) { b.icon = ic; return b; }
+
    private int currentIndex = -1;
    private class_2960 textureId;
    private int imageWidth;
@@ -83,16 +87,16 @@ public class ScreenshotViewScreen extends class_437 {
       int rowY = this.field_22790 - 28;
       int totalW = btnW * 7 + btnGap * 6;
       int startX = this.field_22789 / 2 - totalW / 2;
-      this.buttons.add(new TurtUIButton(startX, rowY, btnW, 20, "Prev", btnTheme, this::previousScreenshot));
-      this.buttons.add(new TurtUIButton(startX + btnW + btnGap, rowY, btnW, 20, "Next", btnTheme, this::nextScreenshot));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 2, rowY, btnW, 20, "Edit", btnTheme, this::editCurrent));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 3, rowY, btnW, 20, "Copy", btnTheme, this::copyCurrent));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 4, rowY, btnW, 20, "Open", btnTheme, this::openCurrent));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 5, rowY, btnW, 20, "Folder", btnTheme, this::openFolder));
-      this.buttons.add(new TurtUIButton(startX + (btnW + btnGap) * 6, rowY, btnW, 20, "Delete", btnTheme, this::deleteCurrent));
-      this.buttons.add(new TurtUIButton(this.field_22789 - 68, 10, 58, 20, "Back", btnTheme, this::method_25419));
-      this.buttons.add(new TurtUIButton(10, this.field_22790 / 2 - 10, 28, 20, "<", btnTheme, this::previousScreenshot));
-      this.buttons.add(new TurtUIButton(this.field_22789 - 38, this.field_22790 / 2 - 10, 28, 20, ">", btnTheme, this::nextScreenshot));
+      this.buttons.add(icon(new TurtUIButton(startX, rowY, btnW, 20, "Prev", btnTheme, this::previousScreenshot), com.turtmod.ui.TurtIcons.arrowBack()));
+      this.buttons.add(icon(new TurtUIButton(startX + btnW + btnGap, rowY, btnW, 20, "Next", btnTheme, this::nextScreenshot), com.turtmod.ui.TurtIcons.arrowFwd()));
+      this.buttons.add(icon(new TurtUIButton(startX + (btnW + btnGap) * 2, rowY, btnW, 20, "Edit", btnTheme, this::editCurrent), com.turtmod.ui.TurtIcons.pencil()));
+      this.buttons.add(icon(new TurtUIButton(startX + (btnW + btnGap) * 3, rowY, btnW, 20, "Copy", btnTheme, this::copyCurrent), com.turtmod.ui.TurtIcons.copy()));
+      this.buttons.add(icon(new TurtUIButton(startX + (btnW + btnGap) * 4, rowY, btnW, 20, "Open", btnTheme, this::openCurrent), com.turtmod.ui.TurtIcons.export()));
+      this.buttons.add(icon(new TurtUIButton(startX + (btnW + btnGap) * 5, rowY, btnW, 20, "Folder", btnTheme, this::openFolder), com.turtmod.ui.TurtIcons.folder()));
+      this.buttons.add(icon(new TurtUIButton(startX + (btnW + btnGap) * 6, rowY, btnW, 20, "Delete", btnTheme, this::deleteCurrent), com.turtmod.ui.TurtIcons.trash()));
+      this.buttons.add(icon(new TurtUIButton(this.field_22789 - 68, 10, 58, 20, "Back", btnTheme, this::method_25419), com.turtmod.ui.TurtIcons.arrowBack()));
+      this.buttons.add(icon(new TurtUIButton(10, this.field_22790 / 2 - 10, 28, 20, "", btnTheme, this::previousScreenshot), com.turtmod.ui.TurtIcons.arrowBack()));
+      this.buttons.add(icon(new TurtUIButton(this.field_22789 - 38, this.field_22790 / 2 - 10, 28, 20, "", btnTheme, this::nextScreenshot), com.turtmod.ui.TurtIcons.arrowFwd()));
    }
 
    private void loadScreenshotList(File initialFile) {

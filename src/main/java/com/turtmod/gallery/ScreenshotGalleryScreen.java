@@ -91,10 +91,10 @@ public class ScreenshotGalleryScreen extends class_437 {
       int sw = com.turtmod.ui.TurtLauncher.SIDEBAR_W - 12;
       int sy = this.panelY + com.turtmod.ui.TurtLauncher.HEADER_H + 8;
       int gap = 4, bh = 18;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openFolder)); sy += bh + gap;
-      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", btnTheme, this::loadScreenshots));
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", btnTheme, this::openFolder).withIcon(com.turtmod.ui.TurtIcons.folder())); sy += bh + gap;
+      this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", btnTheme, this::loadScreenshots).withIcon(com.turtmod.ui.TurtIcons.arrowFwd()));
       int backY = this.panelY + this.panelH - com.turtmod.ui.TurtLauncher.FOOTER_H - bh - 6;
-      this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", btnTheme, this::method_25419));
+      this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", btnTheme, this::method_25419).withIcon(com.turtmod.ui.TurtIcons.arrowBack()));
    }
 
    private void layoutPanels() {

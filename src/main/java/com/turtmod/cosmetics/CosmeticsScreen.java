@@ -131,31 +131,31 @@ public class CosmeticsScreen extends class_437 {
       int backY = this.panelY + this.panelH - TurtLauncher.FOOTER_H - bh - 6;
 
       if (this.view == View.GALLERY) {
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "New Preset", t, this::newPreset)); sy += bh + group;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Edit", t, () -> { if (hasSel()) openEditor(this.presets.get(this.selected)); else setStatus("Pick a preset first."); })); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply", t, this::applySelected)); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Delete", t, this::deleteSelected));
-         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, this::method_25419));
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "New Preset", t, this::newPreset).withIcon(com.turtmod.ui.TurtIcons.plus())); sy += bh + group;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Edit", t, () -> { if (hasSel()) openEditor(this.presets.get(this.selected)); else setStatus("Pick a preset first."); }).withIcon(com.turtmod.ui.TurtIcons.pencil())); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply", t, this::applySelected).withIcon(com.turtmod.ui.TurtIcons.check())); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Delete", t, this::deleteSelected).withIcon(com.turtmod.ui.TurtIcons.trash()));
+         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, this::method_25419).withIcon(com.turtmod.ui.TurtIcons.arrowBack()));
       } else if (this.view == View.EDIT) {
          // Sidebar: save/apply both return to the gallery; model toggle is a segmented control under the preview.
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Save & Close", t, this::backToGallery)); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply Now", t, () -> { saveEditing(); applyPreset(this.editing); backToGallery(); })); sy += bh + group;
-         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back to Presets", t, this::backToGallery));
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Save & Close", t, this::backToGallery).withIcon(com.turtmod.ui.TurtIcons.check())); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Apply Now", t, () -> { saveEditing(); applyPreset(this.editing); backToGallery(); }).withIcon(com.turtmod.ui.TurtIcons.check())); sy += bh + group;
+         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back to Presets", t, this::backToGallery).withIcon(com.turtmod.ui.TurtIcons.arrowBack()));
 
          // Content-area skin sources: IGN field + Fetch, then Upload PNG / Skins Library.
          int col = this.contentX;
          int colW = this.contentW * 52 / 100;
          int cy = this.contentY + 44;
          this.ignX = col; this.ignY = cy; this.ignW = colW - 60; this.ignH = bh;
-         this.buttons.add(new TurtUIButton(col + colW - 56, cy, 56, bh, "Fetch", t, () -> fetchByName(this.ignInput))); cy += bh + gap;
+         this.buttons.add(new TurtUIButton(col + colW - 56, cy, 56, bh, "Fetch", t, () -> fetchByName(this.ignInput)).withIcon(com.turtmod.ui.TurtIcons.export())); cy += bh + gap;
          int halfW = (colW - gap) / 2;
-         this.buttons.add(new TurtUIButton(col, cy, halfW, bh, "Upload PNG", t, this::importSkinFile));
-         this.buttons.add(new TurtUIButton(col + halfW + gap, cy, colW - halfW - gap, bh, "Skins Library", t, this::openLibrary));
+         this.buttons.add(new TurtUIButton(col, cy, halfW, bh, "Upload PNG", t, this::importSkinFile).withIcon(com.turtmod.ui.TurtIcons.export()));
+         this.buttons.add(new TurtUIButton(col + halfW + gap, cy, colW - halfW - gap, bh, "Skins Library", t, this::openLibrary).withIcon(com.turtmod.ui.TurtIcons.folder()));
       } else { // LIBRARY — pull skins in from anywhere: upload, drag, or the folder itself.
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload PNG", t, this::importSkinToLibrary)); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", t, this::openSkinsFolder)); sy += bh + gap;
-         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", t, this::loadAvailableSkins));
-         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, () -> { this.view = View.EDIT; this.rebuildButtons(); }));
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Upload PNG", t, this::importSkinToLibrary).withIcon(com.turtmod.ui.TurtIcons.export())); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Open Folder", t, this::openSkinsFolder).withIcon(com.turtmod.ui.TurtIcons.folder())); sy += bh + gap;
+         this.buttons.add(new TurtUIButton(sx, sy, sw, bh, "Refresh", t, this::loadAvailableSkins).withIcon(com.turtmod.ui.TurtIcons.arrowFwd()));
+         this.buttons.add(new TurtUIButton(sx, backY, sw, bh, "Back", t, () -> { this.view = View.EDIT; this.rebuildButtons(); }).withIcon(com.turtmod.ui.TurtIcons.arrowBack()));
       }
    }
 

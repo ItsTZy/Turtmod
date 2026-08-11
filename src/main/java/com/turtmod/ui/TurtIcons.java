@@ -665,6 +665,126 @@ public final class TurtIcons {
       "............",
    };
 
+   private static final String[] COPY = {
+      "............",
+      "..oooooo....",
+      "..owwwwo....",
+      "..owwwwooooo",
+      "..owwwwowwwo",
+      "..ooooowwwwo",
+      "....owwwwwwo",
+      "....owwwwwwo",
+      "....owwwwwwo",
+      "....oooooooo",
+      "............",
+      "............",
+   };
+
+   private static final String[] TRASH = {
+      "............",
+      "...oooooo...",
+      "..oooooooo..",
+      "...o....o...",
+      "..oooooooo..",
+      "..owgwgwgo..",
+      "..owgwgwgo..",
+      "..owgwgwgo..",
+      "..owgwgwgo..",
+      "..oooooooo..",
+      "............",
+      "............",
+   };
+
+   private static final String[] FOLDER = {
+      "............",
+      "............",
+      ".ooooo......",
+      ".owwwooooo..",
+      ".owwwwwwwwo.",
+      ".oyyyyyyyyo.",
+      ".oyyyyyyyyo.",
+      ".oyyyyyyyyo.",
+      ".oyyyyyyyyo.",
+      ".oooooooooo.",
+      "............",
+      "............",
+   };
+
+   private static final String[] EXPORT = {
+      "............",
+      "....oooooo..",
+      "....o..wwo..",
+      "....o.wwoo..",
+      "....owwoo...",
+      ".oowwooo....",
+      ".owwoo......",
+      ".owoo.......",
+      ".ooo........",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] PENCIL = {
+      "..........o.",
+      ".........owo",
+      "........owyo",
+      ".......owyo.",
+      "......owyo..",
+      ".....owyo...",
+      "....owyo....",
+      "...owyo.....",
+      "..oooo......",
+      ".oygo.......",
+      "..o.........",
+      "............",
+   };
+
+   private static final String[] ARROWR = {
+      "............",
+      "............",
+      "....ll......",
+      ".....ll.....",
+      "......ll....",
+      ".......ll...",
+      ".......ll...",
+      "......ll....",
+      ".....ll.....",
+      "....ll......",
+      "............",
+      "............",
+   };
+
+   private static final String[] PLUS = {
+      "............",
+      ".....oo.....",
+      ".....gg.....",
+      ".....gg.....",
+      "..ooggggoo..",
+      "..gggggggg..",
+      "..gggggggg..",
+      "..ooggggoo..",
+      ".....gg.....",
+      ".....gg.....",
+      "............",
+      "............",
+   };
+
+   private static final String[] CHECK = {
+      "............",
+      "............",
+      "..........ll",
+      ".........llo",
+      "........llo.",
+      "..o....llo..",
+      "..lo..llo...",
+      "..llolll....",
+      "...lll......",
+      "....l.......",
+      "............",
+      "............",
+   };
+
    // ── Registry + module mapping ────────────────────────────────────────────────
 
    private static final Map<String, String[]> MODULES = new HashMap<>();
@@ -730,6 +850,15 @@ public final class TurtIcons {
    public static String[] eye()       { return EYE; }
    public static String[] dots()      { return DOTS; }
    public static String[] wrench()    { return GEAR; }
+   public static String[] copy()      { return COPY; }
+   public static String[] trash()     { return TRASH; }
+   public static String[] folder()    { return FOLDER; }
+   public static String[] export()    { return EXPORT; }
+   public static String[] pencil()    { return PENCIL; }
+   public static String[] arrowFwd()  { return ARROWR; }
+   public static String[] person2()   { return PERSON; }
+   public static String[] plus()      { return PLUS; }
+   public static String[] check()     { return CHECK; }
 
    // ── Drawing ───────────────────────────────────────────────────────────────────
 

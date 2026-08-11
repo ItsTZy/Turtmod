@@ -141,7 +141,11 @@ public class TurtUICheckbox {
       String q = this.highlightQuery;
       int idx = (q == null || q.isEmpty()) ? -1 : this.label.toLowerCase(java.util.Locale.ROOT).indexOf(q);
       if (idx < 0) {
-         TurtUIUtils.drawText(ctx, this.textRenderer, this.label, nx, ny, textColor, false, false, false);
+         // Trim long names so they never run under the toggle pill (fits icon + label + toggle in the card).
+         int avail = (this.x + w - 33) - nx;
+         String shown = this.textRenderer.method_1727(this.label) <= avail
+            ? this.label : this.textRenderer.method_27523(this.label, Math.max(0, avail - 4)) + "…";
+         TurtUIUtils.drawText(ctx, this.textRenderer, shown, nx, ny, textColor, false, false, false);
       } else {
          String pre = this.label.substring(0, idx);
          String mid = this.label.substring(idx, idx + q.length());
