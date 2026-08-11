@@ -86,7 +86,7 @@ public class TurtModMainMenuScreen extends class_437 {
          boolean hov = TurtLauncher.navItemHovered(panelX, panelY, i, mx, my);
          String[] ic = switch (i) {
             case 0 -> com.turtmod.ui.TurtIcons.layout();     // HUD Editor
-            case 1 -> com.turtmod.ui.TurtIcons.person();     // Skin Changer
+            case 1 -> com.turtmod.ui.TurtIcons.shirt();      // Skin Changer
             case 2 -> com.turtmod.ui.TurtIcons.gear();       // Settings
             case 3 -> com.turtmod.ui.TurtIcons.camera();     // Gallery
             case 5 -> com.turtmod.ui.TurtIcons.arrowBack();  // Back

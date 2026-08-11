@@ -35,7 +35,8 @@ public class TitleScreenMixin extends class_437 {
       int y = this.field_22790 / 4 + 48 + 48;
       this.method_37063(new TurtLogoButton(x, y, 20, 20, (button) -> this.field_22787.method_1507(new TurtModMainMenuScreen(this))));
       int col = this.field_22789 / 2 - 124;
-      this.method_37063(class_4185.method_46430(class_2561.method_43470("📸"), (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))).method_46434(col, y, 20, 20).method_46431());
+      this.method_37063(new com.turtmod.ui.TurtIconButton(col, y, 20, 20, com.turtmod.ui.TurtIcons.camera(),
+         (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))));
       com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
          int gap = 4;

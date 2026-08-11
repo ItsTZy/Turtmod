@@ -177,13 +177,13 @@ public class ScreenshotEditorScreen extends class_437 {
       int avail = this.lw - 12 - 120;
       int bw = Math.max(38, Math.min(78, (avail - 3 * gap) / 4));
       int x = this.lw - 12 - bw;
-      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Cancel", t, this::onCancel));
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Cancel", t, this::onCancel).withIcon(com.turtmod.ui.TurtIcons.arrowBack()));
       x -= bw + gap;
-      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Copy", t, this::onCopy));
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Copy", t, this::onCopy).withIcon(com.turtmod.ui.TurtIcons.copy()));
       x -= bw + gap;
-      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save Copy", t, this::onSaveCopy));
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save Copy", t, this::onSaveCopy).withIcon(com.turtmod.ui.TurtIcons.export()));
       x -= bw + gap;
-      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save", t, this::onSave));
+      this.buttons.add(new TurtUIButton(x, y, bw, bh, "Save", t, this::onSave).withIcon(com.turtmod.ui.TurtIcons.check()));
    }
 
    private void loadTexture() {

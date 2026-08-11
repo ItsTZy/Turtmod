@@ -785,6 +785,96 @@ public final class TurtIcons {
       "............",
    };
 
+   private static final String[] SHIRT = {
+      "............",
+      "..oo....oo..",
+      ".owwo..owwo.",
+      "owwwwooowwwo",
+      "owgggwwgggwo",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oooooooooo.",
+      "............",
+      "............",
+   };
+
+   private static final String[] GEM = {
+      "............",
+      "...oooooo...",
+      "..occccco...",
+      ".occccccco..",
+      "occccccccco.",
+      ".occcccco...",
+      "..occcco....",
+      "...occo.....",
+      "....oo......",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] WRENCH2 = {
+      ".........oo.",
+      "........owwo",
+      ".......owwo.",
+      "......owwo..",
+      ".....owwo...",
+      "..o.owwo....",
+      ".owoowo.....",
+      ".owwowo.....",
+      "..owwo......",
+      ".owwoo......",
+      ".owo........",
+      ".oo.........",
+   };
+
+   private static final String[] ARMOR2 = {
+      "............",
+      ".oo......oo.",
+      ".onnooonno..",
+      "onnnnnnnnno.",
+      "onnnwwwnnno.",
+      "onnnnnnnnno.",
+      "onnnnnnnnno.",
+      ".onnnnnnno..",
+      ".onnnnnnno..",
+      "..oooooooo..",
+      "............",
+      "............",
+   };
+
+   private static final String[] OUTLINE = {
+      "............",
+      ".gggggggggg.",
+      ".g........g.",
+      ".g.oooooo.g.",
+      ".g.o....o.g.",
+      ".g.o....o.g.",
+      ".g.o....o.g.",
+      ".g.oooooo.g.",
+      ".g........g.",
+      ".gggggggggg.",
+      "............",
+      "............",
+   };
+
+   private static final String[] FREELOOK = {
+      "............",
+      ".....gg.....",
+      "....gggg....",
+      ".....gg.....",
+      ".g.......g..",
+      "gg.......gg.",
+      ".g...o...g..",
+      "gg.......gg.",
+      ".g.......g..",
+      ".....gg.....",
+      "....gggg....",
+      ".....gg.....",
+   };
+
    // ── Registry + module mapping ────────────────────────────────────────────────
 
    private static final Map<String, String[]> MODULES = new HashMap<>();
@@ -799,7 +889,7 @@ public final class TurtIcons {
       MODULES.put("Hurt Cam", CAMERA);
       MODULES.put("Potion HUD", BOTTLE);
       MODULES.put("Zoom", MAG);
-      MODULES.put("Armor HUD", ARMOR);
+      MODULES.put("Armor HUD", ARMOR2);
       MODULES.put("Hit Color", TARGET);
       MODULES.put("Reach Display", RULER);
       MODULES.put("Hitboxes", HITBOX);
@@ -812,15 +902,15 @@ public final class TurtIcons {
       MODULES.put("Clear View", EYE);
       MODULES.put("Overlays", CLOUD);
       MODULES.put("Shield Tweaks", SHIELD);
-      MODULES.put("Freelook", EYE);
-      MODULES.put("Own Nametag", CHAT);
+      MODULES.put("Freelook", FREELOOK);
+      MODULES.put("Own Nametag", PERSON);
       MODULES.put("Clean F3", LINES);
       MODULES.put("Scoreboard Tweaks", LINES);
       MODULES.put("Chat Tweaks", CHAT);
       MODULES.put("Command Keys", KEYBOARD);
       MODULES.put("Module Notifications", BELL);
       MODULES.put("Theme Settings", PALETTE);
-      MODULES.put("Block Outline", CUBE);
+      MODULES.put("Block Outline", OUTLINE);
       MODULES.put("Held Item Tweaks", SWORD);
       MODULES.put("Sprint Display", BOOT);
       MODULES.put("Elytra Pitch HUD", WINGS);
@@ -849,7 +939,9 @@ public final class TurtIcons {
    public static String[] arrowBack() { return ARROW; }
    public static String[] eye()       { return EYE; }
    public static String[] dots()      { return DOTS; }
-   public static String[] wrench()    { return GEAR; }
+   public static String[] wrench()    { return WRENCH2; }
+   public static String[] gem()       { return GEM; }
+   public static String[] shirt()     { return SHIRT; }
    public static String[] copy()      { return COPY; }
    public static String[] trash()     { return TRASH; }
    public static String[] folder()    { return FOLDER; }

@@ -372,7 +372,7 @@ public final class TurtModClientConfigScreen extends class_437 {
          boolean hov = TurtLauncher.navItemHovered(px, py, i, mlx, mly);
          String name = tabs[i] == Tab.HUD ? "HUD" : tabs[i].name().charAt(0) + tabs[i].name().substring(1).toLowerCase();
          String[] ic = switch (tabs[i]) {
-            case VISUALS -> com.turtmod.ui.TurtIcons.eye();
+            case VISUALS -> com.turtmod.ui.TurtIcons.gem();
             case HUD -> com.turtmod.ui.TurtIcons.layout();
             case UTILITY -> com.turtmod.ui.TurtIcons.wrench();
             case MISC -> com.turtmod.ui.TurtIcons.dots();

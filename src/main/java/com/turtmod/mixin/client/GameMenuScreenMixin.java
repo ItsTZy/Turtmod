@@ -32,7 +32,8 @@ public abstract class GameMenuScreenMixin extends class_437 {
       int col = this.field_22789 / 2 - 124;
       com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
       if (cfg == null || cfg.hud.screenshotMenuButton) {
-         this.method_37063(class_4185.method_46430(class_2561.method_43470("📸"), (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))).method_46434(col, y, 20, 20).method_46431());
+         this.method_37063(new com.turtmod.ui.TurtIconButton(col, y, 20, 20, com.turtmod.ui.TurtIcons.camera(),
+            (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))));
       }
       // Skin Changer: a wider labelled button to the LEFT of the gallery button, with a live skin preview above.
       if (cfg == null || cfg.hud.skinChangerMenuButton) {
