@@ -288,8 +288,9 @@ public final class TurtUIUtils {
 
    /** Subtle accent glow that follows the cursor — draw over the backdrop, under the panel. */
    public static void drawCursorGlow(class_332 context, int mx, int my) {
-      for (int r = 64; r >= 10; r -= 9) {
-         int a = (int)(4.5f * (1.0f - (float) r / 64f)) + 1;
+      // A small, very faint glow — the old 64px green halo trailing the cursor read as busy.
+      for (int r = 22; r >= 8; r -= 7) {
+         int a = (int)(3.0f * (1.0f - (float) r / 22f)) + 1;
          drawRoundedRect(context, mx - r, my - r, r * 2, r * 2, r / 2, new Color(120, 230, 160, a));
       }
    }

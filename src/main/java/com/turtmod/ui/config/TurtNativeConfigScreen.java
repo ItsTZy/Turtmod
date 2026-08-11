@@ -292,7 +292,10 @@ public class TurtNativeConfigScreen extends class_437 {
             idx[0]++;
             return false;
          }
-         float rp = fade * 2.0f - idx[0] * 0.06f;
+         // Staggered reveal that ALWAYS settles to zero offset (the old formula left later rows shifted
+         // permanently right — same bug as the module grid).
+         float delay = Math.min(0.6f, idx[0] * 0.03f);
+         float rp = (fade - delay) / Math.max(0.001f, 1f - delay);
          rp = rp < 0f ? 0f : (rp > 1f ? 1f : rp);
          float e = TurtUIUtils.ease(rp);
          ctx.method_51448().pushMatrix();
