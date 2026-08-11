@@ -44,6 +44,14 @@ public class TurtNativeConfigScreen extends class_437 {
    private final String title;
    private int activeCat;
 
+   /** Optional "Live Preview" renderer for a single-module page (draws the HUD into the given box). */
+   public interface PreviewRenderer { void render(class_332 ctx, int x, int y, int w, int h); }
+   private PreviewRenderer preview;
+   private int previewY;
+   private int previewH;
+   /** Attach a live-preview box shown at the bottom of the page. Call before the screen opens. */
+   public void setPreview(PreviewRenderer p) { this.preview = p; }
+
    private final TurtUIScale uiScale = new TurtUIScale();
 
    private long lastFrameNs = System.nanoTime();
@@ -189,6 +197,7 @@ public class TurtNativeConfigScreen extends class_437 {
       this.drawTabs(ctx, mx, my);
       this.drawSearchBar(ctx, mx, my);
       this.drawList(ctx, mx, my);
+      this.drawPreviewPane(ctx);
       this.drawButtons(ctx, mx, my);
 
       ctx.method_51448().popMatrix();
@@ -219,7 +228,15 @@ public class TurtNativeConfigScreen extends class_437 {
       this.btnH = 18;
       this.btnW = 84;
       this.btnY = LOGICAL_H - TurtLauncher.FOOTER_H - 22;
-      this.listBottom = this.btnY - 4;
+      // Reserve a bottom band for the live-preview box on single-module pages; the option list shrinks to fit.
+      if (this.preview != null) {
+         this.previewH = 78;
+         this.previewY = this.btnY - 4 - this.previewH;
+         this.listBottom = this.previewY - 6;
+      } else {
+         this.previewH = 0;
+         this.listBottom = this.btnY - 4;
+      }
       this.doneX = this.contentX + this.contentW - this.btnW;
 
       // Tab pill geometry.
@@ -230,6 +247,18 @@ public class TurtNativeConfigScreen extends class_437 {
          this.tabW[i] = w;
          x += w + 4;
       }
+   }
+
+   /** Draws the "Live Preview" box (single-module pages only) and renders the HUD into it via the hook. */
+   private void drawPreviewPane(class_332 ctx) {
+      if (this.preview == null || this.previewH <= 0) {
+         return;
+      }
+      int x = this.contentX, y = this.previewY, w = this.contentW, h = this.previewH;
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4, Palette.CARD_BG);
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4, Palette.CARD_BORDER);
+      ctx.method_51433(this.field_22793, "LIVE PREVIEW", x + 7, y + 5, Palette.alpha(Palette.GREEN, 200).getRGB(), false);
+      this.preview.render(ctx, x + 6, y + 16, w - 12, h - 22);
    }
 
    private void drawTabs(class_332 ctx, int mx, int my) {

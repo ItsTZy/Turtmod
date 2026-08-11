@@ -48,7 +48,14 @@ public final class TurtModConfigScreenFactory {
          .onSave(() -> ConfigManager.save(TurtModClient.getConfig()))
          .build();
       config.load();
-      return new TurtNativeConfigScreen(parent, config);
+      TurtNativeConfigScreen screen = new TurtNativeConfigScreen(parent, config);
+      // Live "preview box" for modules that have a visual HUD — updates as you edit the settings.
+      if (com.turtmod.hud.HudPreview.has(kind)) {
+         final ModuleKind k = kind;
+         screen.setPreview((ctx, x, y, w, h) ->
+            com.turtmod.hud.HudPreview.render(ctx, class_310.method_1551(), TurtModClient.getConfig(), k, x, y, w, h));
+      }
+      return screen;
    }
 
    public static String getModuleDisplayName(ModuleKind kind) {

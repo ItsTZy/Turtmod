@@ -46,6 +46,18 @@ public final class KeystrokesFeature {
       if (client.field_1724 != null && config.misc.enabled && config.hud.keystrokesHud) {
          int x = HudEditorFeature.clampToScreenX(client, config.hud.keystrokesHudX, getScaledWidth(config));
          int y = HudEditorFeature.clampToScreenY(client, config.hud.keystrokesHudY, getScaledHeight(config));
+         drawAt(context, client, config, x, y);
+      }
+   }
+
+   /** Live-settings preview: draw the HUD at (x,y) with the current settings (no config position/clamp).
+    *  Caller (HudPreview) temporarily forces the module on so the cluster + sizing are correct. */
+   public static void renderPreview(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      drawAt(context, client, config, x, y);
+   }
+
+   private static void drawAt(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      {
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.keystrokesHudScalePercent);
          PanelSize size = getPanelBaseSize(client, config);
          boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config);
