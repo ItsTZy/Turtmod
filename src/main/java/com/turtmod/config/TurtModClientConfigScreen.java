@@ -400,10 +400,13 @@ public final class TurtModClientConfigScreen extends class_437 {
       context.method_44379(this.listLeft - 2, this.listTop - 2, this.listLeft + this.listW + 2, this.listBottom + 2);
       context.method_51448().pushMatrix();
       context.method_51448().translate(0f, -this.scrollY);
-      // Lunar-style staggered reveal: rows cascade in from the right when a tab opens.
+      // Lunar-style staggered reveal: rows cascade in from the right when a tab opens, then ALL settle to
+      // zero offset once the fade completes. (The old formula left high-index cards permanently shifted
+      // right — with many modules the lower cards visibly sat off to the side.)
       for (int i = 0; i < this.checkboxes.size(); i++) {
          TurtUICheckbox cb = this.checkboxes.get(i);
-         float rp = this.tabFade * 2.0f - i * 0.12f;
+         float delay = Math.min(0.6f, i * 0.03f);                       // capped so the stagger always finishes
+         float rp = (this.tabFade - delay) / Math.max(0.001f, 1f - delay);
          rp = rp < 0f ? 0f : (rp > 1f ? 1f : rp);
          float e = TurtUIUtils.ease(rp);
          context.method_51448().pushMatrix();

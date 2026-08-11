@@ -75,30 +75,15 @@ public final class TurtLauncher {
 
       // ── Header strip
       TurtUIUtils.drawRoundedRect(ctx, panelX, panelY, panelW, HEADER_H, 4, HEADER_BG);
-      // Logo in header left (uses BrandingRenderer so correct 640x640 texture dims).
-      // Gentle floating bob for a cute, living header (Lunar-style).
-      int logoBob = (int)Math.round(Math.sin(System.currentTimeMillis() * 0.0022) * 1.4);
-      BrandingRenderer.drawLogo(ctx, panelX + 8, panelY + (HEADER_H - LOGO_SZ) / 2 + logoBob, LOGO_SZ, LOGO_SZ);
+      // Logo in header left (static — a floating bob read as restless/busy).
+      BrandingRenderer.drawLogo(ctx, panelX + 8, panelY + (HEADER_H - LOGO_SZ) / 2, LOGO_SZ, LOGO_SZ);
       // Title text (gradient, after logo)
       TurtUIUtils.drawGradientText(ctx, tr, title, panelX + 10 + LOGO_SZ + 6, panelY + (HEADER_H - 8) / 2, GREEN, PINK, false, true);
       // Version right
       if (version != null)
          TurtUIUtils.drawText(ctx, tr, version, panelX + panelW - 8, panelY + (HEADER_H - 8) / 2, new Color(0x88AAAAAA, true), true, false);
-      // Gradient divider below header
+      // Clean gradient divider below header (no sweeping "shine" — it made the frame feel busy).
       TurtUIUtils.drawHGradientLine(ctx, panelX + 6, panelY + HEADER_H, panelW - 12, GREEN, PINK, 1);
-      // Lunar-style shine sweeping along the divider for a living, premium feel.
-      int lineX = panelX + 6;
-      int lineW = panelW - 12;
-      float st = (System.currentTimeMillis() % 3200L) / 3200.0F;
-      int sx = lineX + (int)(st * lineW);
-      for (int i = -10; i <= 10; i++) {
-         int a = (int)(140.0F * (1.0F - Math.abs(i) / 10.0F));
-         int xx = sx + i;
-         if (a <= 0 || xx < lineX || xx > lineX + lineW) {
-            continue;
-         }
-         ctx.method_25294(xx, panelY + HEADER_H, xx + 1, panelY + HEADER_H + 1, (a << 24) | 0xFFFFFF);
-      }
 
       // ── Sidebar bg + separator
       if (sidebar) {
@@ -141,11 +126,9 @@ public final class TurtLauncher {
       navIndicatorY = navIndicatorY < 0f ? target : TurtUIUtils.lerp01(navIndicatorY, target, dt, 18f);
       int y = Math.round(navIndicatorY);
 
-      // Gentle breathing pulse for a living, Lunar-style feel.
-      float pulse = 0.5f + 0.5f * (float) Math.sin(now * 3.5e-9);
-      int fillA = 30 + (int)(14 * pulse);
+      // Steady, quiet highlight (no breathing pulse — it read as restless).
       TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 4,
-         new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), fillA));
+         new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), 34));
       TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 4,
          new Color(GREEN.getRed(), GREEN.getGreen(), GREEN.getBlue(), 70));
       // Rounded accent bar on the left edge.

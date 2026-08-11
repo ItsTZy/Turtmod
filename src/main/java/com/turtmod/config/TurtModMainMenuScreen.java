@@ -87,19 +87,19 @@ public class TurtModMainMenuScreen extends class_437 {
          TurtLauncher.drawNavItem(ctx, this.field_22793, panelX, panelY, i, NAV_LABELS[i], false, hov);
       }
 
-      // ── Content: large logo + title + description
+      // ── Content: a calm, centered logo + title + tagline, with the memorial pinned at the bottom.
+      // Clean/minimal (Lunar-style): plenty of breathing room, no decorative pills, no restless motion.
       int cx2 = TurtLauncher.contentX(panelX);
       int cy2 = TurtLauncher.contentY(panelY);
       int cw  = TurtLauncher.contentW(panelW);
       int ch  = TurtLauncher.contentH(panelH);
       int centerCX = cx2 + cw / 2;
 
-      // Big logo centered in content
-      int logoW = 80, logoH = 80;
+      // Centered logo with a very subtle breathe so it feels alive without being busy.
+      int logoW = 76, logoH = 76;
       int logoX = centerCX - logoW / 2;
-      int logoY = cy2 + ch / 2 - logoH / 2 - 28;
-      // Gentle "breathing" pulse so the turtle feels alive.
-      float breathe = 1f + 0.025f * (float)Math.sin(System.currentTimeMillis() / 900.0);
+      int logoY = cy2 + (ch - logoH) / 2 - 26;
+      float breathe = 1f + 0.012f * (float)Math.sin(System.currentTimeMillis() / 1500.0);
       float lcx = logoX + logoW / 2f, lcy = logoY + logoH / 2f;
       ctx.method_51448().pushMatrix();
       ctx.method_51448().translate(lcx, lcy);
@@ -108,38 +108,20 @@ public class TurtModMainMenuScreen extends class_437 {
       BrandingRenderer.drawLogo(ctx, logoX, logoY, logoW, logoH);
       ctx.method_51448().popMatrix();
 
-      // "TurtMod" title gradient below logo
+      // "TurtMod" wordmark + a single quiet tagline underneath.
       TurtUIUtils.drawGradientText(ctx, this.field_22793, "TurtMod",
-         centerCX, logoY + logoH + 4, TurtLauncher.GREEN, TurtLauncher.PINK, true, true);
+         centerCX, logoY + logoH + 8, TurtLauncher.GREEN, TurtLauncher.PINK, true, true);
+      TurtUIUtils.drawText(ctx, this.field_22793, "Clean HUD & PvP utilities",
+         centerCX, logoY + logoH + 22, new Color(0x99A9B4B0, true), true, false);
 
-      // Credit line only — kept simple per request (no cycling puns).
-      TurtUIUtils.drawText(ctx, this.field_22793, "Made by Tzy  •  1.21.11",
-         centerCX, logoY + logoH + 16, new Color(0x88BBBBBB, true), true, false);
-
-      // Gradient divider
-      TurtUIUtils.drawHGradientLine(ctx, cx2, logoY + logoH + 26, cw, TurtLauncher.GREEN, TurtLauncher.PINK, 1);
-
-      // Feature pills row
-      String[] features = {"HUD", "Combat", "Visual", "Skins"};
-      int pillW = (cw - 6) / features.length;
-      int pillY = logoY + logoH + 32;
-      for (int i = 0; i < features.length; i++) {
-         int px2 = cx2 + i * (pillW + 2);
-         TurtUIUtils.drawRoundedRect(ctx, px2, pillY, pillW, 18, 3, TurtLauncher.SIDEBAR_W > 0 ? new Color(0x22FFFFFF, true) : TurtLauncher.BG);
-         TurtUIUtils.drawText(ctx, this.field_22793, features[i], px2 + pillW / 2, pillY + 5, TurtLauncher.GREEN, true, false);
-      }
-
-      // ── In memory of Turt — gentle pulsing memorial badge at the bottom of the content area
+      // ── In loving memory of Turt — kept, but a clean STATIC badge (no pulse) so it reads as a quiet tribute.
       String memorial = "In loving memory of Turt";
       int memW = this.field_22793.method_1727(memorial) + 22;
       int memX = centerCX - memW / 2;
       int memY = cy2 + ch - 20;
-      float pulse = 0.5f + 0.5f * (float)Math.sin(System.currentTimeMillis() / 1100.0);
-      // soft pink glow that breathes slowly
-      Color glow = new Color(TurtLauncher.PINK.getRed(), TurtLauncher.PINK.getGreen(), TurtLauncher.PINK.getBlue(),
-         (int)(26 + 26 * pulse));
-      TurtUIUtils.drawRoundedRect(ctx, memX, memY, memW, 16, 4, new Color(0x22000000, true));
-      ctx.method_73198(memX, memY, memW, 16, glow.getRGB());
+      TurtUIUtils.drawRoundedRect(ctx, memX, memY, memW, 16, 4, new Color(0x2E000000, true));
+      TurtUIUtils.drawRoundedBorder(ctx, memX, memY, memW, 16, 4,
+         new Color(TurtLauncher.PINK.getRed(), TurtLauncher.PINK.getGreen(), TurtLauncher.PINK.getBlue(), 55));
       TurtUIUtils.drawGradientText(ctx, this.field_22793, memorial,
          centerCX, memY + 4, TurtLauncher.PINK, TurtLauncher.GREEN, true, false);
 
