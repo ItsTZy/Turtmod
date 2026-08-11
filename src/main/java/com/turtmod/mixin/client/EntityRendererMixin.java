@@ -25,10 +25,16 @@ public abstract class EntityRendererMixin {
    private void turtmod$setHeartsLine(class_11890 player, class_10055 state, float tickDelta, CallbackInfo ci) {
       TurtModConfig config = TurtModClient.getConfig();
       if (config != null && config.misc.enabled && config.combat.playerHealthIndicator) {
-         // Note: the armor check applies ONLY to INVISIBLE players (see turtmod$showHealthForInvisible) —
-         // visible players always show their health here.
+         class_310 client = class_310.method_1551();
+         // Invisible OTHER players: reveal health ONLY if armored (matches turtmod$showHealthForInvisible).
+         // The SPRITE hearts render independently of the label gate, so they must be gated here too, or a
+         // no-armour invisible player would still show hearts. Visible players are unaffected.
+         if (client != null && player != client.field_1724 && player.method_5767()
+               && !(config.combat.playerHealthIndicatorArmorOnly && turtmod$hasVisibleArmor(player))) {
+            PlayerHeartSpriteRenderer.clear(state);
+            return;
+         }
          if (config.combat.playerHealthIndicatorStyle == TurtModConfig.PlayerHealthIndicatorStyle.SPRITE) {
-            class_310 client = class_310.method_1551();
             if (client != null && player != client.field_1724) {
                PlayerHeartSpriteRenderer.record(state, player.method_6032(), player.method_6063(), player.method_6067(), player.method_17682());
             } else {
