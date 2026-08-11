@@ -53,6 +53,8 @@ public class TurtUICheckbox {
    // the left and a sliding pill toggle on the right (set by the host screen after construction).
    public int rowWidth = 0;
    public int rowHeight = 18;
+   /** Optional pixel-art icon (12x12 grid, see TurtIcons) drawn left of the label in row mode. */
+   public String[] icon = null;
    /** When set (search active), the matching substring of the label is drawn in the accent pink. */
    public String highlightQuery = null;
    private float knobAnim = -1f;     // -1 = uninitialised (snaps to state on first frame)
@@ -127,9 +129,14 @@ public class TurtUICheckbox {
          TurtUIUtils.drawRoundedBorder(ctx, this.x, this.y, w, h, 4, new Color(255, 255, 255, (int)(36 * lift)));
       }
 
+      // Per-module pixel icon (describes the module), drawn left of the name; label shifts to make room.
+      if (this.icon != null) {
+         TurtIcons.drawFit(ctx, this.icon, this.x + 5, this.y + (h - 12) / 2, 12);
+      }
+
       // Name (with optional search-match highlight in accent pink so it reads on any row state).
       Color textColor = this.checked ? accent : (hovered ? new Color(0xFFFFFFFF, true) : this.theme.text());
-      int nx = this.x + 8;
+      int nx = this.x + (this.icon != null ? 21 : 8);
       int ny = this.y + (h - 8) / 2;
       String q = this.highlightQuery;
       int idx = (q == null || q.isEmpty()) ? -1 : this.label.toLowerCase(java.util.Locale.ROOT).indexOf(q);

@@ -176,6 +176,7 @@ public final class TurtModClientConfigScreen extends class_437 {
          cb.rowWidth = colWidth;          // Lunar-style full-width row + pill toggle
          cb.rowHeight = rowHeight - 2;
          cb.highlightQuery = q.isEmpty() ? null : q;
+         cb.icon = com.turtmod.ui.TurtIcons.forModule(option.displayName);  // pixel icon per module
          this.checkboxes.add(cb);
       }
 
