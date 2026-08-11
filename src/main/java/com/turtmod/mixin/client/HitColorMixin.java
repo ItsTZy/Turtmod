@@ -91,7 +91,8 @@ public abstract class HitColorMixin implements OverlayReloadListener {
       for (int i = 0; i < 8; ++i) {
          int rgb;
          if (gradient) {
-            rgb = grad.colorAt(7 == i ? 1.0F : (float) i / 7.0F);
+            // colorAt clamps, so i=7 → t=1.0 → the last stop (clean top→bottom blend, no wrap-around).
+            rgb = grad.colorAt((float) i / 7.0F);
          } else {
             rgb = color;
          }

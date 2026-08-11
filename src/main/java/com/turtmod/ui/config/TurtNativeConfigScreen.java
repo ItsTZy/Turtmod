@@ -507,8 +507,8 @@ public class TurtNativeConfigScreen extends class_437 {
       this.pickH = this.pickGradient ? 344 : 306;
       this.pickX = (LOGICAL_W - this.pickW) / 2;
       this.pickY = (LOGICAL_H - this.pickH) / 2;
-      // Soft accent halo + panel.
-      TurtUIUtils.drawHoverGlow(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, 1f, Palette.alpha(Palette.PINK, 120));
+      // Clean panel: a soft neutral drop shadow for depth (no coloured halo), rounded surface, crisp border.
+      TurtUIUtils.drawRoundedRect(ctx, this.pickX + 2, this.pickY + 3, this.pickW, this.pickH, 8, new Color(0, 0, 0, 90));
       TurtUIUtils.drawRoundedRect(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, new Color(13, 16, 23, 252));
       TurtUIUtils.drawRoundedBorder(ctx, this.pickX, this.pickY, this.pickW, this.pickH, 8, Palette.alpha(Palette.GREEN, 140));
       TurtUIUtils.drawGradientText(ctx, this.field_22793, this.pickerOpt.getName(), this.pickX + 14, this.pickY + 11,

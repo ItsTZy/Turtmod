@@ -168,8 +168,8 @@ public class HitboxColorsScreen extends class_437 {
       // Colour swatch (click to edit) + remove button, right-aligned.
       int swW = 34, swX = x + w - 34 - 8, swY = y + 3, swH = ROW_H - 8;
       // checker under transparency
-      ctx.method_25294(swX, swY, swX + swW, swY + swH, 0xFF303030);
-      ctx.method_25294(swX, swY, swX + swW, swY + swH, col);
+      TurtUIUtils.drawRoundedRect(ctx, swX, swY, swW, swH, 3, new Color(0xFF303030, false));
+      TurtUIUtils.drawRoundedRect(ctx, swX, swY, swW, swH, 3, new Color(col, true));
       TurtUIUtils.drawRoundedBorder(ctx, swX, swY, swW, swH, 3, new Color(255, 255, 255, 40));
       int rmX = x + w - 8, rmY = y + 3;   // "×" hit area is [rmX-16 .. rmX]
       ctx.method_51433(this.field_22793, "✕", rmX - 12, y + 5, 0xFFCC6666, false);
@@ -236,14 +236,14 @@ public class HitboxColorsScreen extends class_437 {
 
       // Preview + Done.
       int prevY = ay + ALPHA_H + 6;
-      ctx.method_25294(px, prevY, px + 40, prevY + 14, currentColor());
-      ctx.method_73198(px, prevY, 40, 14, 0xFF000000);
+      TurtUIUtils.drawRoundedRect(ctx, px, prevY, 40, 14, 3, new Color(currentColor(), true));
+      TurtUIUtils.drawRoundedBorder(ctx, px, prevY, 40, 14, 3, new Color(0, 0, 0, 255));
       String label = this.editing.contains(":") ? this.editing.substring(this.editing.indexOf(':') + 1) : this.editing;
       ctx.method_51433(this.field_22793, label, px + 46, prevY + 3, TEXT_MAIN.getRGB(), false);
       int dnX = px + PICK_W - 44;
       boolean dnHov = mx >= dnX && mx <= dnX + 44 && my >= prevY && my <= prevY + 14;
-      ctx.method_25294(dnX, prevY, dnX + 44, prevY + 14, (dnHov ? Palette.GREEN : BTN_BG).getRGB());
-      ctx.method_73198(dnX, prevY, 44, 14, PANEL_BORDER.getRGB());
+      TurtUIUtils.drawRoundedRect(ctx, dnX, prevY, 44, 14, 3, dnHov ? Palette.GREEN : BTN_BG);
+      TurtUIUtils.drawRoundedBorder(ctx, dnX, prevY, 44, 14, 3, PANEL_BORDER);
       ctx.method_25300(this.field_22793, "Done", dnX + 22, prevY + 3, (dnHov ? Palette.alpha(Palette.PANEL_BG, 255) : TEXT_MAIN).getRGB());
       this.doneX = dnX; this.doneY = prevY;
    }
@@ -260,8 +260,8 @@ public class HitboxColorsScreen extends class_437 {
    }
 
    private void drawField(class_332 ctx, int x, int y, int w, int h, String text, boolean focused, String ph) {
-      ctx.method_25294(x, y, x + w, y + h, Palette.SEARCH_BG.getRGB());
-      ctx.method_73198(x, y, w, h, (focused ? Palette.GREEN : Palette.SEARCH_BORDER).getRGB());
+      TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 3, Palette.SEARCH_BG);
+      TurtUIUtils.drawRoundedBorder(ctx, x, y, w, h, 3, focused ? Palette.GREEN : Palette.SEARCH_BORDER);
       boolean empty = text.isEmpty() && !focused;
       ctx.method_51433(this.field_22793, empty ? ph : text + (focused ? "_" : ""), x + 4, y + (h - 8) / 2, (empty ? Palette.TEXT_MUTED : Palette.TEXT).getRGB(), false);
    }

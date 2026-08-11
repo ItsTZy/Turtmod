@@ -39,18 +39,35 @@ public final class CustomThemeRenderer {
          return;
       }
       // Gradient background: a vertical multi-stop fade at the panel alpha when the bg colour has a gradient.
+      // Each row is inset to the rounded silhouette (same arc math as TurtUIUtils.drawRoundedRect) so gradient
+      // HUDs get the same rounded corners as solid ones, with a clean top→bottom blend (colorAt clamps, so the
+      // last row is the last stop — no first-colour line at the bottom).
       TurtModConfig.GradientDef bgGrad = config.gradients.get(com.turtmod.config.GradientKeys.HUD_BG);
       if (bgGrad != null && bgGrad.isGradient()) {
          int a = getEffectiveBackgroundAlpha(config);
          if (a == 0) {
             return;
          }
-         int n = Math.max(2, h);
-         for (int i = 0; i < n; i++) {
-            float t = (float) i / (n - 1);
+         int r = radiusFor(config, w, h);
+         for (int row = 0; row < h; row++) {
+            float t = (h > 1) ? (float) row / (h - 1) : 0f;
             int col = (a << 24) | (bgGrad.colorAt(t) & 0xFFFFFF);
-            int yy = y + Math.round(t * (h - 1));
-            context.method_25294(x, yy, x + w, yy + 1, col);
+            int inset = 0;
+            // Within r of the top or bottom edge, pull the row in by the circle arc so corners round off.
+            int distTop = row;
+            int distBot = h - 1 - row;
+            int edge = Math.min(distTop, distBot);
+            if (r > 0 && edge < r) {
+               double dy = r - edge - 0.5;
+               double dx = Math.sqrt((double) r * r - dy * dy);
+               inset = (int) Math.ceil(r - dx);
+            }
+            int yy = y + row;
+            int left = x + inset;
+            int right = x + w - inset;
+            if (right > left) {
+               context.method_25294(left, yy, right, yy + 1, col);
+            }
          }
          return;
       }

@@ -27,7 +27,10 @@ public final class GradientRuntime {
          if (g == null || !g.isGradient()) {
             continue;
          }
-         apply(cfg, e.getKey(), g.animatedColor(now));
+         // These fields are a single int (wireframe / outline / text colour) — a static "gradient" would just
+         // show one stop, which reads as "it doesn't work". So they ALWAYS flow (chroma-cycle) whenever a
+         // gradient is set, whether or not the Animate box is ticked.
+         apply(cfg, e.getKey(), g.flowColor(now));
       }
    }
 

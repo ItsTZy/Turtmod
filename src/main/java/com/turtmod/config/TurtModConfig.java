@@ -35,7 +35,12 @@ public final class TurtModConfig {
          return this.stops != null && this.stops.length >= 2;
       }
 
-      /** Colour at position t in [0,1] across the (evenly-spaced) stops, clean linear blend, t wraps. */
+      /**
+       * SPATIAL sampler: colour at position t across the (evenly-spaced) stops, clean linear blend.
+       * t is CLAMPED to [0,1] so t=0 is the first stop and t=1 is the LAST stop (no wrap-around) —
+       * this is what the bg fill / per-glyph text / hit-colour rows want, so the end never snaps back
+       * to the first colour.
+       */
       public int colorAt(float t) {
          if (this.stops == null || this.stops.length == 0) {
             return 0xFFFFFFFF;
@@ -43,7 +48,7 @@ public final class TurtModConfig {
          if (this.stops.length == 1) {
             return this.stops[0];
          }
-         t = t - (float) Math.floor(t);              // wrap into [0,1)
+         t = Math.max(0f, Math.min(1f, t));          // clamp into [0,1]
          float scaled = t * (this.stops.length - 1);
          int i = (int) Math.floor(scaled);
          if (i >= this.stops.length - 1) {
@@ -53,13 +58,34 @@ public final class TurtModConfig {
          return lerpArgb(this.stops[i], this.stops[i + 1], f);
       }
 
+      /**
+       * CYCLIC sampler for animation: a seamless loop that treats the stops as
+       * {@code [s0, s1, … sN-1, s0]} (N segments, wraps) so chroma flows smoothly back to the start.
+       * Always cycles over time regardless of the {@code animate} flag.
+       */
+      public int flowColor(long timeMs) {
+         if (this.stops == null || this.stops.length == 0) {
+            return 0xFFFFFFFF;
+         }
+         if (this.stops.length == 1) {
+            return this.stops[0];
+         }
+         float period = Math.max(500f, 6000f / Math.max(0.1f, this.speed));
+         float t = (timeMs % (long) period) / period;   // [0,1)
+         int n = this.stops.length;                      // N segments back to s0
+         float scaled = t * n;
+         int i = (int) Math.floor(scaled) % n;
+         float f = scaled - (float) Math.floor(scaled);
+         int next = (i + 1) % n;
+         return lerpArgb(this.stops[i], this.stops[next], f);
+      }
+
       /** Current animated colour (flows through the stops over time when animate is on; else stops[0]). */
       public int animatedColor(long timeMs) {
          if (!this.animate) {
             return this.stops.length > 0 ? this.stops[0] : 0xFFFFFFFF;
          }
-         float period = Math.max(500f, 6000f / Math.max(0.1f, this.speed));
-         return colorAt((timeMs % (long) period) / period);
+         return flowColor(timeMs);
       }
 
       private static int lerpArgb(int a, int b, float t) {

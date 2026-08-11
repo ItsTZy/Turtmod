@@ -17,7 +17,6 @@ public class TurtUIButton {
    private float glow = 0f;
    private float press = 0f;          // 1 on click, decays to 0 → tactile squish
    private long lastTickNs = System.nanoTime();
-   private static final Color PINK_GLOW = new Color(16752046, true);
 
    public TurtUIButton(int x, int y, int width, int height, String label, TurtUITheme theme, Runnable onClick) {
       this.x = x;
@@ -61,18 +60,20 @@ public class TurtUIButton {
       Color border = mix(this.theme.border(), this.theme.highlighted(), glow);
       Color text = mix(this.theme.text(), new Color(16777215), glow);
 
-      TurtUIUtils.drawHoverGlow(context, this.x, this.y, this.width, this.height, 4, glow, PINK_GLOW);
-      TurtUIUtils.drawRoundedRect(context, this.x, this.y, this.width, this.height, 4, bg);
+      // Clean: rounded fill + eased hover wash, no expanding ring glow.
+      int radius = 4;
+      TurtUIUtils.drawRoundedRect(context, this.x, this.y, this.width, this.height, radius, bg);
       // Lunar-style: a faint accent wash + glassy top highlight that brighten on hover.
       Color acc = this.theme.highlighted();
       int washA = (int)(34f * glow);
       if (washA > 0) {
-         TurtUIUtils.drawRoundedRect(context, this.x, this.y, this.width, this.height, 4,
+         TurtUIUtils.drawRoundedRect(context, this.x, this.y, this.width, this.height, radius,
             new Color(acc.getRed(), acc.getGreen(), acc.getBlue(), washA));
       }
+      // Glass top highlight, inset to the corner radius so it sits inside the rounded corners.
       int hiA = (int)(38f + 46f * glow);
-      context.method_25294(this.x + 4, this.y + 1, this.x + this.width - 4, this.y + 2, (hiA << 24) | 0xFFFFFF);
-      TurtUIUtils.drawRoundedBorder(context, this.x, this.y, this.width, this.height, 4, border);
+      context.method_25294(this.x + radius, this.y + 1, this.x + this.width - radius, this.y + 2, (hiA << 24) | 0xFFFFFF);
+      TurtUIUtils.drawRoundedBorder(context, this.x, this.y, this.width, this.height, radius, border);
 
       int textWidth = textRenderer.method_1727(this.label);
       int textY = this.y + (this.height - 8) / 2;
