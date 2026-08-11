@@ -235,17 +235,10 @@ public final class TurtModConfigScreenFactory {
       return Category.createBuilder("Theme")
          .group(OptionGroup.createBuilder("HUD Theme")
             // Clean, Lunar-style theme: background, text, accent, shadow. Background Opacity 0 = text-only.
-            .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v))
+            .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v, GradientKeys.HUD_BG))
             .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
-            .addOption(bool("Gradient Background", () -> cfg.theme.hudBgGradient, v -> cfg.theme.hudBgGradient = v))
-            .addOption(color("Background Color 2", () -> cfg.theme.hudBackgroundColor2, v -> cfg.theme.hudBackgroundColor2 = v))
-            .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v))
-            .addOption(bool("Gradient Text", () -> cfg.theme.hudTextGradient, v -> cfg.theme.hudTextGradient = v))
-            .addOption(color("Text Color 2", () -> cfg.theme.hudTextColor2, v -> cfg.theme.hudTextColor2 = v))
-            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v))
-            .addOption(bool("Gradient Accent", () -> cfg.theme.hudAccentGradient, v -> cfg.theme.hudAccentGradient = v))
-            .addOption(color("Accent Color 2", () -> cfg.theme.hudAccentColor2, v -> cfg.theme.hudAccentColor2 = v))
-            .addOption(bool("Animate Gradient", () -> cfg.theme.hudGradientAnimate, v -> cfg.theme.hudGradientAnimate = v))
+            .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v, GradientKeys.HUD_TEXT))
+            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v, GradientKeys.HUD_ACCENT))
             .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
             .addOption(button("Reset Theme", () -> resetThemeDefaults(cfg)))
             .build())
@@ -268,13 +261,9 @@ public final class TurtModConfigScreenFactory {
       cfg.theme.hudGlass = d.hudGlass;
       cfg.theme.hudAccentBar = d.hudAccentBar;
       cfg.theme.themeAlphaPercent = d.themeAlphaPercent;
-      cfg.theme.hudTextGradient = d.hudTextGradient;
-      cfg.theme.hudTextColor2 = d.hudTextColor2;
-      cfg.theme.hudAccentGradient = d.hudAccentGradient;
-      cfg.theme.hudAccentColor2 = d.hudAccentColor2;
-      cfg.theme.hudBgGradient = d.hudBgGradient;
-      cfg.theme.hudBackgroundColor2 = d.hudBackgroundColor2;
-      cfg.theme.hudGradientAnimate = d.hudGradientAnimate;
+      cfg.gradients.remove(GradientKeys.HUD_TEXT);
+      cfg.gradients.remove(GradientKeys.HUD_ACCENT);
+      cfg.gradients.remove(GradientKeys.HUD_BG);
       ConfigManager.save(cfg);
    }
 
@@ -764,17 +753,10 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Smooth Zoom", () -> cfg.visual.zoomSmoothInOut, v -> cfg.visual.zoomSmoothInOut = v))
             .addOption(bool("Hide Arms", () -> cfg.visual.zoomHideArms, v -> cfg.visual.zoomHideArms = v));
          case THEME_SETTINGS -> group
-            .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v))
+            .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v, GradientKeys.HUD_BG))
             .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
-            .addOption(bool("Gradient Background", () -> cfg.theme.hudBgGradient, v -> cfg.theme.hudBgGradient = v))
-            .addOption(color("Background Color 2", () -> cfg.theme.hudBackgroundColor2, v -> cfg.theme.hudBackgroundColor2 = v))
-            .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v))
-            .addOption(bool("Gradient Text", () -> cfg.theme.hudTextGradient, v -> cfg.theme.hudTextGradient = v))
-            .addOption(color("Text Color 2", () -> cfg.theme.hudTextColor2, v -> cfg.theme.hudTextColor2 = v))
-            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v))
-            .addOption(bool("Gradient Accent", () -> cfg.theme.hudAccentGradient, v -> cfg.theme.hudAccentGradient = v))
-            .addOption(color("Accent Color 2", () -> cfg.theme.hudAccentColor2, v -> cfg.theme.hudAccentColor2 = v))
-            .addOption(bool("Animate Gradient", () -> cfg.theme.hudGradientAnimate, v -> cfg.theme.hudGradientAnimate = v))
+            .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v, GradientKeys.HUD_TEXT))
+            .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v, GradientKeys.HUD_ACCENT))
             .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v));
          case ELYTRA_HUD -> group
             .addOption(bool("Enabled", () -> cfg.visual.elytraPitchHud, v -> cfg.visual.elytraPitchHud = v))
@@ -946,6 +928,11 @@ public final class TurtModConfigScreenFactory {
          }
          ConfigManager.save(TurtModClient.getConfig());
       }, ConfigColor.class, null, null, null), autoDescription(name));
+   }
+
+   /** Colour option that also supports a gradient (Solid/Gradient editor in the picker), stored under {@code key}. */
+   private static Option<ConfigColor> color(String name, Supplier<Integer> getter, Consumer<Integer> setter, String key) {
+      return color(name, getter, setter).gradientKey(key);
    }
 
    private static Option<Runnable> button(String name, Runnable action) {

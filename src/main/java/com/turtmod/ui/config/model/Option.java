@@ -18,6 +18,8 @@ public final class Option<T> {
    private final T max;
    private final T increment;
    private OptionDescription description;
+   /** For colour options: the gradient-store key so the picker can offer a Solid/Gradient editor. */
+   private String gradientKey;
 
    public Option(String name, Supplier<T> getter, Consumer<T> setter, Class<?> type, T min, T max, T increment) {
       this.name = name;
@@ -67,6 +69,15 @@ public final class Option<T> {
 
    public Option<T> description(OptionDescription description) {
       this.description = description;
+      return this;
+   }
+
+   public String getGradientKey() {
+      return this.gradientKey;
+   }
+
+   public Option<T> gradientKey(String key) {
+      this.gradientKey = key;
       return this;
    }
 }

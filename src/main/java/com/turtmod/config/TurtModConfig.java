@@ -12,6 +12,68 @@ public final class TurtModConfig {
    public final Misc misc = new Misc();
    public final Map<String, ShieldColorConfig> perPlayerShieldColors = new HashMap();
 
+   /** Per-colour-field gradient definitions, keyed by a stable colour id (see GradientKeys). A field with a
+    *  gradient here (>=2 stops) renders as a multi-stop gradient/chroma instead of its flat colour. */
+   public final Map<String, GradientDef> gradients = new HashMap<>();
+
+   /** A multi-stop gradient: ARGB stops evenly spaced, optionally animated (flowing chroma). */
+   public static class GradientDef {
+      public int[] stops = new int[0];
+      public boolean animate = false;
+      public float speed = 1.0f;
+
+      public GradientDef() {
+      }
+
+      public GradientDef(int[] stops, boolean animate, float speed) {
+         this.stops = stops;
+         this.animate = animate;
+         this.speed = speed;
+      }
+
+      public boolean isGradient() {
+         return this.stops != null && this.stops.length >= 2;
+      }
+
+      /** Colour at position t in [0,1] across the (evenly-spaced) stops, clean linear blend, t wraps. */
+      public int colorAt(float t) {
+         if (this.stops == null || this.stops.length == 0) {
+            return 0xFFFFFFFF;
+         }
+         if (this.stops.length == 1) {
+            return this.stops[0];
+         }
+         t = t - (float) Math.floor(t);              // wrap into [0,1)
+         float scaled = t * (this.stops.length - 1);
+         int i = (int) Math.floor(scaled);
+         if (i >= this.stops.length - 1) {
+            return this.stops[this.stops.length - 1];
+         }
+         float f = scaled - i;
+         return lerpArgb(this.stops[i], this.stops[i + 1], f);
+      }
+
+      /** Current animated colour (flows through the stops over time when animate is on; else stops[0]). */
+      public int animatedColor(long timeMs) {
+         if (!this.animate) {
+            return this.stops.length > 0 ? this.stops[0] : 0xFFFFFFFF;
+         }
+         float period = Math.max(500f, 6000f / Math.max(0.1f, this.speed));
+         return colorAt((timeMs % (long) period) / period);
+      }
+
+      private static int lerpArgb(int a, int b, float t) {
+         t = Math.max(0f, Math.min(1f, t));
+         int aa = a >>> 24 & 255, ar = a >> 16 & 255, ag = a >> 8 & 255, ab = a & 255;
+         int ba = b >>> 24 & 255, br = b >> 16 & 255, bg = b >> 8 & 255, bb = b & 255;
+         int oa = Math.round(aa + (ba - aa) * t);
+         int or = Math.round(ar + (br - ar) * t);
+         int og = Math.round(ag + (bg - ag) * t);
+         int ob = Math.round(ab + (bb - ab) * t);
+         return (oa << 24) | (or << 16) | (og << 8) | ob;
+      }
+   }
+
    public static class ShieldColorConfig {
       public int usableColor = -16711936;
       public int brokenColor = -53200;
@@ -614,15 +676,6 @@ public static final class Combat {
       public int hudTextColor = -1;
       public int hudAccentColor = -11296965;
       public boolean enableShadows = true;
-      // Clean Lunar-style gradients: each colour can optionally fade to a second colour. All default OFF so
-      // the flat look is unchanged until the user opts in (Theme settings). Applied centrally in CustomThemeRenderer.
-      public boolean hudTextGradient = false;
-      public int hudTextColor2 = 0xFF7FE0A0;      // complementary green
-      public boolean hudAccentGradient = false;
-      public int hudAccentColor2 = 0xFFFF8FB0;    // pink
-      public boolean hudBgGradient = false;
-      public int hudBackgroundColor2 = 0xFF0E2A1E;
-      public boolean hudGradientAnimate = false;  // subtle slow flow when on
       // ── removed from the UI (kept for code refs, forced clean) ──
       public int hudBorderColor = 0xFFFFFFFF;
       public int hudBorderThickness = 0;
