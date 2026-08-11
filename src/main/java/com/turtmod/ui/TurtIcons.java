@@ -395,13 +395,283 @@ public final class TurtIcons {
       "............",
    };
 
+   private static final String[] GEAR = {
+      "....oooo....",
+      "..o.o..o.o..",
+      ".ooowwwwooo.",
+      ".owwggggwwo.",
+      "oowg.oo.gwoo",
+      "o.wg.oo.gw.o",
+      "oowg.oo.gwoo",
+      ".owwggggwwo.",
+      ".ooowwwwooo.",
+      "..o.o..o.o..",
+      "....oooo....",
+      "............",
+   };
+
+   private static final String[] LAYOUT = {
+      "............",
+      ".oooooooooo.",
+      ".oggggogggo.",
+      ".oggggogggo.",
+      ".oggggogggo.",
+      ".oooooooooo.",
+      ".oggggogggo.",
+      ".oggggogggo.",
+      ".oggggogggo.",
+      ".oooooooooo.",
+      "............",
+      "............",
+   };
+
+   private static final String[] PERSON = {
+      "....oooo....",
+      "...owwwwo...",
+      "...owwwwo...",
+      "....oooo....",
+      "..oooooooo..",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oo.....oo..",
+      "............",
+      "............",
+   };
+
+   private static final String[] ARROW = {
+      "............",
+      "............",
+      "......ll....",
+      ".....ll.....",
+      "....ll......",
+      "...ll.......",
+      "...ll.......",
+      "....ll......",
+      ".....ll.....",
+      "......ll....",
+      "............",
+      "............",
+   };
+
+   private static final String[] DOTS = {
+      "............",
+      "............",
+      "............",
+      "............",
+      "............",
+      "..gg.gg.gg..",
+      "..gg.gg.gg..",
+      "............",
+      "............",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] DISCORD = {
+      "............",
+      ".oooooooooo.",
+      ".obbbbbbbbo.",
+      ".obwbbbbwbo.",
+      ".obbbbbbbbo.",
+      ".obwwbbwwbo.",
+      ".obbbbbbbbo.",
+      ".ooooobooo..",
+      "......o.....",
+      ".....o......",
+      "............",
+      "............",
+   };
+
+   private static final String[] GAMEPAD = {
+      "............",
+      "............",
+      "............",
+      ".oooooooooo.",
+      "owwgwooprwwo",
+      "owgggoowprwo",
+      "owwgwooprwwo",
+      "owwwwooowwwo",
+      ".oooooooooo.",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] RULER = {
+      "............",
+      "............",
+      ".oooooooooo.",
+      ".oyyyyyyyyo.",
+      ".oywoyoyoyo.",
+      ".oyoyoyoyoy.",
+      ".oyyyyyyyyo.",
+      ".oooooooooo.",
+      "............",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] MUTE = {
+      "............",
+      "......o.....",
+      ".....oo..r.r",
+      "..oooggo.rr.",
+      ".ogggggo..r.",
+      ".ogggggo.rr.",
+      ".ogggggo.r.r",
+      "..oooggo....",
+      ".....oo.....",
+      "......o.....",
+      "............",
+      "............",
+   };
+
+   private static final String[] SPARKLE = {
+      "...p........",
+      "..ppp.......",
+      "...p...w....",
+      ".......www..",
+      "........w...",
+      "..w.........",
+      ".www...p....",
+      "..w...ppp...",
+      "...p...p....",
+      "..ppp.......",
+      "...p........",
+      "............",
+   };
+
+   private static final String[] TOTEM = {
+      "....oooo....",
+      "...oyggyo...",
+      "...oykkyo...",
+      "...oyggyo...",
+      "..ooyyyyoo..",
+      ".oy.oyyo.yo.",
+      "..o.oyyo.o..",
+      "....oyyo....",
+      "....oyyo....",
+      "....oyyo....",
+      "....oooo....",
+      "............",
+   };
+
+   private static final String[] HOOK = {
+      "....oo......",
+      "....go......",
+      "....go......",
+      "....go......",
+      "....go......",
+      "....go......",
+      "...ogo......",
+      "...gog......",
+      "..go.og.....",
+      "..og.go.....",
+      "...ogo......",
+      "............",
+   };
+
+   private static final String[] CUBE = {
+      "............",
+      "...oooooo...",
+      "..oggggggo..",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      ".oggggggggo.",
+      "..oooooooo..",
+      "............",
+      "............",
+   };
+
+   private static final String[] CHAT = {
+      "............",
+      ".oooooooooo.",
+      ".owwwwwwwwo.",
+      ".owgggggwwo.",
+      ".owwwwwwwwo.",
+      ".owggggwwwo.",
+      ".owwwwwwwwo.",
+      ".oooooboooo.",
+      "......o.....",
+      ".....o......",
+      "............",
+      "............",
+   };
+
+   private static final String[] KEYBOARD = {
+      "............",
+      "............",
+      ".oooooooooo.",
+      ".owowowowoo.",
+      ".oooooooooo.",
+      ".owowowowoo.",
+      ".oooooooooo.",
+      ".oowwwwwooo.",
+      ".oooooooooo.",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] SIGNAL = {
+      "............",
+      "...oooooo...",
+      "..o......o..",
+      ".o..oooo..o.",
+      "...o....o...",
+      "..o.oooo.o..",
+      "....o..o....",
+      ".....oo.....",
+      ".....ll.....",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] BUTTON = {
+      "............",
+      "............",
+      ".oooooooooo.",
+      "owwwwwwwwwwo",
+      "oggggggggggo",
+      "oggggggggggo",
+      "oddddddddddo",
+      ".oooooooooo.",
+      "............",
+      "............",
+      "............",
+      "............",
+   };
+
+   private static final String[] WINGS = {
+      "............",
+      ".oo......oo.",
+      ".owo....owo.",
+      ".owwo..owwo.",
+      ".owgwoowgwo.",
+      ".owggwwggwo.",
+      ".owggwwggwo.",
+      ".owgwoowgwo.",
+      ".owo....owo.",
+      ".oo......oo.",
+      "............",
+      "............",
+   };
+
    // ── Registry + module mapping ────────────────────────────────────────────────
 
    private static final Map<String, String[]> MODULES = new HashMap<>();
    static {
       MODULES.put("Keystrokes", KEY);
       MODULES.put("FPS/Ping", BARS);
-      MODULES.put("Ping Display", BARS);
+      MODULES.put("Ping Display", SIGNAL);
       MODULES.put("CPS Counter", MOUSE);
       MODULES.put("Health Indicator", HEART);
       MODULES.put("Fullbright", SUN);
@@ -411,7 +681,7 @@ public final class TurtIcons {
       MODULES.put("Zoom", MAG);
       MODULES.put("Armor HUD", ARMOR);
       MODULES.put("Hit Color", TARGET);
-      MODULES.put("Reach Display", TARGET);
+      MODULES.put("Reach Display", RULER);
       MODULES.put("Hitboxes", HITBOX);
       MODULES.put("Inventory HUD", CHEST);
       MODULES.put("Kit Loader", CHEST);
@@ -419,21 +689,29 @@ public final class TurtIcons {
       MODULES.put("Death Coords", SKULL);
       MODULES.put("Low Fire", FLAME);
       MODULES.put("Fog Tweaks", CLOUD);
-      MODULES.put("Clear View", CLOUD);
+      MODULES.put("Clear View", EYE);
       MODULES.put("Overlays", CLOUD);
       MODULES.put("Shield Tweaks", SHIELD);
       MODULES.put("Freelook", EYE);
-      MODULES.put("Own Nametag", EYE);
+      MODULES.put("Own Nametag", CHAT);
       MODULES.put("Clean F3", LINES);
       MODULES.put("Scoreboard Tweaks", LINES);
-      MODULES.put("Chat Tweaks", LINES);
-      MODULES.put("Command Keys", LINES);
+      MODULES.put("Chat Tweaks", CHAT);
+      MODULES.put("Command Keys", KEYBOARD);
       MODULES.put("Module Notifications", BELL);
       MODULES.put("Theme Settings", PALETTE);
-      MODULES.put("Block Outline", PALETTE);
+      MODULES.put("Block Outline", CUBE);
       MODULES.put("Held Item Tweaks", SWORD);
       MODULES.put("Sprint Display", BOOT);
-      MODULES.put("Elytra Pitch HUD", BOOT);
+      MODULES.put("Elytra Pitch HUD", WINGS);
+      MODULES.put("Discord RPC", DISCORD);
+      MODULES.put("Gamemode Switcher", GAMEPAD);
+      MODULES.put("Container Buttons", BUTTON);
+      MODULES.put("Fishing Line", HOOK);
+      MODULES.put("Mute Sounds", MUTE);
+      MODULES.put("Hide Particles", SPARKLE);
+      MODULES.put("Totem Tweaks", TOTEM);
+      MODULES.put("Enable TurtMod", TURTLE);
    }
 
    /** Icon for a module display name, or the turtle fallback so nothing is ever blank. */
@@ -442,9 +720,16 @@ public final class TurtIcons {
       return icon != null ? icon : TURTLE;
    }
 
-   public static String[] camera() {
-      return CAMERA;
-   }
+   // Named icons for hub nav + category tabs.
+   public static String[] turtle()    { return TURTLE; }
+   public static String[] camera()    { return CAMERA; }
+   public static String[] gear()      { return GEAR; }
+   public static String[] layout()    { return LAYOUT; }
+   public static String[] person()    { return PERSON; }
+   public static String[] arrowBack() { return ARROW; }
+   public static String[] eye()       { return EYE; }
+   public static String[] dots()      { return DOTS; }
+   public static String[] wrench()    { return GEAR; }
 
    // ── Drawing ───────────────────────────────────────────────────────────────────
 

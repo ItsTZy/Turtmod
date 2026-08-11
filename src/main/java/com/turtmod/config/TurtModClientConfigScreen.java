@@ -371,7 +371,13 @@ public final class TurtModClientConfigScreen extends class_437 {
          boolean active = this.activeTab == tabs[i];
          boolean hov = TurtLauncher.navItemHovered(px, py, i, mlx, mly);
          String name = tabs[i] == Tab.HUD ? "HUD" : tabs[i].name().charAt(0) + tabs[i].name().substring(1).toLowerCase();
-         TurtLauncher.drawNavItem(context, this.field_22793, px, py, i, name, active, hov);
+         String[] ic = switch (tabs[i]) {
+            case VISUALS -> com.turtmod.ui.TurtIcons.eye();
+            case HUD -> com.turtmod.ui.TurtIcons.layout();
+            case UTILITY -> com.turtmod.ui.TurtIcons.wrench();
+            case MISC -> com.turtmod.ui.TurtIcons.dots();
+         };
+         TurtLauncher.drawNavItem(context, this.field_22793, px, py, i, name, ic, active, hov);
       }
 
       // Special (Settings): live count of active modules at the foot of the sidebar.

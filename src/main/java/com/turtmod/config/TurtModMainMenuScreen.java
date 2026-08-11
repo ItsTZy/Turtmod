@@ -84,7 +84,15 @@ public class TurtModMainMenuScreen extends class_437 {
             continue;
          }
          boolean hov = TurtLauncher.navItemHovered(panelX, panelY, i, mx, my);
-         TurtLauncher.drawNavItem(ctx, this.field_22793, panelX, panelY, i, NAV_LABELS[i], false, hov);
+         String[] ic = switch (i) {
+            case 0 -> com.turtmod.ui.TurtIcons.layout();     // HUD Editor
+            case 1 -> com.turtmod.ui.TurtIcons.person();     // Skin Changer
+            case 2 -> com.turtmod.ui.TurtIcons.gear();       // Settings
+            case 3 -> com.turtmod.ui.TurtIcons.camera();     // Gallery
+            case 5 -> com.turtmod.ui.TurtIcons.arrowBack();  // Back
+            default -> null;
+         };
+         TurtLauncher.drawNavItem(ctx, this.field_22793, panelX, panelY, i, NAV_LABELS[i], ic, false, hov);
       }
 
       // ── Content: a calm, centered logo + title + tagline, with the memorial pinned at the bottom.

@@ -139,19 +139,26 @@ public final class TurtLauncher {
    public static void drawNavItem(class_332 ctx, class_327 tr,
                                   int panelX, int panelY, int index,
                                   String label, boolean active, boolean hovered) {
+      drawNavItem(ctx, tr, panelX, panelY, index, label, null, active, hovered);
+   }
+
+   /** Nav item with an optional pixel icon drawn left of the label. */
+   public static void drawNavItem(class_332 ctx, class_327 tr,
+                                  int panelX, int panelY, int index,
+                                  String label, String[] icon, boolean active, boolean hovered) {
       int x = panelX + 3;
       int y = panelY + HEADER_H + 4 + index * (NAV_ITEM_H + NAV_ITEM_PAD);
       int w = SIDEBAR_W - 6;
       int h = NAV_ITEM_H;
-
-      if (active) {
-         TurtUIUtils.drawText(ctx, tr, label, x + 10, y + (h - 8) / 2, GREEN, false, true);
-      } else if (hovered) {
+      if (hovered && !active) {
          TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 3, new Color(0x1EFFFFFF, true));
-         TurtUIUtils.drawText(ctx, tr, label, x + 10, y + (h - 8) / 2, TEXT, false, false);
-      } else {
-         TurtUIUtils.drawText(ctx, tr, label, x + 10, y + (h - 8) / 2, new Color(0xBBCCCCCC, true), false, false);
       }
+      if (icon != null) {
+         com.turtmod.ui.TurtIcons.drawFit(ctx, icon, x + 7, y + (h - 14) / 2, 14);
+      }
+      int labelX = x + (icon != null ? 25 : 10);
+      Color c = active ? GREEN : (hovered ? TEXT : new Color(0xBBCCCCCC, true));
+      TurtUIUtils.drawText(ctx, tr, label, labelX, y + (h - 8) / 2, c, false, active);
    }
 
    /** Returns whether the mouse is over a sidebar nav item. */
