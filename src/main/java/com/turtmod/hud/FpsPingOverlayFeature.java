@@ -12,19 +12,28 @@ public final class FpsPingOverlayFeature {
 
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (client.field_1724 != null && config.misc.enabled && config.hud.minimalFpsPingOverlay) {
-         int fps = client.method_47599();
-         int ping = -1;
-         if (client.method_1562() != null) {
-            class_640 entry = client.method_1562().method_2871(client.field_1724.method_5667());
-            if (entry != null) {
-               ping = entry.method_2959();
-            }
-         }
-
          // Non-destructive on-screen clamp in SCALED gui space (matches the HUD editor + GuiGraphics).
-         // The old clamp used RAW window dims, which let the overlay sit off-screen at GUI scale != 1.
          int x = HudEditorFeature.clampToScreenX(client, config.hud.minimalOverlayX, getScaledWidth(config));
          int y = HudEditorFeature.clampToScreenY(client, config.hud.minimalOverlayY, getScaledHeight(config));
+         drawAt(context, client, config, x, y);
+      }
+   }
+
+   /** Live-settings preview: draw the overlay at (x,y) with the current settings (no config pos/clamp). */
+   public static void renderPreview(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      drawAt(context, client, config, x, y);
+   }
+
+   private static void drawAt(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      int fps = client.method_47599();
+      int ping = -1;
+      if (client.method_1562() != null) {
+         class_640 entry = client.method_1562().method_2871(client.field_1724.method_5667());
+         if (entry != null) {
+            ping = entry.method_2959();
+         }
+      }
+      {
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent);
          boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.fpsPingShowBackground;
          context.method_51448().pushMatrix();

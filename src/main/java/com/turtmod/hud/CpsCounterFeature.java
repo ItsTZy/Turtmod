@@ -19,6 +19,17 @@ public final class CpsCounterFeature {
       if (client.field_1724 != null && config.misc.enabled && config.hud.cpsCounterHud) {
          int x = HudEditorFeature.clampToScreenX(client, config.hud.cpsCounterX, getScaledWidth(config));
          int y = HudEditorFeature.clampToScreenY(client, config.hud.cpsCounterY, getScaledHeight(config));
+         drawAt(context, client, config, x, y);
+      }
+   }
+
+   /** Live-settings preview: draw the counter at (x,y) with the current settings (no config pos/clamp). */
+   public static void renderPreview(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      drawAt(context, client, config, x, y);
+   }
+
+   private static void drawAt(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      {
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.cpsCounterScalePercent);
          int leftCps = CPSTracker.getLeftCPS();
          int rightCps = CPSTracker.getRightCPS();

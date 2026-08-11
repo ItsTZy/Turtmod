@@ -19,7 +19,9 @@ public final class HudPreview {
 
    /** Whether this module has a visual HUD we can preview in a box. */
    public static boolean has(ModuleKind kind) {
-      return kind == ModuleKind.KEYSTROKES;
+      return kind == ModuleKind.KEYSTROKES
+         || kind == ModuleKind.CPS_COUNTER
+         || kind == ModuleKind.FPS_PING;
    }
 
    /** Render the HUD for {@code kind} centred inside the box, clipped to it, using the live config. */
@@ -37,12 +39,20 @@ public final class HudPreview {
                try {
                   int hw = KeystrokesFeature.getScaledWidth(cfg);
                   int hh = KeystrokesFeature.getScaledHeight(cfg);
-                  int px = x + Math.max(2, (w - hw) / 2);
-                  int py = y + Math.max(2, (h - hh) / 2);
-                  KeystrokesFeature.renderPreview(ctx, client, cfg, px, py);
+                  KeystrokesFeature.renderPreview(ctx, client, cfg, x + Math.max(2, (w - hw) / 2), y + Math.max(2, (h - hh) / 2));
                } finally {
                   cfg.hud.keystrokesHud = prev;
                }
+            }
+            case CPS_COUNTER -> {
+               int hw = CpsCounterFeature.getScaledWidth(cfg);
+               int hh = CpsCounterFeature.getScaledHeight(cfg);
+               CpsCounterFeature.renderPreview(ctx, client, cfg, x + Math.max(2, (w - hw) / 2), y + Math.max(2, (h - hh) / 2));
+            }
+            case FPS_PING -> {
+               int hw = FpsPingOverlayFeature.getScaledWidth(cfg);
+               int hh = FpsPingOverlayFeature.getScaledHeight(cfg);
+               FpsPingOverlayFeature.renderPreview(ctx, client, cfg, x + Math.max(2, (w - hw) / 2), y + Math.max(2, (h - hh) / 2));
             }
             default -> {
             }
