@@ -694,7 +694,7 @@ public final class HudPanelsFeature {
       // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
       // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
       float ts = 0.66F;
-      int textColor = CustomThemeRenderer.getTextColor(config); // follow the theme's Text Color setting
+      int textColor = CustomThemeRenderer.applyHudOpacity(config, 0xFFFFFFFF); // vanilla-style white (not themed)
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
       context.method_51448().pushMatrix();
