@@ -165,6 +165,7 @@ public final class TurtModConfigScreenFactory {
                cfg.hud.armorHudShowDurability = v != TurtModConfig.ArmorHudDurabilityMode.OFF;
             }, TurtModConfig.ArmorHudDurabilityMode.class))
             .addOption(bool("Low Durability Warning", () -> cfg.hud.armorHudWarnings, v -> cfg.hud.armorHudWarnings = v))
+            .addOption(bool("Text Color at Full Durability", () -> cfg.hud.armorHudFullDurabilityTextColor, v -> cfg.hud.armorHudFullDurabilityTextColor = v))
             .addOption(intOpt("Armor Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 5))
             .addOption(bool("Movable Potion HUD", () -> cfg.hud.movablePotionHud, v -> cfg.hud.movablePotionHud = v))
             .addOption(enumOpt("Potion Style", () -> cfg.hud.potionHudStyle, v -> cfg.hud.potionHudStyle = v, TurtModConfig.PotionHudStyle.class))
@@ -637,6 +638,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Show Main Hand", () -> cfg.hud.armorHudShowMainHand, v -> cfg.hud.armorHudShowMainHand = v))
             .addOption(bool("Show Offhand", () -> cfg.hud.armorHudShowOffhand, v -> cfg.hud.armorHudShowOffhand = v))
             .addOption(bool("Low Durability Warning", () -> cfg.hud.armorHudWarnings, v -> cfg.hud.armorHudWarnings = v))
+            .addOption(bool("Text Color at Full Durability", () -> cfg.hud.armorHudFullDurabilityTextColor, v -> cfg.hud.armorHudFullDurabilityTextColor = v))
             .addOption(intOpt("Warning Threshold %", () -> cfg.hud.armorHudWarningThresholdPercent, v -> cfg.hud.armorHudWarningThresholdPercent = v, 1, 100, 1))
             .addOption(intOpt("Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 5));
          case POTION_HUD -> group
@@ -1042,6 +1044,7 @@ public final class TurtModConfigScreenFactory {
       cfg.hud.armorHudStyle = TurtModConfig.ArmorHudStyle.HOTBAR;
       cfg.hud.armorHudSide = TurtModConfig.ArmorHudSide.RIGHT;
       cfg.hud.armorHudShowDurability = true;
+      cfg.hud.armorHudFullDurabilityTextColor = true;
       cfg.hud.armorHudDurabilityMode = TurtModConfig.ArmorHudDurabilityMode.REMAINING;
       cfg.hud.armorHudShowMainHand = false;
       cfg.hud.armorHudShowOffhand = false;

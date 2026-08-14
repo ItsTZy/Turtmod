@@ -33,7 +33,6 @@ public final class ToggleSprintFeature {
       boolean toggleMode = isToggleSprintEnabled(client);
       TurtModConfig.SprintDisplayStyle style = config.hud.sprintDisplayStyle;
       boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.sprintShowBackground;
-      int accent = CustomThemeRenderer.getAccentColor(config);
       int normal = CustomThemeRenderer.getTextColor(config);
 
       // Dimmed colour for the idle state (sprint line stays visible even when not sprinting).
@@ -52,7 +51,8 @@ public final class ToggleSprintFeature {
             case SHORT   -> lines.add(isSprinting ? "Sprinting" : "Sprint");
             case ICON    -> lines.add(ICON_SPRINT);
          }
-         colors.add(isSprinting ? (toggleMode ? accent : normal) : muted);
+         // Active sprint uses the theme's Text colour (was the Accent colour in toggle mode); idle = muted.
+         colors.add(isSprinting ? normal : muted);
       }
       if (isSneaking) {
          lines.add(style == TurtModConfig.SprintDisplayStyle.ICON ? ICON_SNEAK : "Sneaking");

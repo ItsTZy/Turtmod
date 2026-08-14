@@ -459,6 +459,9 @@ public static final class Combat {
       public boolean armorHudVertical = true;
       public boolean armorHudHotbarStyle = true;
       public boolean armorHudShowDurability = true;
+      // When on, armour pieces at FULL durability show their number in the theme's Text colour instead of the
+      // vanilla green bar-colour; damaged pieces still fade green→red so wear is still visible at a glance.
+      public boolean armorHudFullDurabilityTextColor = true;
       public int armorHudScalePercent = 100;
       public ArmorHudStyle armorHudStyle = ArmorHudStyle.HOTBAR;
       public ArmorHudSide armorHudSide = ArmorHudSide.RIGHT;
