@@ -810,6 +810,19 @@ public class TurtNativeConfigScreen extends class_437 {
             this.editingHex = false;
          } else if (key == 259 && !this.hexBuf.isEmpty()) { // Backspace
             this.hexBuf = this.hexBuf.substring(0, this.hexBuf.length() - 1);
+         } else if (key == 86 && (input.comp_4797() & 0x2) != 0) { // Ctrl+V: paste a hex colour
+            String clip = this.field_22787 != null ? this.field_22787.field_1774.method_1460() : null;
+            if (clip != null) {
+               String hex = clip.trim();
+               if (hex.startsWith("#")) {
+                  hex = hex.substring(1);
+               }
+               hex = hex.replaceAll("[^0-9A-Fa-f]", "");
+               if (hex.length() > 8) {
+                  hex = hex.substring(0, 8);
+               }
+               this.hexBuf = hex.toUpperCase();
+            }
          }
          return true;
       }
@@ -913,6 +926,15 @@ public class TurtNativeConfigScreen extends class_437 {
                   }
                }
             }
+         }
+         // Click the colour swatch chip to copy its hex to the clipboard.
+         if (TurtUIUtils.isHovered(mx, my, this.svX, this.hexFieldY, 34, this.hexFieldH)) {
+            int argb = (this.pA << 24) | (ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF);
+            if (this.field_22787 != null) {
+               this.field_22787.field_1774.method_1455(String.format("#%08X", argb));
+            }
+            TurtSounds.confirm();
+            return true;
          }
          if (TurtUIUtils.isHovered(mx, my, this.hexFieldX, this.hexFieldY, this.hexFieldW, this.hexFieldH)) {
             this.startHexEdit();
