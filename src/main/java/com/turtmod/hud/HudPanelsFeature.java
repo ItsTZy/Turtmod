@@ -694,13 +694,16 @@ public final class HudPanelsFeature {
       // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
       // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
       float ts = 0.66F;
-      int textColor = CustomThemeRenderer.applyHudOpacity(config, 0xFFFFFFFF); // vanilla-style white (not themed)
+      // Vanilla effect colours (not themed): duration is gray (0xFF808080, vanilla -8355712), the level
+      // reads like the effect name — white. Both still fade with the HUD opacity.
+      int durationColor = CustomThemeRenderer.applyHudOpacity(config, 0xFF808080);
+      int levelColor = CustomThemeRenderer.applyHudOpacity(config, 0xFFFFFFFF);
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
       context.method_51448().pushMatrix();
       context.method_51448().translate((float)(x + 8), (float)(y + 12));
       context.method_51448().scale(ts, ts);
-      context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, textColor);
+      context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, durationColor);
       context.method_51448().popMatrix();
       if (effect.method_5578() > 0) {
          String amp = getAmplifierText(effect.method_5578() + 1);
@@ -708,7 +711,7 @@ public final class HudPanelsFeature {
          context.method_51448().pushMatrix();
          context.method_51448().translate((float)(x + 15), (float)(y - 1));
          context.method_51448().scale(ts, ts);
-         context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, textColor);
+         context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, levelColor);
          context.method_51448().popMatrix();
       }
 
