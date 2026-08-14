@@ -16,6 +16,9 @@ public final class TurtModConfig {
     *  gradient here (>=2 stops) renders as a multi-stop gradient/chroma instead of its flat colour. */
    public final Map<String, GradientDef> gradients = new HashMap<>();
 
+   /** User-saved swatches (ARGB) shown in the colour picker's "Saved" row — persist across sessions. */
+   public final java.util.List<Integer> savedPickerColors = new java.util.ArrayList<>();
+
    /** A multi-stop gradient: ARGB stops evenly spaced, optionally animated (flowing chroma). */
    public static class GradientDef {
       public int[] stops = new int[0];

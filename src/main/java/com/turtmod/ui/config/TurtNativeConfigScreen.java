@@ -138,6 +138,9 @@ public class TurtNativeConfigScreen extends class_437 {
    private int hexFieldH;
    private static final java.util.ArrayDeque<Integer> RECENT = new java.util.ArrayDeque<>();
    private int recentY;
+   private int savedRowY;   // persistent "Saved" swatch row
+   private int savedAddX;   // the "+" save-current button at the end of the Saved row
+   private static final int SAVED_MAX = 8;
 
    // ── In-picker gradient editor (only when the colour option has a gradient key). ──
    private boolean pickGradient;                              // Solid (false) vs Gradient (true) mode
@@ -504,7 +507,7 @@ public class TurtNativeConfigScreen extends class_437 {
    private void renderColorPicker(class_332 ctx, int mx, int my) {
       ctx.method_25294(-2000, -2000, LOGICAL_W + 2000, LOGICAL_H + 2000, 0xB0000000);
       this.pickW = 244;
-      this.pickH = this.pickGradient ? 344 : 306;
+      this.pickH = this.pickGradient ? 344 : 344;   // solid mode grew to fit the persistent "Saved" row
       this.pickX = (LOGICAL_W - this.pickW) / 2;
       this.pickY = (LOGICAL_H - this.pickH) / 2;
       // Clean panel: a soft neutral drop shadow for depth (no coloured halo), rounded surface, crisp border.
@@ -612,6 +615,25 @@ public class TurtNativeConfigScreen extends class_437 {
                i++;
             }
          }
+         // Persistent "Saved" swatches + a "+" that saves the current colour (right-click a swatch to remove).
+         java.util.List<Integer> saved = TurtModClient.getConfig().savedPickerColors;
+         this.savedRowY = this.recentY + this.presetSize + 13;
+         ctx.method_51433(this.field_22793, "Saved", this.svX, this.savedRowY - 9, Palette.TEXT_MUTED.getRGB(), false);
+         int si = 0;
+         for (; si < saved.size() && si < SAVED_MAX; si++) {
+            int c = saved.get(si);
+            int px = this.presetX0 + si * (this.presetSize + this.presetGap);
+            boolean ph = TurtUIUtils.isHovered(mx, my, px, this.savedRowY, this.presetSize, this.presetSize);
+            this.drawChecker(ctx, px, this.savedRowY, this.presetSize, this.presetSize);
+            TurtUIUtils.drawRoundedRect(ctx, px, this.savedRowY, this.presetSize, this.presetSize, 3, new Color(c, true));
+            TurtUIUtils.drawRoundedBorder(ctx, px, this.savedRowY, this.presetSize, this.presetSize, 3,
+               ph ? Palette.PINK : new Color(255, 255, 255, 70));
+         }
+         this.savedAddX = this.presetX0 + si * (this.presetSize + this.presetGap);
+         boolean addHov = TurtUIUtils.isHovered(mx, my, this.savedAddX, this.savedRowY, this.presetSize, this.presetSize);
+         TurtUIUtils.drawRoundedRect(ctx, this.savedAddX, this.savedRowY, this.presetSize, this.presetSize, 3, Palette.alpha(Palette.GREEN, addHov ? 90 : 45));
+         TurtUIUtils.drawRoundedBorder(ctx, this.savedAddX, this.savedRowY, this.presetSize, this.presetSize, 3, Palette.alpha(Palette.GREEN, 150));
+         drawCentered(ctx, "+", this.savedAddX + this.presetSize / 2, this.savedRowY + 4, Palette.GREEN);
       }
 
       // Done.
@@ -933,6 +955,39 @@ public class TurtNativeConfigScreen extends class_437 {
                   TurtSounds.tick();
                   return true;
                }
+            }
+            // Saved swatches: left-click applies, right-click removes.
+            java.util.List<Integer> saved = TurtModClient.getConfig().savedPickerColors;
+            for (int i = 0; i < saved.size() && i < SAVED_MAX; i++) {
+               int px = this.presetX0 + i * (this.presetSize + this.presetGap);
+               if (TurtUIUtils.isHovered(mx, my, px, this.savedRowY, this.presetSize, this.presetSize)) {
+                  if (button == 1) {
+                     saved.remove(i);
+                     com.turtmod.config.ConfigManager.save(TurtModClient.getConfig());
+                  } else {
+                     int v = saved.get(i);
+                     this.pA = (v >>> 24) & 0xFF;
+                     float[] hsb = ConfigColor.RGBtoHSB((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, null);
+                     this.pH = hsb[0];
+                     this.pS = hsb[1];
+                     this.pB = hsb[2];
+                     this.applyPicker();
+                  }
+                  TurtSounds.tick();
+                  return true;
+               }
+            }
+            // "+" button: save the current colour (dedupe, newest first, cap the list).
+            if (TurtUIUtils.isHovered(mx, my, this.savedAddX, this.savedRowY, this.presetSize, this.presetSize)) {
+               int cur = (this.pA << 24) | (ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF);
+               saved.remove((Integer) cur);
+               saved.add(0, cur);
+               while (saved.size() > 32) {
+                  saved.remove(saved.size() - 1);
+               }
+               com.turtmod.config.ConfigManager.save(TurtModClient.getConfig());
+               TurtSounds.confirm();
+               return true;
             }
          }
          if (TurtUIUtils.isHovered(mx, my, this.svX, this.svY, this.svW, this.svH)) {
