@@ -30,10 +30,14 @@ public final class HudPanelsFeature {
    // a 20px pitch (a neat 2px gap), 4px panel padding, the 16px icon drawn at slot+1,+1, and a themed
    // panel background behind it. (Was a bespoke 22px bubble offset outside the panel — it never lined up
    // with the panel edge/screen corner.)
-   private static final int POTION_SLOT = 18;
-   private static final int POTION_SLOT_PITCH = 19; // tight 1px gap between slots (was 20 = looser 2px)
-   private static final int POTION_PAD = 1;         // 1px edge ring = same as the inter-slot gap -> a clean,
-                                                    // uniform tight grid (was 4 = the fat "outline")
+   // Icons-only "pot HUD": vanilla proportions — a 24px effect-background frame with the 18px icon inset at
+   // +3 (exactly like the real vanilla potion HUD), spaced on a 25px pitch.
+   private static final int POTION_SLOT = 24;
+   private static final int POTION_SLOT_PITCH = 25;
+   private static final int POTION_PAD = 1;
+   // The real vanilla effect-background sprites (a clean subtle frame) — drawn behind each icon.
+   private static final net.minecraft.class_2960 POTION_BG = net.minecraft.class_2960.method_60656("hud/effect_background");
+   private static final net.minecraft.class_2960 POTION_BG_AMBIENT = net.minecraft.class_2960.method_60656("hud/effect_background_ambient");
    private static final int POTION_CELL_WIDTH = POTION_SLOT_PITCH;
    private static final int POTION_CELL_HEIGHT = POTION_SLOT_PITCH;
    private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
@@ -468,15 +472,19 @@ public final class HudPanelsFeature {
          context.method_51448().translate((float)x, (float)y);
          context.method_51448().scale(scale, scale);
          context.method_51448().translate((float)(-x), (float)(-y));
-         // Full-panel themed background behind every style (draws nothing in the transparent theme),
-         // exactly like the Inventory HUD — so it reaches the panel edge / screen corner and each pot
-         // still sits in its own slot cell (drawn per-icon below), matching the inv-HUD look.
-         CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
-         // Honour the chosen style (FULL / COMPACT / ICONS_ONLY) — previously only icons rendered.
+         // Icons-only style = pure vanilla look: NO outer panel box (each pot already sits in its own
+         // vanilla effect-background frame). The text styles (FULL/COMPACT) keep the themed panel behind
+         // them so their name/timer text stays readable.
          int cols = potionTextColumns(config, visibleEffects.size());
          switch (config.hud.potionHudStyle) {
-            case FULL -> renderPotionFull(context, client, config, x, y, size.width, cols, visibleEffects);
-            case COMPACT -> renderPotionCompact(context, client, config, x, y, size.width, cols, visibleEffects);
+            case FULL -> {
+               CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+               renderPotionFull(context, client, config, x, y, size.width, cols, visibleEffects);
+            }
+            case COMPACT -> {
+               CustomThemeRenderer.renderThemedBox(context, x, y, size.width, size.height, config);
+               renderPotionCompact(context, client, config, x, y, size.width, cols, visibleEffects);
+            }
             default -> renderPotionIconsOnly(context, client, config, x, y, visibleEffects);
          }
 
@@ -613,8 +621,8 @@ public final class HudPanelsFeature {
          int rowY = startY + rowInCol * 22;
          int iconX = colX + 4;
          int textX = iconX + 18 + 8;
-         CustomThemeRenderer.renderSlotCell(context, iconX, rowY, 18, 18, config, true);
-         drawEffectIcon(context, effect, iconX + 1, rowY + 1);
+         drawPotionBg(context, config, effect, iconX, rowY, 18);
+         drawEffectIcon(context, effect, iconX + 1, rowY + 1, 16);
          String name = trim(buildPotionName(effect), 22);
          String meta = trim(buildPotionMeta(effect, config), 22);
          context.method_27535(client.field_1772, class_2561.method_43470(name), textX, rowY + 2, CustomThemeRenderer.getTextColor(config));
@@ -645,8 +653,8 @@ public final class HudPanelsFeature {
          int nameX = iconX + 18 + 6;
          int available = Math.max(8, durationX - nameX - 6);
          String name = client.field_1772.method_27523(buildPotionName(effect), available);
-         CustomThemeRenderer.renderSlotCell(context, iconX, rowY, 18, 18, config, true);
-         drawEffectIcon(context, effect, iconX + 1, rowY + 1);
+         drawPotionBg(context, config, effect, iconX, rowY, 18);
+         drawEffectIcon(context, effect, iconX + 1, rowY + 1, 16);
          context.method_27535(client.field_1772, class_2561.method_43470(name), nameX, rowY + 5, CustomThemeRenderer.getTextColor(config));
          context.method_27535(client.field_1772, class_2561.method_43470(formatDuration(effect, config)), durationX, rowY + 5, CustomThemeRenderer.getMutedTextColor(config));
       }
@@ -669,26 +677,34 @@ public final class HudPanelsFeature {
          int row = horizontal ? (i / cols) : (i % rows);
          int slotX = startX + col * POTION_SLOT_PITCH;
          int slotY = startY + row * POTION_SLOT_PITCH;
-         CustomThemeRenderer.renderSlotCell(context, slotX, slotY, POTION_SLOT, POTION_SLOT, config, true);
-         drawEffectIcon(context, effect, slotX + 1, slotY + 1);
-         drawIconOverlay(context, client, config, effect, slotX + 1, slotY + 1);
+         // Real vanilla look: the effect-background frame + the 18px icon inset at +3.
+         drawPotionBg(context, config, effect, slotX, slotY, POTION_SLOT);
+         drawEffectIcon(context, effect, slotX + 3, slotY + 3, 18);
+         drawIconOverlay(context, client, config, effect, slotX + 3, slotY + 3);
       }
 
    }
 
-   private static void drawEffectIcon(class_332 context, class_1293 effect, int x, int y) {
-      context.method_52706(class_10799.field_56883, class_329.method_71644(effect.method_5579()), x, y, 16, 16);
+   private static void drawEffectIcon(class_332 context, class_1293 effect, int x, int y, int size) {
+      context.method_52706(class_10799.field_56883, class_329.method_71644(effect.method_5579()), x, y, size, size);
+   }
+
+   /** The real vanilla effect-background frame (ambient variant for ambient effects), tinted by HUD opacity. */
+   private static void drawPotionBg(class_332 context, TurtModConfig config, class_1293 effect, int x, int y, int size) {
+      int tint = CustomThemeRenderer.applyHudOpacity(config, 0xFFFFFFFF);
+      net.minecraft.class_2960 bg = effect.method_5591() ? POTION_BG_AMBIENT : POTION_BG;
+      context.method_52707(class_10799.field_56883, bg, x, y, size, size, tint);
    }
 
    private static void drawIconOverlay(class_332 context, class_310 client, TurtModConfig config, class_1293 effect, int x, int y) {
-      // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
-      // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
+      // Icon is 18px at (x,y). Draw the timer + level SMALL (scaled ~0.66) so they sit neatly on the icon:
+      // timer centred along the bottom, level top-right.
       float ts = 0.66F;
       int textColor = CustomThemeRenderer.getTextColor(config); // follow the theme's Text Color setting
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);
       context.method_51448().pushMatrix();
-      context.method_51448().translate((float)(x + 8), (float)(y + 12));
+      context.method_51448().translate((float)(x + 9), (float)(y + 13));
       context.method_51448().scale(ts, ts);
       context.method_27535(client.field_1772, class_2561.method_43470(duration), -durationWidth / 2, 0, textColor);
       context.method_51448().popMatrix();
@@ -696,7 +712,7 @@ public final class HudPanelsFeature {
          String amp = getAmplifierText(effect.method_5578() + 1);
          int ampWidth = client.field_1772.method_1727(amp);
          context.method_51448().pushMatrix();
-         context.method_51448().translate((float)(x + 15), (float)(y - 1));
+         context.method_51448().translate((float)(x + 17), (float)(y - 1));
          context.method_51448().scale(ts, ts);
          context.method_27535(client.field_1772, class_2561.method_43470(amp), -ampWidth, 0, textColor);
          context.method_51448().popMatrix();
