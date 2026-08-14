@@ -30,10 +30,11 @@ public final class HudPanelsFeature {
    // a 20px pitch (a neat 2px gap), 4px panel padding, the 16px icon drawn at slot+1,+1, and a themed
    // panel background behind it. (Was a bespoke 22px bubble offset outside the panel — it never lined up
    // with the panel edge/screen corner.)
+   // Match the Inventory HUD slots EXACTLY (InventoryHudFeature: SLOT 18, GAP 2 -> pitch 20, PANEL_PADDING 4).
+   // The old cramped 1px gap/pad made the accent slot outlines merge into an ugly block.
    private static final int POTION_SLOT = 18;
-   private static final int POTION_SLOT_PITCH = 19; // tight 1px gap between slots (was 20 = looser 2px)
-   private static final int POTION_PAD = 1;         // 1px edge ring = same as the inter-slot gap -> a clean,
-                                                    // uniform tight grid (was 4 = the fat "outline")
+   private static final int POTION_SLOT_PITCH = 20; // 2px gap, same as the inv HUD
+   private static final int POTION_PAD = 4;         // 4px panel padding, same as the inv HUD
    private static final int POTION_CELL_WIDTH = POTION_SLOT_PITCH;
    private static final int POTION_CELL_HEIGHT = POTION_SLOT_PITCH;
    private static final int POTION_MAX_SIMPLE_EFFECTS = 8;
@@ -165,7 +166,7 @@ public final class HudPanelsFeature {
             int textX = itemX + (16 - client.field_1772.method_1727(durabilityText)) / 2;
             // Horizontal row: TOP places text above the tray, otherwise below.
             int textY = config.hud.armorHudSide == TurtModConfig.ArmorHudSide.TOP ? y - 10 : y + HOTBAR_HEIGHT + 2;
-            context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
+            CustomThemeRenderer.drawHudLabel(context, client.field_1772, durabilityText, textX, textY, durabilityColor, config);
          }
       }
    }
@@ -208,7 +209,7 @@ public final class HudPanelsFeature {
                ? x - 4 - client.field_1772.method_1727(durabilityText)
                : x + HOTBAR_HEIGHT + 4;
             int textY = itemY + 4;
-            context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
+            CustomThemeRenderer.drawHudLabel(context, client.field_1772, durabilityText, textX, textY, durabilityColor, config);
          }
       }
    }
@@ -245,12 +246,12 @@ public final class HudPanelsFeature {
                if (config.hud.armorHudSide == TurtModConfig.ArmorHudSide.LEFT) {
                   textX = slotX - 4 - client.field_1772.method_1727(durabilityText);
                }
-               context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
+               CustomThemeRenderer.drawHudLabel(context, client.field_1772, durabilityText, textX, textY, durabilityColor, config);
             } else {
                int textX = slotX + (18 - client.field_1772.method_1727(durabilityText)) / 2;
                // Horizontal row: TOP places text above the slot, otherwise below.
                int textY = config.hud.armorHudSide == TurtModConfig.ArmorHudSide.TOP ? slotY - 10 : slotY + 18 + 6;
-               context.method_27535(client.field_1772, class_2561.method_43470(durabilityText), textX, textY, durabilityColor);
+               CustomThemeRenderer.drawHudLabel(context, client.field_1772, durabilityText, textX, textY, durabilityColor, config);
             }
          }
       }
@@ -371,7 +372,9 @@ public final class HudPanelsFeature {
    private static int armorDurabilityColor(class_1799 stack, TurtModConfig config) {
       boolean full = !stack.method_7963() || stack.method_7919() <= 0;
       if (config.hud.armorHudFullDurabilityTextColor && full) {
-         return CustomThemeRenderer.applyHudOpacity(config, CustomThemeRenderer.getTextColor(config));
+         // getTextColor already carries the HUD opacity; return it as-is so drawHudLabel can also apply the
+         // theme's Text-colour gradient (per-glyph) when one is set.
+         return CustomThemeRenderer.getTextColor(config);
       }
       return CustomThemeRenderer.applyHudOpacity(config, -16777216 | stack.method_31580());
    }
@@ -694,9 +697,9 @@ public final class HudPanelsFeature {
       // Icon is 16px at (x,y) inside an 18px slot. Draw the timer + level SMALL (scaled ~0.66) so they
       // sit neatly inside the slot instead of dominating it: timer centred along the bottom, level top-right.
       float ts = 0.66F;
-      // Vanilla effect colours (not themed): duration is gray (0xFF808080, vanilla -8355712), the level
-      // reads like the effect name — white. Both still fade with the HUD opacity.
-      int durationColor = CustomThemeRenderer.applyHudOpacity(config, 0xFF808080);
+      // Vanilla-style effect colours (not themed): duration in a light gray (a touch lighter than vanilla's
+      // 0xFF808080, which read too dark here), the level white like the effect name. Both fade with HUD opacity.
+      int durationColor = CustomThemeRenderer.applyHudOpacity(config, 0xFFAAAAAA);
       int levelColor = CustomThemeRenderer.applyHudOpacity(config, 0xFFFFFFFF);
       String duration = getTimerDuration(effect);
       int durationWidth = client.field_1772.method_1727(duration);

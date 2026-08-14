@@ -426,8 +426,8 @@ public static final class Combat {
       public int moduleToastOffsetX = 0;
       public int moduleToastOffsetY = 0;
       public boolean inventoryHudEnabled = false;
-      public int inventoryHudX = 0;
-      public int inventoryHudY = 203;
+      public int inventoryHudX = 445;
+      public int inventoryHudY = 291;
       public int inventoryHudScalePercent = 65;
       public boolean inventoryHudBackground = true;
       public boolean coordinatesHud = false;
@@ -454,8 +454,8 @@ public static final class Combat {
       public boolean snapToCenter = true;
       public int centerSnapRange = 8;
       public boolean movableArmorHud = true;
-      public int armorHudX = 413;
-      public int armorHudY = 271;
+      public int armorHudX = 67;
+      public int armorHudY = 316;
       public boolean armorHudVertical = true;
       public boolean armorHudHotbarStyle = true;
       public boolean armorHudShowDurability = true;
@@ -472,7 +472,7 @@ public static final class Combat {
       public boolean armorHudWarnings = true;
       public int armorHudWarningThresholdPercent = 20;
       public boolean movablePotionHud = true;
-      public int potionHudX = 613;
+      public int potionHudX = 640;
       public int potionHudY = 0;
       public int potionMaxRows = 6;
       public int potionHudColumns = 1;
@@ -605,8 +605,8 @@ public static final class Combat {
 
       public Hud() {
          this.coordinatesHud = false;
-         this.coordinatesHudX = 253;
-         this.coordinatesHudY = 291;
+         this.coordinatesHudX = 267;
+         this.coordinatesHudY = 302;
          this.coordinatesHudScalePercent = 89;
          this.coordinatesHudMode = TurtModConfig.CoordinatesHudMode.COMPACT;
          this.coordsShowChunk = true;
@@ -621,7 +621,7 @@ public static final class Combat {
          this.minimalFpsPingOverlay = true;
          this.fpsColorCoded = false;
          this.minimalOverlayX = 0;
-         this.minimalOverlayY = 0;
+         this.minimalOverlayY = 352;
          this.overlayScalePercent = 100;
          this.cleanF3Mode = false;
          this.cleanF3ShowFpsPing = true;
@@ -666,7 +666,7 @@ public static final class Combat {
          this.potionThrowHudScalePercent = 50;
          this.reachDisplay = false;
          this.reachHudX = 0;
-         this.reachHudY = 180;
+         this.reachHudY = 182;
          this.reachHudScalePercent = 100;
          this.reachShowTypeTag = true;
          this.reachShowEntityName = true;
@@ -675,17 +675,17 @@ public static final class Combat {
          this.reachDecimals = 2;
          this.reachDisplayTicks = 60;
          this.toggleSprintHud = false;
-         this.toggleSprintHudX = 170;
-         this.toggleSprintHudY = 342;
+         this.toggleSprintHudX = 0;
+         this.toggleSprintHudY = 0;
          this.toggleSprintHudScalePercent = 100;
          this.keystrokesHud = false;
          this.keystrokesShowCps = false;
-         this.keystrokesHudX = 594;
-         this.keystrokesHudY = 41;
+         this.keystrokesHudX = 582;
+         this.keystrokesHudY = 171;
          this.keystrokesHudScalePercent = 85;
          this.cpsCounterHud = false;
-         this.cpsCounterX = 602;
-         this.cpsCounterY = 210;
+         this.cpsCounterX = 597;
+         this.cpsCounterY = 249;
          this.cpsCounterScalePercent = 105;
          this.cpsShowBoth = true;
          this.cpsShowRightClick = false;
