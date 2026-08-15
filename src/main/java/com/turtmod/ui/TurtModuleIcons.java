@@ -66,6 +66,15 @@ public final class TurtModuleIcons {
       ITEM_IDS.put("Mute Sounds", "note_block");
       ITEM_IDS.put("Hide Particles", "gunpowder");
       ITEM_IDS.put("Totem Tweaks", "totem_of_undying");
+      // Sidebar nav + category tabs (keyed by their label). "Back" stays a pixel arrow (no fitting item).
+      ITEM_IDS.put("HUD Editor", "item_frame");
+      ITEM_IDS.put("Skin Changer", "player_head");
+      ITEM_IDS.put("Settings", "redstone");
+      ITEM_IDS.put("Gallery", "painting");
+      ITEM_IDS.put("Visuals", "ender_eye");
+      ITEM_IDS.put("HUD", "item_frame");
+      ITEM_IDS.put("Utility", "repeater");
+      ITEM_IDS.put("Misc", "barrel");
    }
 
    // Resolved-and-cached stacks. A sentinel EMPTY marks "no mapping / unresolved" so we only look up once.

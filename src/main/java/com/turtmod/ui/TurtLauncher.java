@@ -153,10 +153,15 @@ public final class TurtLauncher {
       if (hovered && !active) {
          TurtUIUtils.drawRoundedRect(ctx, x, y, w, h, 3, new Color(0x1EFFFFFF, true));
       }
-      if (icon != null) {
+      // Prefer a real Minecraft item icon for the nav/tab (crisp/native), else the pixel glyph.
+      net.minecraft.class_1799 itemIcon = TurtModuleIcons.forModule(label);
+      boolean hasIcon = itemIcon != null || icon != null;
+      if (itemIcon != null) {
+         TurtModuleIcons.drawItem(ctx, itemIcon, x + 6, y + (h - 16) / 2);
+      } else if (icon != null) {
          com.turtmod.ui.TurtIcons.drawFit(ctx, icon, x + 7, y + (h - 14) / 2, 14);
       }
-      int labelX = x + (icon != null ? 25 : 10);
+      int labelX = x + (hasIcon ? 25 : 10);
       Color c = active ? GREEN : (hovered ? TEXT : new Color(0xBBCCCCCC, true));
       TurtUIUtils.drawText(ctx, tr, label, labelX, y + (h - 8) / 2, c, false, active);
    }
