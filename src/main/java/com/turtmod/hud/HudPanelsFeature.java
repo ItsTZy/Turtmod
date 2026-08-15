@@ -682,7 +682,8 @@ public final class HudPanelsFeature {
          int row = horizontal ? (i / cols) : (i % rows);
          int slotX = startX + col * POTION_SLOT_PITCH;
          int slotY = startY + row * POTION_SLOT_PITCH;
-         CustomThemeRenderer.renderSlotCell(context, slotX, slotY, POTION_SLOT, POTION_SLOT, config, true);
+         // active=false → the subtle hairline border, not the bold accent outline (which read too thick).
+         CustomThemeRenderer.renderSlotCell(context, slotX, slotY, POTION_SLOT, POTION_SLOT, config, false);
          drawEffectIcon(context, effect, slotX + 1, slotY + 1);
          drawIconOverlay(context, client, config, effect, slotX + 1, slotY + 1);
       }

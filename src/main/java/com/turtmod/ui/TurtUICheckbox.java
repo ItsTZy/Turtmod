@@ -87,16 +87,12 @@ public class TurtUICheckbox {
       ctx.method_51448().pushMatrix();
       ctx.method_51448().translate(lift * 2.5f, -lift * 1.0f);
 
-      // Soft accent glow behind the card on hover.
-      if (lift > 0.01f) {
-         TurtUIUtils.drawHoverGlow(ctx, this.x, this.y, w, h, 4, lift * 0.8f, accent);
-      }
-
-      // Row card.
+      // Row card. (No hover glow — its square corners clashed with the rounded card.)
       int bg = this.checked ? 0x33000000 : (hovered ? 0x2BFFFFFF : 0x16FFFFFF);
       TurtUIUtils.drawRoundedRect(ctx, this.x, this.y, w, h, 4, new Color(bg, true));
+      // Checked rows get a clean subtle accent outline (replaces the old left-edge accent bar that read ugly).
       if (this.checked) {
-         ctx.method_25294(this.x + 2, this.y + 3, this.x + 4, this.y + h - 3, accent.getRGB());
+         TurtUIUtils.drawRoundedBorder(ctx, this.x, this.y, w, h, 4, new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 110));
       } else if (lift > 0.01f) {
          TurtUIUtils.drawRoundedBorder(ctx, this.x, this.y, w, h, 4, new Color(255, 255, 255, (int)(36 * lift)));
       }
@@ -134,12 +130,12 @@ public class TurtUICheckbox {
          TurtUIUtils.drawText(ctx, this.textRenderer, post, cx, ny, textColor, false, false, false);
       }
 
-      // Sliding pill toggle on the right (larger radius reads as a cleaner pill).
+      // Sliding toggle on the right — a softly-rounded rectangle (not a full pill; the full pill read too round).
       int ph = Math.min(12, h - 4);
       int pw = ph * 2;
       int px = this.x + w - pw - 6;
       int py = this.y + (h - ph) / 2;
-      int r = ph / 2;
+      int r = 4;
       TurtUIUtils.drawRoundedRect(ctx, px, py, pw, ph, r, new Color(0x66262626, true)); // off track
       TurtUIUtils.drawRoundedBorder(ctx, px, py, pw, ph, r, new Color(255, 255, 255, 20));
       int aa = (int)(this.knobAnim * 255f);
@@ -150,7 +146,7 @@ public class TurtUICheckbox {
       int knob = ph - 4;
       int travel = pw - knob - 4;
       int kx = px + 2 + Math.round(travel * this.knobAnim);
-      TurtUIUtils.drawRoundedRect(ctx, kx, py + 2, knob, knob, knob / 2, new Color(250, 250, 250, 255));
+      TurtUIUtils.drawRoundedRect(ctx, kx, py + 2, knob, knob, 3, new Color(250, 250, 250, 255));
 
       ctx.method_51448().popMatrix();
    }
