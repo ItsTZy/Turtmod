@@ -37,8 +37,11 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    @Override
    protected void method_75752(class_332 ctx, int mouseX, int mouseY, float delta) {
       super.method_75752(ctx, mouseX, mouseY, delta);   // normal vanilla button
-      // Pixel shirt icon on the left of the button face (replaces the old 🧍 emoji in the label).
-      com.turtmod.ui.TurtIcons.drawFit(ctx, com.turtmod.ui.TurtIcons.shirt(), this.method_46426() + 4, this.method_46427() + 3, 14);
+      // Player-head item icon on the left of the button face (matches the item icons used in the menu nav).
+      net.minecraft.class_1799 headIcon = com.turtmod.ui.TurtModuleIcons.forModule("Skin Changer");
+      if (headIcon != null) {
+         com.turtmod.ui.TurtModuleIcons.drawItem(ctx, headIcon, this.method_46426() + 4, this.method_46427() + 2);
+      }
       class_8685 skin = currentSkin();
       if (skin == null) {
          return;
