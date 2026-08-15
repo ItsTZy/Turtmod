@@ -8,36 +8,8 @@ import net.minecraft.class_327;
 import net.minecraft.class_332;
 
 public class TurtUICheckbox {
-   /** Flip to false to fall back to the classic square checkbox. While true, the module toggles
-    *  draw the turtle-shell sprites below (grey = off, green = on). */
-   public static boolean USE_TURTLE_SHELL = false;
-   // GUI sprites: place the PNGs at assets/turtmod/textures/gui/sprites/<name>.png
-   private static final class_2960 SHELL_OFF = class_2960.method_60655("turtmod", "turtle_shell_off");
-   private static final class_2960 SHELL_ON = class_2960.method_60655("turtmod", "turtle_shell_on");
-
-   /** Per-module icons (your turtle-skin screenshots). Keyed by the module's display name. Only
-    *  modules registered here render an icon; everything else keeps the shell/checkbox so you can
-    *  add art one module at a time without breaking the rest. Icon files go in
-    *  assets/turtmod/textures/gui/sprites/modules/&lt;slug&gt;.png and are referenced as
-    *  turtmod:modules/&lt;slug&gt; (slug = lower-case name, non-alphanumerics → "_"). The icon shows
-    *  dimmed when the module is OFF and full-colour when ON. */
-   private static final java.util.Map<String, class_2960> MODULE_ICONS = new java.util.HashMap<>();
-   /** Render size of a module icon (px). The 12px toggle hitbox is unchanged; the icon just draws
-    *  a touch larger into the gap before the label. */
-   private static final int ICON_SIZE = 16;
-
-   /** Turn the slug "fullbright" out of the display name "Fullbright". */
-   public static String iconSlug(String displayName) {
-      return displayName.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
-   }
-
-   /** Register a module to use its own turtle icon. Call once you've dropped its PNG in place. */
-   public static void enableIcon(String displayName) {
-      MODULE_ICONS.put(displayName, class_2960.method_60655("turtmod", "modules/" + iconSlug(displayName)));
-   }
-
-   // NOTE: per-row module icons are intentionally NOT registered here. The module list shows the
-   // classic checkbox. enableIcon(...) remains available if you ever want a one-off row icon back.
+   // Module rows now render a real Minecraft item icon (see TurtModuleIcons), with the TurtIcons pixel glyph
+   // as the fallback. The old turtle-shell sprites / per-module AI PNGs were removed (dead art).
    public final int x;
    public final int y;
    public final int size;
@@ -129,14 +101,19 @@ public class TurtUICheckbox {
          TurtUIUtils.drawRoundedBorder(ctx, this.x, this.y, w, h, 4, new Color(255, 255, 255, (int)(36 * lift)));
       }
 
-      // Per-module pixel icon (describes the module), drawn left of the name; label shifts to make room.
-      if (this.icon != null) {
+      // Per-module icon, drawn left of the name; label shifts to make room. Prefer a real Minecraft item icon
+      // (crisp/native); fall back to the pixel glyph for modules without an item mapping.
+      net.minecraft.class_1799 itemIcon = TurtModuleIcons.forModule(this.label);
+      if (itemIcon != null) {
+         TurtModuleIcons.drawItem(ctx, itemIcon, this.x + 3, this.y + (h - 16) / 2);
+      } else if (this.icon != null) {
          TurtIcons.drawFit(ctx, this.icon, this.x + 5, this.y + (h - 12) / 2, 12);
       }
+      boolean hasIcon = itemIcon != null || this.icon != null;
 
       // Name (with optional search-match highlight in accent pink so it reads on any row state).
       Color textColor = this.checked ? accent : (hovered ? new Color(0xFFFFFFFF, true) : this.theme.text());
-      int nx = this.x + (this.icon != null ? 21 : 8);
+      int nx = this.x + (hasIcon ? 21 : 8);
       int ny = this.y + (h - 8) / 2;
       String q = this.highlightQuery;
       int idx = (q == null || q.isEmpty()) ? -1 : this.label.toLowerCase(java.util.Locale.ROOT).indexOf(q);
