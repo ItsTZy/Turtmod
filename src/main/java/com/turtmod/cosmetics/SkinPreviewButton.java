@@ -25,10 +25,10 @@ public class SkinPreviewButton extends class_4185.class_12231 {
    // Last-rendered preview rect (for drag hit-testing).
    private int pvx1, pvy1, pvx2, pvy2;
    private boolean dragging = false;
-   private boolean manual = false;            // true once the user has dragged to rotate
    private float userYaw = 0f;
    private float userPitch = 0f;
    private int lastMx, lastMy;                // for computing drag delta in the render loop
+   private long lastFrameNs = System.nanoTime();   // for time-based idle spin
 
    public SkinPreviewButton(int x, int y, int w, int h, class_4185.class_4241 onPress) {
       super(x, y, w, h, class_2561.method_43470("  Skin Changer"), onPress, field_40754);
@@ -61,25 +61,24 @@ public class SkinPreviewButton extends class_4185.class_12231 {
       if (y2 > sh - 2) { int d = y2 - (sh - 2); y1 -= d; y2 -= d; }
       this.pvx1 = x1; this.pvy1 = y1; this.pvx2 = x2; this.pvy2 = y2;
 
-      // Drive rotation from the render loop's live cursor delta (reliable, unlike drag-event routing).
+      // Rotation: drag to spin/tilt; when idle it keeps slowly turning (turntable) from wherever you left it.
+      long now = System.nanoTime();
+      float dt = Math.min((now - this.lastFrameNs) / 1_000_000_000f, 0.1f);
+      this.lastFrameNs = now;
       if (this.dragging) {
-         this.manual = true;
-         this.userYaw += (mouseX - this.lastMx);
+         // Drag follows the cursor: drag right → the model turns right (was inverted before).
+         this.userYaw -= (mouseX - this.lastMx);
          this.userPitch += (mouseY - this.lastMy) * 0.02f;
          this.userPitch = Math.max(-0.6f, Math.min(0.6f, this.userPitch));
+      } else {
+         this.userYaw += dt * 40f;                       // idle turntable (~40°/s), continues from current angle
+         this.userPitch *= Math.max(0f, 1f - dt * 2f);   // gently ease the tilt back to level
       }
       this.lastMx = mouseX;
       this.lastMy = mouseY;
 
-      float bodyYaw, tiltPitch;
-      if (this.manual) {
-         bodyYaw = 180f + this.userYaw;
-         tiltPitch = this.userPitch;
-      } else {
-         float spin = (System.currentTimeMillis() % 6000L) / 6000.0f * 360.0f;   // slow turntable
-         bodyYaw = 180f + spin;
-         tiltPitch = 0f;
-      }
+      float bodyYaw = 180f + this.userYaw;
+      float tiltPitch = this.userPitch;
 
       // Scissor to the preview region before submitting (the GUI entity render captures the scissor).
       ctx.method_44379(x1, y1, x2, y2);

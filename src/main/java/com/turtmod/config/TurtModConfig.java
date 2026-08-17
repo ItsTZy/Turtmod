@@ -490,6 +490,8 @@ public static final class Combat {
       public PotionHudStyle potionHudStyle;
       public int potionHudScalePercent;
       public boolean minimalFpsPingOverlay;
+      public boolean overlayShowFps;   // show the "Fps N" part of the overlay
+      public boolean overlayShowPing;  // show the "Ping Nms" part of the overlay
       public boolean fpsColorCoded;
       public int minimalOverlayX;
       public int minimalOverlayY;
@@ -622,6 +624,8 @@ public static final class Combat {
          this.potionHudStyle = TurtModConfig.PotionHudStyle.ICONS_ONLY;
          this.potionHudScalePercent = 105;
          this.minimalFpsPingOverlay = true;
+         this.overlayShowFps = true;
+         this.overlayShowPing = true;
          this.fpsColorCoded = false;
          this.minimalOverlayX = 0;
          this.minimalOverlayY = 352;

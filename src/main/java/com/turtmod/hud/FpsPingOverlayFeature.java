@@ -42,22 +42,40 @@ public final class FpsPingOverlayFeature {
           context.method_51448().translate((float)(-x), (float)(-y));
           int textColor = CustomThemeRenderer.getTextColor(config);
           int fpsColor = config.hud.fpsColorCoded ? fpsColor(fps) : textColor;
+          boolean showFps = config.hud.overlayShowFps;
+          boolean showPing = config.hud.overlayShowPing;
+          if (!showFps && !showPing) {   // both parts hidden → nothing to draw
+             context.method_51448().popMatrix();
+             return;
+          }
           String fpsText = "Fps " + fps;
           String pingText = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
           int w = getBaseWidth(client, config);
           if (transparentText) {
-             int cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, fpsText, x, y, fpsColor, config);
-             cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, pingText, cursor + 4, y, textColor, config);
+             int cursor = x;
+             boolean drawn = false;
+             if (showFps) {
+                cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, fpsText, cursor, y, fpsColor, config);
+                drawn = true;
+             }
+             if (showPing) {
+                CustomThemeRenderer.renderBracketedText(context, client.field_1772, pingText, drawn ? cursor + 4 : cursor, y, textColor, config);
+             }
           } else {
              CustomThemeRenderer.renderThemedBox(context, x, y, w, getBaseHeight(), config);
-             String pingPart = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
-             int fpsW = CustomThemeRenderer.textWidth(client.field_1772, fpsText, config);
-             // Centre the two-part label as one unit inside the panel.
-             int totalW = fpsW + CustomThemeRenderer.textWidth(client.field_1772, "  " + pingPart, config);
-             int tx = x + Math.max(0, (w - totalW) / 2);
              int ty = CustomThemeRenderer.centeredTextY(y, getBaseHeight());
-             CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, tx, ty, fpsColor, config);
-             CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingPart, tx + fpsW, ty, textColor, config);
+             if (showFps && showPing) {
+                int fpsW = CustomThemeRenderer.textWidth(client.field_1772, fpsText, config);
+                int totalW = fpsW + CustomThemeRenderer.textWidth(client.field_1772, "  " + pingText, config);
+                int tx = x + Math.max(0, (w - totalW) / 2);
+                CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, tx, ty, fpsColor, config);
+                CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingText, tx + fpsW, ty, textColor, config);
+             } else {
+                String only = showFps ? fpsText : pingText;
+                int color = showFps ? fpsColor : textColor;
+                int tw = CustomThemeRenderer.textWidth(client.field_1772, only, config);
+                CustomThemeRenderer.drawHudLabel(context, client.field_1772, only, x + Math.max(0, (w - tw) / 2), ty, color, config);
+             }
           }
 
          context.method_51448().popMatrix();
@@ -75,9 +93,23 @@ public final class FpsPingOverlayFeature {
 
    private static int getBaseWidth(class_310 client, TurtModConfig config) {
       if (client != null && client.field_1772 != null) {
-         int compact = CustomThemeRenderer.textWidth(client.field_1772, "Fps 999  Ping 999ms", config);
-         int transparent = CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Fps 999", config) + 4
-            + CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Ping 999ms", config);
+         boolean showFps = config.hud.overlayShowFps;
+         boolean showPing = config.hud.overlayShowPing;
+         if (!showFps && !showPing) {
+            return 1;
+         }
+         String compactStr = (showFps && showPing) ? "Fps 999  Ping 999ms" : (showFps ? "Fps 999" : "Ping 999ms");
+         int compact = CustomThemeRenderer.textWidth(client.field_1772, compactStr, config);
+         int transparent = 0;
+         if (showFps) {
+            transparent += CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Fps 999", config);
+         }
+         if (showFps && showPing) {
+            transparent += 4;
+         }
+         if (showPing) {
+            transparent += CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Ping 999ms", config);
+         }
          return Math.max(compact, transparent) + 12;
       } else {
          return 160;
