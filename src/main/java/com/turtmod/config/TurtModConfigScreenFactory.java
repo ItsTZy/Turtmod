@@ -176,7 +176,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Potion Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 5))
             .build())
          .group(OptionGroup.createBuilder("Counters & Info")
-            .addOption(bool("FPS/Ping", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))
+            .addOption(bool("FPS/Ping", () -> cfg.hud.minimalFpsPingOverlay || cfg.hud.pingHudEnabled, v -> { cfg.hud.minimalFpsPingOverlay = v; cfg.hud.pingHudEnabled = v; }))
             .addOption(bool("Reach Display", () -> cfg.hud.reachDisplay, v -> cfg.hud.reachDisplay = v))
             .addOption(bool("Inventory HUD", () -> cfg.hud.inventoryHudEnabled, v -> cfg.hud.inventoryHudEnabled = v))
             .addOption(bool("Keystrokes", () -> cfg.hud.keystrokesHud, v -> cfg.hud.keystrokesHud = v))
@@ -349,8 +349,8 @@ public final class TurtModConfigScreenFactory {
          }
          case FPS_PING -> {
             cfg.hud.minimalFpsPingOverlay = dh.minimalFpsPingOverlay;
-            cfg.hud.overlayShowFps = dh.overlayShowFps;
-            cfg.hud.overlayShowPing = dh.overlayShowPing;
+            cfg.hud.pingHudEnabled = dh.pingHudEnabled;
+            cfg.hud.pingHudScalePercent = dh.pingHudScalePercent;
             cfg.hud.overlayScalePercent = dh.overlayScalePercent;
          }
          case REACH -> {
@@ -654,11 +654,11 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Clock Timer (1:30)", () -> cfg.hud.potionTimerClock, v -> cfg.hud.potionTimerClock = v))
             .addOption(intOpt("Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 5));
          case FPS_PING -> group
-            .addOption(bool("Enabled", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))
-            .addOption(bool("Show FPS", () -> cfg.hud.overlayShowFps, v -> cfg.hud.overlayShowFps = v))
-            .addOption(bool("Show Ping", () -> cfg.hud.overlayShowPing, v -> cfg.hud.overlayShowPing = v))
+            .addOption(bool("FPS HUD", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))
+            .addOption(bool("Ping HUD", () -> cfg.hud.pingHudEnabled, v -> cfg.hud.pingHudEnabled = v))
             .addOption(bool("Color-Coded FPS", () -> cfg.hud.fpsColorCoded, v -> cfg.hud.fpsColorCoded = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("FPS Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Ping Scale %", () -> cfg.hud.pingHudScalePercent, v -> cfg.hud.pingHudScalePercent = v, 50, 300, 5))
             .addOption(bool("Background", () -> cfg.hud.fpsPingShowBackground, v -> cfg.hud.fpsPingShowBackground = v));
          case REACH -> group
             .addOption(bool("Enabled", () -> cfg.hud.reachDisplay, v -> cfg.hud.reachDisplay = v))

@@ -489,9 +489,11 @@ public static final class Combat {
       public PotionSortMode potionSortMode;
       public PotionHudStyle potionHudStyle;
       public int potionHudScalePercent;
-      public boolean minimalFpsPingOverlay;
-      public boolean overlayShowFps;   // show the "Fps N" part of the overlay
-      public boolean overlayShowPing;  // show the "Ping Nms" part of the overlay
+      public boolean minimalFpsPingOverlay;   // FPS HUD (Lunar-style: FPS is its own movable HUD)
+      public boolean pingHudEnabled;          // Ping HUD — a SEPARATE, independently-placeable HUD
+      public int pingHudX;
+      public int pingHudY;
+      public int pingHudScalePercent;
       public boolean fpsColorCoded;
       public int minimalOverlayX;
       public int minimalOverlayY;
@@ -624,8 +626,10 @@ public static final class Combat {
          this.potionHudStyle = TurtModConfig.PotionHudStyle.ICONS_ONLY;
          this.potionHudScalePercent = 105;
          this.minimalFpsPingOverlay = true;
-         this.overlayShowFps = true;
-         this.overlayShowPing = true;
+         this.pingHudEnabled = true;
+         this.pingHudX = 0;
+         this.pingHudY = 366;
+         this.pingHudScalePercent = 100;
          this.fpsColorCoded = false;
          this.minimalOverlayX = 0;
          this.minimalOverlayY = 352;

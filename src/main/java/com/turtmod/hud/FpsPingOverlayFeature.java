@@ -1,119 +1,112 @@
 package com.turtmod.hud;
 
 import com.turtmod.config.TurtModConfig;
-import net.minecraft.class_2561;
 import net.minecraft.class_310;
 import net.minecraft.class_332;
 import net.minecraft.class_640;
 
+/**
+ * FPS and Ping are TWO SEPARATE, independently-placeable HUDs (Lunar-style): the FPS HUD draws "Fps N" at its
+ * own position, the Ping HUD draws "Ping Nms" at its own position, each with its own enable + scale, and each
+ * is its own draggable box in the HUD editor.
+ */
 public final class FpsPingOverlayFeature {
    private FpsPingOverlayFeature() {
    }
 
+   /** FPS HUD. */
    public static void render(class_332 context, class_310 client, TurtModConfig config) {
       if (client.field_1724 != null && config.misc.enabled && config.hud.minimalFpsPingOverlay) {
-         // Non-destructive on-screen clamp in SCALED gui space (matches the HUD editor + GuiGraphics).
          int x = HudEditorFeature.clampToScreenX(client, config.hud.minimalOverlayX, getScaledWidth(config));
          int y = HudEditorFeature.clampToScreenY(client, config.hud.minimalOverlayY, getScaledHeight(config));
-         drawAt(context, client, config, x, y);
+         drawAt(context, client, config, x, y, true, config.hud.overlayScalePercent);
       }
    }
 
-   /** Live-settings preview: draw the overlay at (x,y) with the current settings (no config pos/clamp). */
-   public static void renderPreview(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
-      drawAt(context, client, config, x, y);
+   /** Ping HUD (separate). */
+   public static void renderPing(class_332 context, class_310 client, TurtModConfig config) {
+      if (client.field_1724 != null && config.misc.enabled && config.hud.pingHudEnabled) {
+         int x = HudEditorFeature.clampToScreenX(client, config.hud.pingHudX, getPingScaledWidth(config));
+         int y = HudEditorFeature.clampToScreenY(client, config.hud.pingHudY, getPingScaledHeight(config));
+         drawAt(context, client, config, x, y, false, config.hud.pingHudScalePercent);
+      }
    }
 
-   private static void drawAt(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
-      int fps = client.method_47599();
-      int ping = -1;
-      if (client.method_1562() != null) {
+   /** Live-settings preview (FPS). */
+   public static void renderPreview(class_332 context, class_310 client, TurtModConfig config, int x, int y) {
+      drawAt(context, client, config, x, y, true, config.hud.overlayScalePercent);
+   }
+
+   private static int currentPing(class_310 client) {
+      if (client.method_1562() != null && client.field_1724 != null) {
          class_640 entry = client.method_1562().method_2871(client.field_1724.method_5667());
          if (entry != null) {
-            ping = entry.method_2959();
+            return entry.method_2959();
          }
       }
-      {
-         float scale = CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent);
-         boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.fpsPingShowBackground;
-         context.method_51448().pushMatrix();
-         context.method_51448().translate((float)x, (float)y);
-         context.method_51448().scale(scale, scale);
-          context.method_51448().translate((float)(-x), (float)(-y));
-          int textColor = CustomThemeRenderer.getTextColor(config);
-          int fpsColor = config.hud.fpsColorCoded ? fpsColor(fps) : textColor;
-          boolean showFps = config.hud.overlayShowFps;
-          boolean showPing = config.hud.overlayShowPing;
-          if (!showFps && !showPing) {   // both parts hidden → nothing to draw
-             context.method_51448().popMatrix();
-             return;
-          }
-          String fpsText = "Fps " + fps;
-          String pingText = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
-          int w = getBaseWidth(client, config);
-          if (transparentText) {
-             int cursor = x;
-             boolean drawn = false;
-             if (showFps) {
-                cursor = CustomThemeRenderer.renderBracketedText(context, client.field_1772, fpsText, cursor, y, fpsColor, config);
-                drawn = true;
-             }
-             if (showPing) {
-                CustomThemeRenderer.renderBracketedText(context, client.field_1772, pingText, drawn ? cursor + 4 : cursor, y, textColor, config);
-             }
-          } else {
-             CustomThemeRenderer.renderThemedBox(context, x, y, w, getBaseHeight(), config);
-             int ty = CustomThemeRenderer.centeredTextY(y, getBaseHeight());
-             if (showFps && showPing) {
-                int fpsW = CustomThemeRenderer.textWidth(client.field_1772, fpsText, config);
-                int totalW = fpsW + CustomThemeRenderer.textWidth(client.field_1772, "  " + pingText, config);
-                int tx = x + Math.max(0, (w - totalW) / 2);
-                CustomThemeRenderer.drawHudLabel(context, client.field_1772, fpsText, tx, ty, fpsColor, config);
-                CustomThemeRenderer.drawHudLabel(context, client.field_1772, "  " + pingText, tx + fpsW, ty, textColor, config);
-             } else {
-                String only = showFps ? fpsText : pingText;
-                int color = showFps ? fpsColor : textColor;
-                int tw = CustomThemeRenderer.textWidth(client.field_1772, only, config);
-                CustomThemeRenderer.drawHudLabel(context, client.field_1772, only, x + Math.max(0, (w - tw) / 2), ty, color, config);
-             }
-          }
-
-         context.method_51448().popMatrix();
-      }
+      return -1;
    }
 
+   private static void drawAt(class_332 context, class_310 client, TurtModConfig config, int x, int y, boolean isFps, int scalePercent) {
+      int textColor = CustomThemeRenderer.getTextColor(config);
+      String text;
+      int color;
+      if (isFps) {
+         int fps = client.method_47599();
+         text = "Fps " + fps;
+         color = config.hud.fpsColorCoded ? fpsColor(fps) : textColor;
+      } else {
+         int ping = currentPing(client);
+         text = ping >= 0 ? "Ping " + ping + "ms" : "Ping --";
+         color = textColor;
+      }
+      float scale = CustomThemeRenderer.getHudScale(config, scalePercent);
+      boolean transparentText = CustomThemeRenderer.isTransparentTextMode(config) || !config.hud.fpsPingShowBackground;
+      context.method_51448().pushMatrix();
+      context.method_51448().translate((float) x, (float) y);
+      context.method_51448().scale(scale, scale);
+      context.method_51448().translate((float) (-x), (float) (-y));
+      if (transparentText) {
+         CustomThemeRenderer.renderBracketedText(context, client.field_1772, text, x, y, color, config);
+      } else {
+         int w = getBaseWidth(client, config, isFps);
+         CustomThemeRenderer.renderThemedBox(context, x, y, w, getBaseHeight(), config);
+         int tw = CustomThemeRenderer.textWidth(client.field_1772, text, config);
+         int tx = x + Math.max(0, (w - tw) / 2);
+         int ty = CustomThemeRenderer.centeredTextY(y, getBaseHeight());
+         CustomThemeRenderer.drawHudLabel(context, client.field_1772, text, tx, ty, color, config);
+      }
+      context.method_51448().popMatrix();
+   }
+
+   // ── FPS HUD sizing ──
    public static int getScaledWidth(TurtModConfig config) {
       class_310 client = class_310.method_1551();
-      return Math.round((float)getBaseWidth(client, config) * CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent));
+      return Math.round((float) getBaseWidth(client, config, true) * CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent));
    }
 
    public static int getScaledHeight(TurtModConfig config) {
-      return Math.round((float)getBaseHeight() * CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent));
+      return Math.round((float) getBaseHeight() * CustomThemeRenderer.getHudScale(config, config.hud.overlayScalePercent));
    }
 
-   private static int getBaseWidth(class_310 client, TurtModConfig config) {
+   // ── Ping HUD sizing ──
+   public static int getPingScaledWidth(TurtModConfig config) {
+      class_310 client = class_310.method_1551();
+      return Math.round((float) getBaseWidth(client, config, false) * CustomThemeRenderer.getHudScale(config, config.hud.pingHudScalePercent));
+   }
+
+   public static int getPingScaledHeight(TurtModConfig config) {
+      return Math.round((float) getBaseHeight() * CustomThemeRenderer.getHudScale(config, config.hud.pingHudScalePercent));
+   }
+
+   private static int getBaseWidth(class_310 client, TurtModConfig config, boolean isFps) {
       if (client != null && client.field_1772 != null) {
-         boolean showFps = config.hud.overlayShowFps;
-         boolean showPing = config.hud.overlayShowPing;
-         if (!showFps && !showPing) {
-            return 1;
-         }
-         String compactStr = (showFps && showPing) ? "Fps 999  Ping 999ms" : (showFps ? "Fps 999" : "Ping 999ms");
+         String compactStr = isFps ? "Fps 999" : "Ping 999ms";
          int compact = CustomThemeRenderer.textWidth(client.field_1772, compactStr, config);
-         int transparent = 0;
-         if (showFps) {
-            transparent += CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Fps 999", config);
-         }
-         if (showFps && showPing) {
-            transparent += 4;
-         }
-         if (showPing) {
-            transparent += CustomThemeRenderer.getBracketedTextWidth(client.field_1772, "Ping 999ms", config);
-         }
+         int transparent = CustomThemeRenderer.getBracketedTextWidth(client.field_1772, compactStr, config);
          return Math.max(compact, transparent) + 12;
-      } else {
-         return 160;
       }
+      return isFps ? 70 : 96;
    }
 
    private static int getBaseHeight() {

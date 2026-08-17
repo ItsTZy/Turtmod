@@ -41,7 +41,8 @@ public final class HudEditorFeature {
 
       drawAnchor(context, client, config, HudEditorFeature.Anchor.ARMOR, "Armor", config.hud.movableArmorHud);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.POTION, "Potions", config.hud.movablePotionHud);
-      drawAnchor(context, client, config, HudEditorFeature.Anchor.OVERLAY, "FPS/Ping", config.hud.minimalFpsPingOverlay);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.OVERLAY, "FPS", config.hud.minimalFpsPingOverlay);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.PING, "Ping", config.hud.pingHudEnabled);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.DEBUG, "Clean F3", config.hud.cleanF3Mode);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.REACH, "Reach", config.hud.reachDisplay);
       drawAnchor(context, client, config, HudEditorFeature.Anchor.SPRINT, "Sprint", config.hud.toggleSprintHud);
@@ -99,7 +100,7 @@ public final class HudEditorFeature {
          case 0 -> var10000 = "Armor";
          case 1 -> var10000 = "Potions";
          case 2 -> var10000 = "Totems";
-         case 3 -> var10000 = "FPS/Ping";
+         case 3 -> var10000 = "FPS";
          case 4 -> var10000 = "Clean F3";
          case 5 -> var10000 = "Reach";
          case 6 -> var10000 = "Sprint";
@@ -111,6 +112,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = "Health";
          case 13 -> var10000 = "Scoreboard";
          case 14 -> var10000 = "Pots";
+         case 15 -> var10000 = "Ping";
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -175,6 +177,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.showExactHealthNumber;
          case 13 -> var10000 = !config.visual.hideScoreboard;
          case 14 -> var10000 = false;
+         case 15 -> var10000 = config.hud.pingHudEnabled;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -199,6 +202,7 @@ public final class HudEditorFeature {
          case 12 -> config.combat.showExactHealthNumber = enabled;
          case 13 -> config.visual.hideScoreboard = !enabled;
          case 14 -> config.combat.potionThrowCounterHud = enabled;
+         case 15 -> config.hud.pingHudEnabled = enabled;
       }
    }
 
@@ -293,6 +297,10 @@ public final class HudEditorFeature {
             config.hud.potionThrowHudX = x;
             config.hud.potionThrowHudY = y;
             break;
+         case 15:
+            config.hud.pingHudX = x;
+            config.hud.pingHudY = y;
+            break;
       }
 
    }
@@ -359,6 +367,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getX(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudX;
+         case 15 -> var10000 = config.hud.pingHudX;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -375,7 +384,7 @@ public final class HudEditorFeature {
     *  Excludes POTION/SCOREBOARD (self-clamping getters), HEALTH (own space), and TOTEM/ZOOM/POTS (no size). */
    private static boolean isDirectStore(Anchor anchor) {
       return switch (anchor.ordinal()) {
-         case 0, 3, 4, 5, 6, 7, 8, 10, 11 -> true;
+         case 0, 3, 4, 5, 6, 7, 8, 10, 11, 15 -> true;
          default -> false;
       };
    }
@@ -398,6 +407,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getY(client, config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
          case 14 -> var10000 = config.hud.potionThrowHudY;
+         case 15 -> var10000 = config.hud.pingHudY;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -426,6 +436,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
          case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
+         case 15 -> var10000 = FpsPingOverlayFeature.getPingScaledWidth(config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -450,6 +461,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
          case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
          case 14 -> var10000 = 0; // POTS — see getWidth
+         case 15 -> var10000 = FpsPingOverlayFeature.getPingScaledHeight(config);
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -536,6 +548,7 @@ public final class HudEditorFeature {
          case 12 -> var10000 = config.combat.healthScalePercent;
          case 13 -> var10000 = config.visual.scoreboardScalePercent <= 0 ? 100 : config.visual.scoreboardScalePercent;
          case 14 -> var10000 = config.hud.potionThrowHudScalePercent;
+         case 15 -> var10000 = config.hud.pingHudScalePercent;
          default -> throw new MatchException((String)null, (Throwable)null);
       }
 
@@ -561,6 +574,7 @@ public final class HudEditorFeature {
          case 12 -> config.combat.healthScalePercent = next;
          case 13 -> config.visual.scoreboardScalePercent = next;
          case 14 -> config.hud.potionThrowHudScalePercent = next;
+         case 15 -> config.hud.pingHudScalePercent = next;
       }
 
    }
@@ -599,6 +613,8 @@ public final class HudEditorFeature {
          config.hud.inventoryHudY = 203;
          config.hud.cpsCounterX = 602;
          config.hud.cpsCounterY = 210;
+         config.hud.pingHudX = 0;
+         config.hud.pingHudY = 366;
          ConfigManager.save(config);
       }
    }
@@ -618,11 +634,12 @@ public final class HudEditorFeature {
       COORDINATES,
       HEALTH,
       SCOREBOARD,
-      POTS;
+      POTS,
+      PING;
 
       // $FF: synthetic method
       private static Anchor[] $values() {
-         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS};
+         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS, PING};
       }
    }
 }

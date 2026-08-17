@@ -365,6 +365,7 @@ public final class TurtModClient implements ClientModInitializer {
          // never changes the user's saved layout.
          safeRender("health", () -> HealthNumberFeature.render(context, client, config));
          safeRender("fpsPing", () -> FpsPingOverlayFeature.render(context, client, config));
+         safeRender("pingHud", () -> FpsPingOverlayFeature.renderPing(context, client, config));
          safeRender("panels", () -> HudPanelsFeature.render(context, client, config));
          safeRender("reach", () -> ReachDisplayFeature.render(context, client, config));
          safeRender("sprint", () -> ToggleSprintFeature.render(context, client, config));
