@@ -108,18 +108,21 @@ public abstract class EntityRenderDispatcherMixin {
    }
 
    private static int turtmod$getColor(class_1297 entity, class_1297 targeted, TurtModConfig config) {
-      // A user-picked per-entity colour wins outright, so an entity you added always shows its own colour.
+      // Hurt flash and target highlight take precedence — even for an entity with its own custom colour —
+      // so those states still apply to per-entity hitboxes (previously the custom colour won outright and
+      // the target/hurt colours never showed on entities you'd added to the list).
+      if (config.hud.hitboxHurtColorEnabled && entity instanceof class_1309 living && living.field_6235 > 0) {
+         return config.hud.hitboxHurtColor;
+      }
+      if (config.hud.hitboxChangeTargetColor && targeted == entity) {
+         return config.hud.hitboxTargetColor;
+      }
+      // Otherwise a user-picked per-entity colour wins over the default hitbox colour.
       Integer custom = turtmod$customColorFor(entity, config);
       if (custom != null) {
          return custom;
       }
-      if (config.hud.hitboxHurtColorEnabled && entity instanceof class_1309 living) {
-         if (living.field_6235 > 0) {
-            return config.hud.hitboxHurtColor;
-         }
-      }
-
-      return config.hud.hitboxChangeTargetColor && targeted == entity ? config.hud.hitboxTargetColor : config.hud.hitboxColor;
+      return config.hud.hitboxColor;
    }
 
    /** The user-picked colour for this entity's type, or null if the type isn't in the custom list. */
