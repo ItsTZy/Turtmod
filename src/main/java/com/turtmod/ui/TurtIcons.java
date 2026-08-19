@@ -919,7 +919,7 @@ public final class TurtIcons {
       MODULES.put("Container Buttons", BUTTON);
       MODULES.put("Fishing Line", HOOK);
       MODULES.put("Mute Sounds", MUTE);
-      MODULES.put("Hide Particles", SPARKLE);
+      MODULES.put("Particle Tweaks", SPARKLE);
       MODULES.put("Totem Tweaks", TOTEM);
       MODULES.put("Enable TurtMod", TURTLE);
    }

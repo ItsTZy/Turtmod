@@ -90,7 +90,7 @@ public final class TurtModConfigScreenFactory {
          case PING_DISPLAY -> "Ping Display";
          case DEATH_COORDS -> "Death Coords";
          case MUTE_SOUNDS -> "Mute Sounds";
-         case HIDE_PARTICLES -> "Hide Particles";
+         case HIDE_PARTICLES -> "Particle Tweaks";
          case CLEAR_VIEW -> "Clear View";
          case CHAT_TWEAKS -> "Chat Tweaks";
          case COMMAND_KEYS -> "Command Keys";
@@ -471,6 +471,8 @@ public final class TurtModConfigScreenFactory {
          case HIDE_PARTICLES -> {
             cfg.misc.hideParticlesEnabled = dm.hideParticlesEnabled;
             cfg.misc.hideParticles = dm.hideParticles;
+            cfg.misc.particlesFast = dm.particlesFast;
+            cfg.misc.particleLifePercent = dm.particleLifePercent;
             cfg.misc.hiddenParticleIds.clear();
          }
          case CLEAR_VIEW -> {
@@ -798,6 +800,8 @@ public final class TurtModConfigScreenFactory {
          case HIDE_PARTICLES -> group
             .addOption(bool("Enabled", () -> cfg.misc.hideParticlesEnabled, v -> cfg.misc.hideParticlesEnabled = v))
             .addOption(bool("Hide All Particles", () -> cfg.misc.hideParticles, v -> cfg.misc.hideParticles = v))
+            .addOption(bool("Fast Particles", () -> cfg.misc.particlesFast, v -> cfg.misc.particlesFast = v))
+            .addOption(intOpt("Particle Lifetime %", () -> cfg.misc.particleLifePercent, v -> cfg.misc.particleLifePercent = v, 0, 100, 5))
             .addOption(button("Pick Particles to Hide...", () -> openPicker(
                "Hide Particles", "Click a particle to hide/show (spawns a preview)",
                registryIds(net.minecraft.class_7923.field_41180), cfg.misc.hiddenParticleIds,

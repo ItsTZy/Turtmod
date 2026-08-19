@@ -101,11 +101,28 @@ public class RegistryPickerScreen extends class_437 {
       this.filtered.clear();
       String q = this.search == null ? "" : this.search.method_1882().trim().toLowerCase(Locale.ROOT);
       for (String id : this.allIds) {
-         if (q.isEmpty() || id.toLowerCase(Locale.ROOT).contains(q)) {
+         // Match either the raw id OR the friendly name, so people can search "campfire smoke" too.
+         if (q.isEmpty() || id.toLowerCase(Locale.ROOT).contains(q) || prettify(id).toLowerCase(Locale.ROOT).contains(q)) {
             this.filtered.add(id);
          }
       }
       this.clampScroll();
+   }
+
+   /** "minecraft:campfire_cosy_smoke" → "Campfire Cosy Smoke" — a readable name most people recognise. */
+   private static String prettify(String id) {
+      String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+      StringBuilder sb = new StringBuilder();
+      for (String part : path.split("[_/]")) {
+         if (part.isEmpty()) {
+            continue;
+         }
+         if (sb.length() > 0) {
+            sb.append(' ');
+         }
+         sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+      }
+      return sb.length() == 0 ? path : sb.toString();
    }
 
    private int maxScroll() {
@@ -130,12 +147,14 @@ public class RegistryPickerScreen extends class_437 {
       ctx.method_44379(this.listLeft, this.listTop, this.listLeft + this.listW, this.listBottom);
       int y = this.listTop - Math.round(this.scrollY);
       int textY = (this.rowH - 8) / 2;
+      String hoveredId = null;
       for (String id : this.filtered) {
          if (y + this.rowH >= this.listTop && y <= this.listBottom) {
             boolean on = this.selected.contains(id);
             boolean hov = mx >= this.listLeft && mx <= this.listLeft + this.listW && my >= y && my <= y + this.rowH;
             if (hov) {
                ctx.method_25294(this.listLeft, y, this.listLeft + this.listW, y + this.rowH, 0x22FFFFFF);
+               hoveredId = id;
             }
             int boxX = this.listLeft + 2;
             int boxY = y + (this.rowH - 10) / 2;
@@ -144,7 +163,11 @@ public class RegistryPickerScreen extends class_437 {
             if (on) {
                ctx.method_51433(this.field_22793, "✔", boxX + 1, boxY + 1, 0xFF000000, false);
             }
-            ctx.method_51433(this.field_22793, id, this.listLeft + 16, y + textY, on ? -1 : -5592406, false);
+            // Friendly name first (what people recognise), then the raw id in a muted grey for reference/search.
+            String pretty = prettify(id);
+            ctx.method_51433(this.field_22793, pretty, this.listLeft + 16, y + textY, on ? -1 : -5592406, false);
+            int pw = this.field_22793.method_1727(pretty);
+            ctx.method_51433(this.field_22793, id, this.listLeft + 16 + pw + 6, y + textY, on ? 0xFF7A8290 : 0xFF565C66, false);
             if (this.preview == PreviewType.PARTICLE) {
                // Live animated thumbnail per row.
                int tx = this.listLeft + this.listW - this.thumb - 4;
@@ -160,8 +183,54 @@ public class RegistryPickerScreen extends class_437 {
       }
       ctx.method_44380();
       this.drawScrollbar(ctx);
+      // Helpful hint: what the hovered particle is / when it appears (falls back to the friendly name).
+      if (this.preview == PreviewType.PARTICLE && hoveredId != null) {
+         String info = descriptionFor(hoveredId);
+         String hint = info != null ? prettify(hoveredId) + " — " + info : prettify(hoveredId);
+         int hy = this.listBottom + 6;
+         ctx.method_25294(this.listLeft, hy, this.listLeft + this.listW, hy + 14, 0x66000000);
+         ctx.method_51433(this.field_22793, this.field_22793.method_27523(hint, this.listW - 8), this.listLeft + 4, hy + 3, -3355444, false);
+      }
       TurtUIUtils.drawOpenFade(ctx, this.field_22789, this.field_22790, this.openFade);
       super.method_25394(ctx, mx, my, delta);
+   }
+
+   /** Short "what/when" blurbs for the common particles people actually want to hide. Null = no blurb. */
+   private static String descriptionFor(String id) {
+      String p = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+      return switch (p) {
+         case "explosion", "explosion_emitter" -> "The puff from a TNT / creeper / firework explosion";
+         case "poof" -> "The small puff when a mob dies or spawns";
+         case "crit" -> "The stars on a critical hit";
+         case "enchanted_hit" -> "The cyan sparks when you hit with a Sharpness weapon";
+         case "sweep_attack" -> "The arc from a sword sweep attack";
+         case "damage_indicator" -> "The hearts/particles shown when an entity takes damage";
+         case "smoke", "large_smoke" -> "Smoke — torches, fire, extinguishing, etc.";
+         case "campfire_cosy_smoke", "campfire_signal_smoke" -> "The smoke column rising from a campfire";
+         case "flame" -> "The flames on torches, fire and furnaces";
+         case "lava" -> "The sparks that pop out of lava";
+         case "cloud" -> "Small white puffs (e.g. when a mob dies)";
+         case "splash" -> "Water splashes (swimming, rain, dripping)";
+         case "bubble", "bubble_pop", "bubble_column_up" -> "Underwater bubbles";
+         case "heart" -> "The hearts when animals breed or a tamed mob is happy";
+         case "angry_villager" -> "The angry cloud above a villager/mob";
+         case "happy_villager" -> "The green sparkles (villager trade, bone-mealing)";
+         case "portal" -> "The purple swirl of a nether portal / enderman";
+         case "enchant" -> "The glyphs flowing to an enchanting table";
+         case "note" -> "The music note from a note block";
+         case "firework" -> "Firework rocket spark trail";
+         case "totem_of_undying" -> "The green swirl when a Totem saves you";
+         case "dripping_water", "falling_water", "dripping_lava", "falling_lava" -> "Drips falling from blocks above";
+         case "witch" -> "The purple spell particles around a witch";
+         case "effect", "entity_effect", "ambient_entity_effect" -> "The swirls from a potion effect on a mob";
+         case "dust", "dust_color_transition" -> "Redstone dust particles";
+         case "electric_spark" -> "Sparks from a lightning-charged copper";
+         case "sculk_charge", "sculk_charge_pop", "sculk_soul" -> "The dark particles spreading from sculk";
+         case "soul", "soul_fire_flame" -> "Soul fire / soul sand flame";
+         case "snowflake" -> "Falling snow in snowy biomes";
+         case "dripping_honey", "falling_honey", "landing_honey" -> "Honey dripping from a beehive/block";
+         default -> null;
+      };
    }
 
    /** Draws an animated particle texture thumbnail with a checker backing so it's always visible. */

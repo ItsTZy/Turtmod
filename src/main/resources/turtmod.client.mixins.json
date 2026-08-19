@@ -27,6 +27,7 @@
 		"HandledScreenMixin",
 		"HeldItemScaleMixin",
 		"HideParticlesMixin",
+		"ParticleAgeAccessor",
 		"MuteSoundsMixin",
 		"HideScoreboardMixin",
 		"InGameHudMixin",

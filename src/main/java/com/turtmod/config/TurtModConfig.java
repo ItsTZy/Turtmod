@@ -898,6 +898,8 @@ public static final class Combat {
       public boolean hideParticlesEnabled = true;
       public boolean muteSoundsEnabled = true;
       public boolean hideParticles = false;
+      public boolean particlesFast = false;      // don't hide — just shorten particle lifetime (quick fade)
+      public int particleLifePercent = 25;       // % of a particle's normal lifetime when Fast Particles is on
       public boolean muteAnvil = false;
       public boolean muteNoteBlocks = false;
       public boolean muteTotemPop = false;

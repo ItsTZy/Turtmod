@@ -64,7 +64,7 @@ public final class TurtModuleIcons {
       ITEM_IDS.put("Container Buttons", "hopper");
       ITEM_IDS.put("Fishing Line", "fishing_rod");
       ITEM_IDS.put("Mute Sounds", "note_block");
-      ITEM_IDS.put("Hide Particles", "gunpowder");
+      ITEM_IDS.put("Particle Tweaks", "gunpowder");
       ITEM_IDS.put("Totem Tweaks", "totem_of_undying");
       // Sidebar nav + category tabs (keyed by their label). "Back" stays a pixel arrow (no fitting item).
       ITEM_IDS.put("HUD Editor", "item_frame");
