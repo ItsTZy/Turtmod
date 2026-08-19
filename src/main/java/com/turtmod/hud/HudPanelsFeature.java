@@ -468,7 +468,8 @@ public final class HudPanelsFeature {
             sortEffectsByLongestDuration(effects);
          }
          int visibleCount = Math.max(1, Math.min(effects.size(), POTION_MAX_SIMPLE_EFFECTS));
-         List<class_1293> visibleEffects = new ArrayList(effects.subList(0, visibleCount));
+         // Read-only view (consumers only iterate/size it, and 'effects' isn't modified after) — avoids a copy.
+         List<class_1293> visibleEffects = effects.subList(0, visibleCount);
          float scale = CustomThemeRenderer.getHudScale(config, config.hud.potionHudScalePercent);
          PanelSize size = getPotionHudSize(config, visibleEffects.size());
          // Anchor-aware placement: potionEditorX/Y pin whichever edge the panel was dropped near and

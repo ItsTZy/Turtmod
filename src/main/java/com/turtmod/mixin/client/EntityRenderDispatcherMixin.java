@@ -125,12 +125,26 @@ public abstract class EntityRenderDispatcherMixin {
       return config.hud.hitboxColor;
    }
 
+   /** Cache of entity-type → registry-id string. Entity types are singletons and their ids never change, so
+    *  this avoids the registry lookup + {@code toString()} allocation for every entity every frame. */
+   @org.spongepowered.asm.mixin.Unique
+   private static final java.util.Map<net.minecraft.class_1299<?>, String> turtmod$typeIdCache = new java.util.IdentityHashMap<>();
+
    /** The user-picked colour for this entity's type, or null if the type isn't in the custom list. */
    private static Integer turtmod$customColorFor(class_1297 entity, TurtModConfig config) {
       if (config.hud.hitboxEntityColors == null || config.hud.hitboxEntityColors.isEmpty()) {
          return null;
       }
-      net.minecraft.class_2960 id = net.minecraft.class_7923.field_41177.method_10221(entity.method_5864());
-      return id == null ? null : config.hud.hitboxEntityColors.get(id.toString());
+      net.minecraft.class_1299<?> type = entity.method_5864();
+      String key = turtmod$typeIdCache.get(type);
+      if (key == null) {
+         net.minecraft.class_2960 id = net.minecraft.class_7923.field_41177.method_10221(type);
+         if (id == null) {
+            return null;
+         }
+         key = id.toString();
+         turtmod$typeIdCache.put(type, key);
+      }
+      return config.hud.hitboxEntityColors.get(key);
    }
 }
