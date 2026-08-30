@@ -1,0 +1,645 @@
+package com.turtmod.hud;
+
+import com.turtmod.combat.HealthNumberFeature;
+import com.turtmod.config.ConfigManager;
+import com.turtmod.config.TurtModConfig;
+import net.minecraft.class_11908;
+import net.minecraft.class_310;
+import net.minecraft.class_332;
+
+public final class HudEditorFeature {
+   private static Anchor dragging;
+   private static Anchor selected;
+   private static int dragOffsetX;
+   private static int dragOffsetY;
+   private static final int CLOSE_SIZE = 10;
+
+   // Snap feedback state (read by HudEditorScreen for the pulse + guides).
+   private static boolean snappedX;
+   private static boolean snappedY;
+   public static long snapPulseNs;
+
+   /** The anchor currently being dragged, or null. Lets the editor screen draw guides/chip for it. */
+   public static Anchor getDragging() {
+      return dragging;
+   }
+
+   private HudEditorFeature() {
+   }
+
+   public static void render(class_332 context, class_310 client, TurtModConfig config, int mouseX, int mouseY) {
+      int sw = context.method_51421();
+      int sh = context.method_51443();
+      if (selected != null && !isEnabled(selected, config)) {
+         selected = null;
+         dragging = null;
+      }
+
+      // Positions are kept on-screen NON-destructively: getX/getY return a clamped DISPLAY position each
+      // frame (see clampToScreenX/Y) so every box is drawn/grabbable on-screen after a resize, WITHOUT
+      // ever rewriting the saved config. The old clampAllToScreen that overwrote config is gone.
+
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.ARMOR, "Armor", config.hud.movableArmorHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.POTION, "Potions", config.hud.movablePotionHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.OVERLAY, "FPS", config.hud.minimalFpsPingOverlay);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.PING, "Ping", config.hud.pingHudEnabled);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.DEBUG, "Clean F3", config.hud.cleanF3Mode);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.REACH, "Reach", config.hud.reachDisplay);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.SPRINT, "Sprint", config.hud.toggleSprintHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.KEYSTROKES, "Keystrokes", config.hud.keystrokesHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.INVENTORY, "Inventory", config.hud.inventoryHudEnabled);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.CPS_COUNTER, "CPS Counter", config.hud.cpsCounterHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.COORDINATES, "Coordinates", config.hud.coordinatesHud);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.HEALTH, "Health", config.combat.showExactHealthNumber);
+      drawAnchor(context, client, config, HudEditorFeature.Anchor.SCOREBOARD, "Scoreboard", !config.visual.hideScoreboard);
+      context.method_25303(client.field_1772, "Left drag: move | Click [x]: disable | Mouse wheel: scale | [+/-]: scale | [R]: reset", 6, sh - 20, -7487905);
+      if (selected != null) {
+         int x = getX(selected, client, config);
+         int y = getY(selected, client, config);
+         int w = getWidth(selected, client, config);
+         int h = getHeight(selected, client, config);
+         int accentColor = -7487905;
+         context.method_73198(x - 2, y - 2, w + 4, h + 4, accentColor);
+         String var10000 = getSelectedName(selected);
+         String info = "Selected: " + var10000 + " | Scale: " + getElementScalePercent(selected, config) + "% | [+/-] scale | [R] reset | Arrows move";
+         int infoW = client.field_1772.method_1727(info) + 10;
+         int infoY = sh - 35;
+         context.method_25294(6, infoY, 6 + infoW, infoY + 12, -1441130988);
+         context.method_73198(6, infoY, infoW, 12, accentColor);
+         context.method_51433(client.field_1772, info, 9, infoY + 3, -1, false);
+      }
+
+   }
+
+   /** Non-destructive on-screen clamp for a DISPLAY x. Returns the stored x pulled just inside the current
+    *  scaled screen width, WITHOUT writing config. This is how HUDs stay on-screen after a window resize /
+    *  GUI-scale change while their saved position is preserved (resize back → they return to where they were). */
+   public static int clampToScreenX(class_310 client, int x, int scaledWidth) {
+      if (client == null || client.method_22683() == null) {
+         return x;
+      }
+      // method_4486() = SCALED gui width (== GuiGraphics.method_51421). NOTE: method_4489() is the RAW
+      // framebuffer width (~2x at GUI scale 2) — using it here made the clamp never engage (HUDs dragged
+      // off-screen). See turtmod-mc-sources memory.
+      int sw = client.method_22683().method_4486();
+      return Math.max(0, Math.min(Math.max(0, sw - scaledWidth), x));
+   }
+
+   /** Non-destructive on-screen clamp for a DISPLAY y (scaled screen height). See {@link #clampToScreenX}. */
+   public static int clampToScreenY(class_310 client, int y, int scaledHeight) {
+      if (client == null || client.method_22683() == null) {
+         return y;
+      }
+      int sh = client.method_22683().method_4502(); // SCALED gui height (method_4507 is raw window height)
+      return Math.max(0, Math.min(Math.max(0, sh - scaledHeight), y));
+   }
+
+   private static String getSelectedName(Anchor selected) {
+      String var10000;
+      switch (selected.ordinal()) {
+         case 0 -> var10000 = "Armor";
+         case 1 -> var10000 = "Potions";
+         case 2 -> var10000 = "Totems";
+         case 3 -> var10000 = "FPS";
+         case 4 -> var10000 = "Clean F3";
+         case 5 -> var10000 = "Reach";
+         case 6 -> var10000 = "Sprint";
+         case 7 -> var10000 = "Keystrokes";
+         case 8 -> var10000 = "CPS Counter";
+         case 9 -> var10000 = "Zoom";
+         case 10 -> var10000 = "Inventory HUD";
+         case 11 -> var10000 = "Coordinates";
+         case 12 -> var10000 = "Health";
+         case 13 -> var10000 = "Scoreboard";
+         case 14 -> var10000 = "Pots";
+         case 15 -> var10000 = "Ping";
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      return var10000;
+   }
+
+   public static boolean mouseClicked(double mouseX, double mouseY, int button, class_310 client, TurtModConfig config) {
+      // Clicking the [x] button in an element's top-right corner disables that HUD element.
+      for(Anchor anchor : HudEditorFeature.Anchor.values()) {
+         if (anchor != Anchor.ZOOM && isEnabled(anchor, config)) {
+            int x = getX(anchor, client, config);
+            int y = getY(anchor, client, config);
+            int w = getWidth(anchor, client, config);
+            int bx = x + w - CLOSE_SIZE;
+            if (mouseX >= (double)bx && mouseX <= (double)(bx + CLOSE_SIZE) && mouseY >= (double)y && mouseY <= (double)(y + CLOSE_SIZE)) {
+               setEnabled(anchor, false, config);
+               if (selected == anchor) {
+                  selected = null;
+               }
+               dragging = null;
+               ConfigManager.save(config);
+               return true;
+            }
+         }
+      }
+
+      for(Anchor anchor : HudEditorFeature.Anchor.values()) {
+         if (isEnabled(anchor, config)) {
+            int x = getX(anchor, client, config);
+            int y = getY(anchor, client, config);
+            int w = getWidth(anchor, client, config);
+            int h = getHeight(anchor, client, config);
+            if (mouseX >= (double)x && mouseX <= (double)(x + w) && mouseY >= (double)y && mouseY <= (double)(y + h)) {
+               dragging = anchor;
+               selected = anchor;
+               dragOffsetX = (int)mouseX - x;
+               dragOffsetY = (int)mouseY - y;
+               return true;
+            }
+         }
+      }
+
+      selected = null;
+      return false;
+   }
+
+   public static boolean isEnabled(Anchor anchor, TurtModConfig config) {
+      boolean var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = config.hud.movableArmorHud;
+         case 1 -> var10000 = config.hud.movablePotionHud;
+         case 2 -> var10000 = false;
+         case 3 -> var10000 = config.hud.minimalFpsPingOverlay;
+         case 4 -> var10000 = config.hud.cleanF3Mode;
+         case 5 -> var10000 = config.hud.reachDisplay;
+         case 6 -> var10000 = config.hud.toggleSprintHud;
+         case 7 -> var10000 = config.hud.keystrokesHud;
+         case 8 -> var10000 = config.hud.cpsCounterHud;
+         case 9 -> var10000 = config.visual.zoomEnabled;
+         case 10 -> var10000 = config.hud.inventoryHudEnabled;
+         case 11 -> var10000 = config.hud.coordinatesHud;
+         case 12 -> var10000 = config.combat.showExactHealthNumber;
+         case 13 -> var10000 = !config.visual.hideScoreboard;
+         case 14 -> var10000 = false;
+         case 15 -> var10000 = config.hud.pingHudEnabled;
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      return var10000;
+   }
+
+   /** Toggle the config flag that backs an editor anchor (used by the in-editor [x] disable button). */
+   private static void setEnabled(Anchor anchor, boolean enabled, TurtModConfig config) {
+      switch (anchor.ordinal()) {
+         case 0 -> config.hud.movableArmorHud = enabled;
+         case 1 -> config.hud.movablePotionHud = enabled;
+         case 2 -> config.combat.totemCounterHud = enabled;
+         case 3 -> config.hud.minimalFpsPingOverlay = enabled;
+         case 4 -> config.hud.cleanF3Mode = enabled;
+         case 5 -> config.hud.reachDisplay = enabled;
+         case 6 -> config.hud.toggleSprintHud = enabled;
+         case 7 -> config.hud.keystrokesHud = enabled;
+         case 8 -> config.hud.cpsCounterHud = enabled;
+         case 9 -> config.visual.zoomEnabled = enabled;
+         case 10 -> config.hud.inventoryHudEnabled = enabled;
+         case 11 -> config.hud.coordinatesHud = enabled;
+         case 12 -> config.combat.showExactHealthNumber = enabled;
+         case 13 -> config.visual.hideScoreboard = !enabled;
+         case 14 -> config.combat.potionThrowCounterHud = enabled;
+         case 15 -> config.hud.pingHudEnabled = enabled;
+      }
+   }
+
+   public static boolean isSelected(Anchor anchor) { return anchor == selected; }
+
+   public static void mouseReleased(double mouseX, double mouseY, int button) {
+      dragging = null;
+      dragOffsetX = 0;
+      dragOffsetY = 0;
+      snappedX = false;
+      snappedY = false;
+   }
+
+   public static void mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, class_310 client, TurtModConfig config) {
+      if (dragging != null) {
+         int newX = (int)mouseX - dragOffsetX;
+         int newY = (int)mouseY - dragOffsetY;
+         if (config.hud.snapToGrid) {
+            newX = newX / config.hud.gridSize * config.hud.gridSize;
+            newY = newY / config.hud.gridSize * config.hud.gridSize;
+         }
+
+         // Follow the mouse 1:1 (no center-snapping — it caused a snap-back/release oscillation near the
+         // middle) and clamp the element FULLY on-screen (scaled bounds), so a drag stores an on-screen
+         // position that getX/getY will read back unchanged.
+         int w = getWidth(dragging, client, config);
+         int h = getHeight(dragging, client, config);
+         int sw = client.method_22683().method_4486(); // SCALED gui width (NOT method_4489 = raw framebuffer)
+         int sh = client.method_22683().method_4502(); // SCALED gui height
+         newX = Math.max(0, Math.min(Math.max(0, sw - w), newX));
+         newY = Math.max(0, Math.min(Math.max(0, sh - h), newY));
+         moveAnchor(dragging, newX, newY, client, config);
+         ConfigManager.save(config);
+      }
+
+   }
+
+   private static void moveAnchor(Anchor anchor, int x, int y, class_310 client, TurtModConfig config) {
+      switch (anchor.ordinal()) {
+         case 0:
+            config.hud.armorHudX = x;
+            config.hud.armorHudY = y;
+            break;
+         case 1:
+            HudPanelsFeature.potionApplyMove(client, config, x, y);
+            break;
+         case 2:
+            config.hud.totemHudX = x;
+            config.hud.totemHudY = y;
+            break;
+         case 3:
+            config.hud.minimalOverlayX = x;
+            config.hud.minimalOverlayY = y;
+            break;
+         case 4:
+            config.hud.cleanF3X = x;
+            config.hud.cleanF3Y = y;
+            break;
+         case 5:
+            config.hud.reachHudX = x;
+            config.hud.reachHudY = y;
+            break;
+         case 6:
+            config.hud.toggleSprintHudX = x;
+            config.hud.toggleSprintHudY = y;
+            break;
+         case 7:
+            config.hud.keystrokesHudX = x;
+            config.hud.keystrokesHudY = y;
+            break;
+         case 8:
+            config.hud.cpsCounterX = x;
+            config.hud.cpsCounterY = y;
+         case 9:
+         default:
+            break;
+         case 10:
+            config.hud.inventoryHudX = x;
+            config.hud.inventoryHudY = y;
+            break;
+         case 11:
+            config.hud.coordinatesHudX = x;
+            config.hud.coordinatesHudY = y;
+            break;
+         case 12:
+            HealthNumberFeature.setPosition(client, config, x, y);
+            break;
+         case 13:
+            HudPanelsFeature.scoreboardApplyMove(client, config, x, y);
+            break;
+         case 14:
+            config.hud.potionThrowHudX = x;
+            config.hud.potionThrowHudY = y;
+            break;
+         case 15:
+            config.hud.pingHudX = x;
+            config.hud.pingHudY = y;
+            break;
+      }
+
+   }
+
+   private static void drawAnchor(class_332 context, class_310 client, TurtModConfig config, Anchor anchor, String name, boolean enabled) {
+      if (!enabled) {
+         return;
+      }
+      int x = getX(anchor, client, config);
+      int y = getY(anchor, client, config);
+      int w = getWidth(anchor, client, config);
+      int h = getHeight(anchor, client, config);
+      if (w <= 0 || h <= 0) {
+         return;
+      }
+      boolean sel = anchor == selected;
+      boolean active = sel || anchor == dragging;
+      int accent = -7487905;   // green
+
+      // Only tint the footprint when active — idle elements get no fill so the real HUD shows through.
+      if (active) {
+         context.method_25294(x, y, x + w, y + h, 0x2200E676);
+      }
+      if (sel) {
+         int cs = 4;
+         context.method_25294(x, y, x + cs, y + 1, accent);
+         context.method_25294(x, y, x + 1, y + cs, accent);
+         context.method_25294(x + w - cs, y, x + w, y + 1, accent);
+         context.method_25294(x + w - 1, y, x + w, y + cs, accent);
+         context.method_25294(x, y + h - 1, x + cs, y + h, accent);
+         context.method_25294(x, y + h - cs, x + 1, y + h, accent);
+         context.method_25294(x + w - cs, y + h - 1, x + w, y + h, accent);
+         context.method_25294(x + w - 1, y + h - cs, x + w, y + h, accent);
+      }
+
+      // [x] disable button in the top-right corner — soft red (no pink, no duplicate name/scale text).
+      int red = 0xFFE06A6A;
+      int bx = x + w - CLOSE_SIZE;
+      context.method_25294(bx, y, bx + CLOSE_SIZE, y + CLOSE_SIZE, -1308622848);
+      context.method_73198(bx, y, CLOSE_SIZE, CLOSE_SIZE, red);
+      // Draw the "x" as pixels crossing at the exact centre — no font baseline/centring quirks.
+      int mcx = bx + CLOSE_SIZE / 2, mcy = y + CLOSE_SIZE / 2;
+      for (int i = -2; i <= 2; i++) {
+         context.method_25294(mcx + i, mcy + i, mcx + i + 1, mcy + i + 1, red);
+         context.method_25294(mcx + i, mcy - i, mcx + i + 1, mcy - i + 1, red);
+      }
+   }
+
+   public static int getX(Anchor anchor, class_310 client, TurtModConfig config) {
+      int var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = config.hud.armorHudX;
+         case 1 -> var10000 = HudPanelsFeature.potionEditorX(client, config);
+         case 2 -> var10000 = config.hud.totemHudX;
+         case 3 -> var10000 = config.hud.minimalOverlayX;
+         case 4 -> var10000 = config.hud.cleanF3X;
+         case 5 -> var10000 = config.hud.reachHudX;
+         case 6 -> var10000 = config.hud.toggleSprintHudX;
+         case 7 -> var10000 = config.hud.keystrokesHudX;
+         case 8 -> var10000 = config.hud.cpsCounterX;
+         case 9 -> var10000 = 0;
+         case 10 -> var10000 = config.hud.inventoryHudX;
+         case 11 -> var10000 = config.hud.coordinatesHudX;
+         case 12 -> var10000 = HealthNumberFeature.getX(client, config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorX(client, config);
+         case 14 -> var10000 = config.hud.potionThrowHudX;
+         case 15 -> var10000 = config.hud.pingHudX;
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      // Direct-store anchors return the raw saved X — clamp the DISPLAY value on-screen (non-destructive).
+      // POTION/SCOREBOARD already return clamped values from their own getters; HEALTH is intentionally
+      // left in its own (raw) space; TOTEM/ZOOM/POTS have no footprint.
+      if (isDirectStore(anchor)) {
+         return clampToScreenX(client, var10000, getWidth(anchor, client, config));
+      }
+      return var10000;
+   }
+
+   /** Anchors whose X/Y are stored as a plain top-left (so their DISPLAY position must be clamped here).
+    *  Excludes POTION/SCOREBOARD (self-clamping getters), HEALTH (own space), and TOTEM/ZOOM/POTS (no size). */
+   private static boolean isDirectStore(Anchor anchor) {
+      return switch (anchor.ordinal()) {
+         case 0, 3, 4, 5, 6, 7, 8, 10, 11, 15 -> true;
+         default -> false;
+      };
+   }
+
+   public static int getY(Anchor anchor, class_310 client, TurtModConfig config) {
+      int var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = config.hud.armorHudY;
+         case 1 -> var10000 = HudPanelsFeature.potionEditorY(client, config);
+         case 2 -> var10000 = config.hud.totemHudY;
+         case 3 -> var10000 = config.hud.minimalOverlayY;
+         case 4 -> var10000 = config.hud.cleanF3Y;
+         case 5 -> var10000 = config.hud.reachHudY;
+         case 6 -> var10000 = config.hud.toggleSprintHudY;
+         case 7 -> var10000 = config.hud.keystrokesHudY;
+         case 8 -> var10000 = config.hud.cpsCounterY;
+         case 9 -> var10000 = 0;
+         case 10 -> var10000 = config.hud.inventoryHudY;
+         case 11 -> var10000 = config.hud.coordinatesHudY;
+         case 12 -> var10000 = HealthNumberFeature.getY(client, config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorY(client, config);
+         case 14 -> var10000 = config.hud.potionThrowHudY;
+         case 15 -> var10000 = config.hud.pingHudY;
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      // See getX: clamp the DISPLAY Y of direct-store anchors on-screen without touching the saved value.
+      if (isDirectStore(anchor)) {
+         return clampToScreenY(client, var10000, getHeight(anchor, client, config));
+      }
+      return var10000;
+   }
+
+   public static int getWidth(Anchor anchor, class_310 client, TurtModConfig config) {
+      int var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledWidth(config);
+         case 1 -> var10000 = HudPanelsFeature.potionEditorWidth(config);
+         case 2 -> var10000 = 0; // TOTEM — counter module removed; anchor kept only to preserve ordinals
+         case 3 -> var10000 = FpsPingOverlayFeature.getScaledWidth(config);
+         case 4 -> var10000 = Math.round(Math.max(80, CleanF3Feature.boxWidth(client, CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
+         case 5 -> var10000 = ReachDisplayFeature.getScaledWidth(config);
+         case 6 -> var10000 = ToggleSprintFeature.getScaledWidth(config);
+         case 7 -> var10000 = KeystrokesFeature.getScaledWidth(config);
+         case 8 -> var10000 = CpsCounterFeature.getScaledWidth(config);
+         case 9 -> var10000 = 0;
+         case 10 -> var10000 = InventoryHudFeature.getScaledWidth(config);
+         case 11 -> var10000 = CoordinatesHudFeature.getScaledWidth(config);
+         case 12 -> var10000 = HealthNumberFeature.getScaledWidth(config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorWidth(config);
+         case 14 -> var10000 = 0; // POTS — counter module removed; anchor kept only to preserve ordinals
+         case 15 -> var10000 = FpsPingOverlayFeature.getPingScaledWidth(config);
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      return var10000;
+   }
+
+   public static int getHeight(Anchor anchor, class_310 client, TurtModConfig config) {
+      int var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = HudPanelsFeature.getArmorHudScaledHeight(config);
+         case 1 -> var10000 = HudPanelsFeature.potionEditorHeight(config);
+         case 2 -> var10000 = 0; // TOTEM — see getWidth
+         case 3 -> var10000 = FpsPingOverlayFeature.getScaledHeight(config);
+         case 4 -> var10000 = Math.round(Math.max(20, CleanF3Feature.boxHeight(CleanF3Feature.buildLines(client, config))) * CustomThemeRenderer.getHudScale(config, config.hud.cleanF3ScalePercent));
+         case 5 -> var10000 = ReachDisplayFeature.getScaledHeight(config);
+         case 6 -> var10000 = ToggleSprintFeature.getScaledHeight(config);
+         case 7 -> var10000 = KeystrokesFeature.getScaledHeight(config);
+         case 8 -> var10000 = CpsCounterFeature.getScaledHeight(config);
+         case 9 -> var10000 = 0;
+         case 10 -> var10000 = InventoryHudFeature.getScaledHeight(config);
+         case 11 -> var10000 = CoordinatesHudFeature.getScaledHeight(config);
+         case 12 -> var10000 = HealthNumberFeature.getScaledHeight(config);
+         case 13 -> var10000 = HudPanelsFeature.scoreboardEditorHeight(config);
+         case 14 -> var10000 = 0; // POTS — see getWidth
+         case 15 -> var10000 = FpsPingOverlayFeature.getPingScaledHeight(config);
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      return var10000;
+   }
+
+   public static boolean keyPressed(class_11908 input, TurtModConfig config) {
+      if (selected == null) {
+         return false;
+      } else {
+         int moveAmount = (input.comp_4797() & 1) == 1 ? 10 : 1;
+         switch (input.comp_4795()) {
+            case 45:
+            case 333:
+               scaleSelected(config, -5);
+               break;
+            case 61:
+            case 334:
+               scaleSelected(config, 5);
+               break;
+            case 82:
+               resetSelectedScale(config);
+               break;
+            case 262:
+               nudgeSelected(moveAmount, 0, config);
+               break;
+            case 263:
+               nudgeSelected(-moveAmount, 0, config);
+               break;
+            case 264:
+               nudgeSelected(0, moveAmount, config);
+               break;
+            case 265:
+               nudgeSelected(0, -moveAmount, config);
+               break;
+            default:
+               return false;
+         }
+
+         ConfigManager.save(config);
+         return true;
+      }
+   }
+
+   /** Arrow-key nudge that stays on-screen (clamped to scaled bounds, same as mouse drag). */
+   private static void nudgeSelected(int dx, int dy, TurtModConfig config) {
+      class_310 client = class_310.method_1551();
+      int w = getWidth(selected, client, config);
+      int h = getHeight(selected, client, config);
+      int nx = clampToScreenX(client, getX(selected, client, config) + dx, w);
+      int ny = clampToScreenY(client, getY(selected, client, config) + dy, h);
+      moveAnchor(selected, nx, ny, client, config);
+   }
+
+   public static boolean mouseScrolled(double mouseX, double mouseY, double amount, TurtModConfig config) {
+      if (selected != null && amount != (double)0.0F) {
+         scaleSelected(config, amount > (double)0.0F ? 5 : -5);
+         ConfigManager.save(config);
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   private static void scaleSelected(TurtModConfig config, int amount) {
+      setElementScalePercent(selected, config, getElementScalePercent(selected, config) + amount);
+   }
+
+   private static int getElementScalePercent(Anchor anchor, TurtModConfig config) {
+      int var10000;
+      switch (anchor.ordinal()) {
+         case 0 -> var10000 = config.hud.armorHudScalePercent;
+         case 1 -> var10000 = config.hud.potionHudScalePercent;
+         case 2 -> var10000 = config.hud.totemHudScalePercent;
+         case 3 -> var10000 = config.hud.overlayScalePercent;
+         case 4 -> var10000 = config.hud.cleanF3ScalePercent;
+         case 5 -> var10000 = config.hud.reachHudScalePercent;
+         case 6 -> var10000 = config.hud.toggleSprintHudScalePercent;
+         case 7 -> var10000 = config.hud.keystrokesHudScalePercent;
+         case 8 -> var10000 = config.hud.cpsCounterScalePercent;
+         case 9 -> var10000 = Math.round((float)(config.visual.zoomLevel * 10));
+         case 10 -> var10000 = config.hud.inventoryHudScalePercent;
+         case 11 -> var10000 = config.hud.coordinatesHudScalePercent;
+         case 12 -> var10000 = config.combat.healthScalePercent;
+         case 13 -> var10000 = config.visual.scoreboardScalePercent <= 0 ? 100 : config.visual.scoreboardScalePercent;
+         case 14 -> var10000 = config.hud.potionThrowHudScalePercent;
+         case 15 -> var10000 = config.hud.pingHudScalePercent;
+         default -> throw new MatchException((String)null, (Throwable)null);
+      }
+
+      int raw = var10000;
+      return Math.max(50, Math.min(300, raw));
+   }
+
+   private static void setElementScalePercent(Anchor anchor, TurtModConfig config, int next) {
+      next = Math.max(50, Math.min(300, next));
+      switch (anchor.ordinal()) {
+         case 0 -> config.hud.armorHudScalePercent = next;
+         case 1 -> config.hud.potionHudScalePercent = next;
+         case 2 -> config.hud.totemHudScalePercent = next;
+         case 3 -> config.hud.overlayScalePercent = next;
+         case 4 -> config.hud.cleanF3ScalePercent = next;
+         case 5 -> config.hud.reachHudScalePercent = next;
+         case 6 -> config.hud.toggleSprintHudScalePercent = next;
+         case 7 -> config.hud.keystrokesHudScalePercent = next;
+         case 8 -> config.hud.cpsCounterScalePercent = next;
+         case 9 -> config.visual.zoomLevel = Math.max(1, Math.min(10, next / 10));
+         case 10 -> config.hud.inventoryHudScalePercent = next;
+         case 11 -> config.hud.coordinatesHudScalePercent = next;
+         case 12 -> config.combat.healthScalePercent = next;
+         case 13 -> config.visual.scoreboardScalePercent = next;
+         case 14 -> config.hud.potionThrowHudScalePercent = next;
+         case 15 -> config.hud.pingHudScalePercent = next;
+      }
+
+   }
+
+   public static boolean resetSelectedScale(TurtModConfig config) {
+      if (config != null && selected != null) {
+         setElementScalePercent(selected, config, 100);
+         ConfigManager.save(config);
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   public static void resetAllPositions(TurtModConfig config) {
+      if (config != null) {
+         config.hud.armorHudX = 413;
+         config.hud.armorHudY = 271;
+         config.hud.potionHudX = 613;
+         config.hud.potionHudY = 0;
+         config.hud.totemHudX = 505;
+         config.hud.totemHudY = 162;
+         config.hud.potionThrowHudX = 505;
+         config.hud.potionThrowHudY = 190;
+         config.hud.minimalOverlayX = 0;
+         config.hud.minimalOverlayY = 0;
+         config.hud.cleanF3X = 0;
+         config.hud.cleanF3Y = 25;
+         config.hud.reachHudX = 0;
+         config.hud.reachHudY = 180;
+         config.hud.toggleSprintHudX = 170;
+         config.hud.toggleSprintHudY = 342;
+         config.hud.keystrokesHudX = 594;
+         config.hud.keystrokesHudY = 41;
+         config.hud.inventoryHudX = 0;
+         config.hud.inventoryHudY = 203;
+         config.hud.cpsCounterX = 602;
+         config.hud.cpsCounterY = 210;
+         config.hud.pingHudX = 0;
+         config.hud.pingHudY = 366;
+         ConfigManager.save(config);
+      }
+   }
+
+   public enum Anchor {
+      ARMOR,
+      POTION,
+      TOTEM,
+      OVERLAY,
+      DEBUG,
+      REACH,
+      SPRINT,
+      KEYSTROKES,
+      CPS_COUNTER,
+      ZOOM,
+      INVENTORY,
+      COORDINATES,
+      HEALTH,
+      SCOREBOARD,
+      POTS,
+      PING;
+
+      // $FF: synthetic method
+      private static Anchor[] $values() {
+         return new Anchor[]{ARMOR, POTION, TOTEM, OVERLAY, DEBUG, REACH, SPRINT, KEYSTROKES, CPS_COUNTER, ZOOM, INVENTORY, COORDINATES, HEALTH, SCOREBOARD, POTS, PING};
+      }
+   }
+}

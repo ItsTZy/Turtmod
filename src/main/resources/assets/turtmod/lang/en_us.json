@@ -1,0 +1,24 @@
+{
+  "key.turtmod.open_config": "Open TurtMod Config",
+  "key.turtmod.freelook_hold": "Freelook (Hold)",
+  "key.turtmod.zoom": "Zoom",
+  "key.turtmod.health_config": "Open Health Indicator Config",
+  "key.turtmod.health_toggle": "Toggle Health Indicator",
+  "key.turtmod.health_offset_up": "Health Indicator Up",
+  "key.turtmod.health_offset_down": "Health Indicator Down",
+  "key.turtmod.health_offset_reset": "Reset Health Indicator Offset",
+
+  "key.turtmod.command_key_1": "Command Key 1",
+  "key.turtmod.command_key_2": "Command Key 2",
+  "key.turtmod.command_key_3": "Command Key 3",
+  "key.turtmod.command_key_4": "Command Key 4",
+  "key.turtmod.command_key_5": "Command Key 5",
+  "key.turtmod.command_key_6": "Command Key 6",
+  "key.turtmod.command_key_7": "Command Key 7",
+  "key.turtmod.command_key_8": "Command Key 8",
+
+  "key.category.turtmod.general": "TurtMod",
+  "key.category.turtmod.visual": "TurtMod Visual",
+  "key.category.turtmod.hud": "TurtMod HUD",
+  "key.category.turtmod.zoom": "TurtMod Zoom"
+}

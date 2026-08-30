@@ -1,0 +1,80 @@
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+
+*.launch
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+.aider*
+
+# turtmod: local reference / backups / scratch (not part of the mod source)
+
+# all top-level underscore-prefixed dirs: _mcref, _mcsrc, _*_backup_*, _ui_backup_*, etc.
+/_*/
+
+# decompiled MC + stray library class dumps at repo root (the real Discord lib is the bundled jar)
+/net/
+/com/
+
+# reference mod sources
+/repos/
+
+# scratch notes / handoff docs
+/New folder/
+*.txt
+HANDOFF.md
+HISTORY_SUMMARY.md
+MOD_HANDOFF.md
+PORTING_HANDOFF.md
+hand.txt
+.claude/
+
+# ── Publishing: keep reference mods, backups & decompiled sources OUT of the repo ──
+# (many reference mods are All-Rights-Reserved / no-license — must NOT be redistributed)
+repos/
+_mcref/
+_mcsrc/
+_intermediary_decompile_java_backup_*/
+_named_decompile_java_backup_*/
+_src_backup_*/
+_ui_backup_*/
+New folder/
+# stray decompiled package roots at project root
+/com/
+/net/
+# local build artifacts / temp
+LICENSE.tmp
+*.hprof

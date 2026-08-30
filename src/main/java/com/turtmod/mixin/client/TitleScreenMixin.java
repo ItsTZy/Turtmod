@@ -1,0 +1,54 @@
+package com.turtmod.mixin.client;
+
+import com.turtmod.config.TurtModMainMenuScreen;
+import com.turtmod.cosmetics.CosmeticsScreen;
+import com.turtmod.cosmetics.SkinPreviewButton;
+import com.turtmod.gallery.ScreenshotGalleryScreen;
+import com.turtmod.ui.TurtLogoButton;
+import net.minecraft.class_2561;
+import net.minecraft.class_4185;
+import net.minecraft.class_437;
+import net.minecraft.class_442;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin({class_442.class})
+public class TitleScreenMixin extends class_437 {
+   @Shadow
+   @Final
+   private boolean field_18222;
+
+   protected TitleScreenMixin(class_2561 title) {
+      super(title);
+   }
+
+   @Inject(
+      method = {"method_25426"},
+      at = {@At("TAIL")}
+   )
+   private void turtmod$addTurtModButton(CallbackInfo ci) {
+      int x = this.field_22789 / 2 + 104;
+      int y = this.field_22790 / 4 + 48 + 48;
+      this.method_37063(new TurtLogoButton(x, y, 20, 20, (button) -> this.field_22787.method_1507(new TurtModMainMenuScreen(this))));
+      int col = this.field_22789 / 2 - 124;
+      this.method_37063(new com.turtmod.ui.TurtIconButton(col, y, 20, 20, com.turtmod.ui.TurtIcons.camera(),
+         (button) -> this.field_22787.method_1507(new ScreenshotGalleryScreen(this))));
+      com.turtmod.config.TurtModConfig cfg = com.turtmod.TurtModClient.getConfig();
+      if (cfg == null || cfg.hud.skinChangerMenuButton) {
+         int gap = 4;
+         int skinW = 96;
+         int skinX = col - gap - skinW;
+         if (skinX < 4) {                                 // keep the gap, shrink to fit on narrow windows
+            skinW = Math.max(20, col - gap - 4);
+            skinX = 4;
+         }
+         int skinY = this.field_22790 / 4 + 48 + 84;      // just below the language/options row
+         this.method_37063(new SkinPreviewButton(skinX, skinY, skinW, 20,
+            (button) -> this.field_22787.method_1507(new CosmeticsScreen(this))));
+      }
+   }
+}
