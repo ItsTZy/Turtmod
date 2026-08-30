@@ -132,6 +132,11 @@ public final class TurtModConfig {
        public boolean disablePowderSnowFog = false;
        public boolean disableAtmosphericFog = false;
        public int fogDensityPercent = 100;
+       // Dedicated module master switch. The Fog Tweaks card used to alias disableAllFog, so toggling
+       // "Disable All Fog" off wrongly turned the whole card off. This flag is the card's real on/off.
+       // Java default is true so existing configs (which lack this field) keep their prior fog behavior;
+       // the bundled turtmod.default.json sets it false so FRESH installs start with the module off.
+       public boolean fogTweaksEnabled = true;
       public int fireYOffset = -40;
       public int shieldYOffset = -1;
       public boolean shieldStatusRecolor = true;
@@ -304,7 +309,7 @@ public final class TurtModConfig {
          this.zoomOutPerScroll = 0.06427523F;
          this.zoomSmoothInOut = true;
          this.zoomHideArms = true;
-         this.zoomNormalizeSensitivity = true;
+         this.zoomNormalizeSensitivity = false;   // default OFF: zoom keeps normal look speed (user request)
          this.zoomSmoothCamera = false;
          this.zoomResetOnStop = true;
          this.zoomLevel = 5;
@@ -910,6 +915,10 @@ public static final class Combat {
       public boolean clearViewHidePotionParticles = true;
       public boolean clearViewReduceEatingParticles = true;
       public boolean clearViewHideEatingParticles = false;
+      // Hide combat crit sparkles. Note: crit/enchanted_hit particles are spawned server-side and arrive as
+      // packets, so the client can't tell "your" crit from another player's — these hide the particle TYPE.
+      public boolean clearViewHideCritParticles = false;
+      public boolean clearViewHideEnchantHitParticles = false;
       public boolean commandKeysEnabled = true;
       // Legacy: one command/message per slot (migrated into commandKeyMacros on load; kept for
       // backwards compatibility so old configs don't get wiped). "/" prefix = command, else chat.

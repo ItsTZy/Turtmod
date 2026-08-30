@@ -33,7 +33,7 @@ public class HideParticlesMixin {
    )
    private void turtmod$maybeSkipAdd(class_702 manager, class_703 particle,
                                      class_2394 effect, double x, double y, double z, double vx, double vy, double vz) {
-      if (turtmod$shouldHide(effect)) {
+      if (turtmod$shouldHide(effect) || turtmod$shouldHideClearView(effect)) {
          return;   // don't add to the render list → fully hidden (but method_3056 still returns the particle)
       }
       manager.method_3058(particle);
@@ -70,5 +70,27 @@ public class HideParticlesMixin {
          return id != null && cfg.misc.hiddenParticleIds.contains(id.toString());
       }
       return false;
+   }
+
+   /**
+    * Clear View's crit/enchant-hit hiding. Independent of the Hide Particles module so it works on its own.
+    * crit = the stars on a critical hit; enchanted_hit = the cyan Sharpness/enchant sparks. These particles
+    * are server-spawned, so this hides the particle TYPE (can't isolate your own from another player's).
+    */
+   private static boolean turtmod$shouldHideClearView(class_2394 effect) {
+      TurtModConfig cfg = TurtModClient.getConfig();
+      if (cfg == null || !cfg.misc.enabled || !cfg.misc.clearViewEnabled || effect == null) {
+         return false;
+      }
+      if (!cfg.misc.clearViewHideCritParticles && !cfg.misc.clearViewHideEnchantHitParticles) {
+         return false;
+      }
+      class_2960 id = class_7923.field_41180.method_10221(effect.method_10295());
+      if (id == null) {
+         return false;
+      }
+      String path = id.method_12832();
+      return (cfg.misc.clearViewHideCritParticles && "crit".equals(path))
+         || (cfg.misc.clearViewHideEnchantHitParticles && "enchanted_hit".equals(path));
    }
 }

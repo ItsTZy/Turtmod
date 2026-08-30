@@ -1,28 +1,38 @@
-# TurtMod
+# 🐢 TurtMod
 
-A client-side **Fabric** quality-of-life mod focused on **visual clarity, combat feedback, and HUD
-customization** — with a custom launcher-style config UI, a movable HUD editor, cosmetics, a screenshot
-gallery, command-key macros, and a kit loader. Client-only; no server-side component.
+**TurtMod** is a client-side Fabric mod for Minecraft **1.21.11** that bundles dozens of visual, combat, and HUD quality-of-life tweaks into one place. Every feature is a toggle you control, and on a fresh install everything starts **off** — enable exactly what you want.
 
-## Supported versions (one branch per version)
+> Client-side only. Works on any compatible Fabric installation.
 
-The game became unobfuscated at 26.1, which needs a no-remap Loom incompatible with the intermediary
-setup used for 1.21.11 — so each supported version lives on its own branch:
+## ✨ Features
 
-| Branch | Minecraft | Mappings | Build |
-|---|---|---|---|
-| `master` | 26.2 | Mojang (unobfuscated) | `./gradlew.bat build` |
-| `26.1` | 26.1 line (26.1 / 26.1.1 / 26.1.2) | Mojang (unobfuscated) | `./gradlew.bat build` |
-| `legacy/1.21.11` | 1.21.11 | intermediary (Stonecutter) | `./gradlew.bat :1.21.11:build` |
+- **Visual** — Fullbright, Low Fire, Shield tweaks (recolor/resize/offset), per-fog controls, overlay removal (pumpkin blur, powder snow, darkness, portal), item scaling, block-outline recolor, hit color.
+- **Combat & HUD** — Custom hitboxes with **per-entity colors**, player health indicator, movable HUDs (armor, potions, keystrokes, CPS, coordinates, FPS/ping) with a HUD editor, Clean F3.
+- **Utility** — Zoom, freelook, clear view, particle & sound tweaks, command keys, screenshot gallery & editor, kit loader, skin & cape changer, Discord RPC.
 
-The 26.x branches require a **JDK 25** Gradle daemon and Fabric loader **≥ 0.19.3**. On `legacy/1.21.11`
-a single harmless `Cannot remap … class_742` warning is expected. Testing is manual in-game.
+Everything is configurable in-game via **Mod Menu** (or `config/turtmod.json`), with a built-in color picker.
 
-## Documentation
+## 📦 Installation
 
-- **[OVERVIEW.md](OVERVIEW.md)** — feature catalog, architecture, and design decisions.
-- **[TECHNICAL.md](TECHNICAL.md)** — code-level reference: config schema, every mixin, keybinds, commands.
+1. Install **Fabric Loader** for Minecraft 1.21.11.
+2. Add the dependencies to your `mods/` folder: **Fabric API**, **Fabric Language Kotlin**, **Cloth Config**, **Mod Menu**.
+3. Drop the TurtMod `.jar` into `mods/`.
+4. Launch with the Fabric profile.
 
-## License
+## 🔧 Building from source
 
-CC0.
+```bash
+./gradlew build
+```
+
+The built jar is written to `versions/1.21.11/build/libs/`.
+
+## 💚 Credits & Thanks
+
+TurtMod was inspired and helped by several amazing mods and their creators. Huge thanks to every project whose ideas and hard work shaped this one, and to the wider Fabric modding community. 🙏
+
+Thank you to everyone who tested TurtMod and sent feedback — and a **big thank you to Veqtora** for all the help along the way. 💛
+
+## 📜 License
+
+Licensed under the **GNU General Public License v3.0** — see [`LICENSE`](LICENSE). This mod reuses ideas and, where applicable, code from other open-source Fabric mods; GPL-3.0 keeps the project open and ensures those contributions are credited and shared alike.

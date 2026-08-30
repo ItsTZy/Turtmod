@@ -61,6 +61,12 @@ public class ScreenshotGalleryScreen extends class_437 {
    private int gridH;
    private int footerY;
    private int scrollOffset = 0;
+   // Scrollbar geometry (in logical coords), stored each frame so clicks/drags can hit-test it.
+   private static final int SB_W = 6;
+   private int sbTrackX, sbTrackY, sbTrackH, sbThumbY, sbThumbH;
+   private boolean sbVisible = false;
+   private boolean draggingScrollbar = false;
+   private int sbGrabDy = 0;   // offset from thumb top to grab point, so the thumb doesn't jump
    private int selectedIdx = -1;
    private String statusMessage = "";
    private int messageTicks = 0;
@@ -204,7 +210,9 @@ public class ScreenshotGalleryScreen extends class_437 {
    private void deleteSelected() {
       if (this.selectedIdx >= 0 && this.selectedIdx < this.screenshots.size()) {
          try {
-            Files.delete(((File)this.screenshots.get(this.selectedIdx)).toPath());
+            File del = (File)this.screenshots.get(this.selectedIdx);
+            Files.delete(del.toPath());
+            this.releaseThumb(del);
             this.setStatus("Deleted image.");
             this.loadScreenshots();
          } catch (IOException var2) {
@@ -243,7 +251,7 @@ public class ScreenshotGalleryScreen extends class_437 {
          case 1 -> { if (this.field_22787 != null) this.field_22787.method_1507(new ScreenshotEditorScreen(this, file)); }
          case 2 -> setStatus(ImageClipboardUtils.copyImageToClipboard(file) ? "Copied to clipboard!" : "Failed to copy.");
          case 3 -> {
-            try { Files.delete(file.toPath()); loadScreenshots(); setStatus("Deleted."); }
+            try { Files.delete(file.toPath()); releaseThumb(file); loadScreenshots(); setStatus("Deleted."); }
             catch (java.io.IOException e) { setStatus("Failed to delete."); }
          }
          default -> { }
@@ -385,17 +393,36 @@ public class ScreenshotGalleryScreen extends class_437 {
       }
       context.method_44380();
 
-      // ── Scrollbar (right of grid)
+      // ── Scrollbar (right of grid) — clickable + draggable (see mouseClicked/Dragged/Released)
       int maxScroll = maxScrollPx();
-      if (maxScroll > 0) {
+      this.sbVisible = maxScroll > 0;
+      if (this.sbVisible) {
          int sbX = this.gridX + this.gridW + 3;
          int sbH = this.gridH;
-         TurtUIUtils.drawRoundedRect(context, sbX, this.gridY, 3, sbH, 1, new Color(0x33353535, true));
          float ratio = (float) this.gridH / (this.gridH + maxScroll);
-         int tbH = Math.max(16, (int)(sbH * ratio));
+         int tbH = Math.max(20, (int)(sbH * ratio));
          int tbY = this.gridY + (int)((sbH - tbH) * ((float)this.scrollOffset / maxScroll));
-         TurtUIUtils.drawRoundedRect(context, sbX, tbY, 3, tbH, 1, ACCENT_GREEN);
+         // Remember the hit-test rects for input handling.
+         this.sbTrackX = sbX;
+         this.sbTrackY = this.gridY;
+         this.sbTrackH = sbH;
+         this.sbThumbY = tbY;
+         this.sbThumbH = tbH;
+         TurtUIUtils.drawRoundedRect(context, sbX, this.gridY, SB_W, sbH, SB_W / 2, new Color(0x33353535, true));
+         boolean hov = this.draggingScrollbar; // subtle brighten while dragging
+         TurtUIUtils.drawRoundedRect(context, sbX, tbY, SB_W, tbH, SB_W / 2, hov ? TEXT_MAIN : ACCENT_GREEN);
       }
+   }
+
+   /** Set scrollOffset so the thumb top sits at the given logical Y, clamped to the track. */
+   private void scrollThumbToY(int thumbTopY) {
+      int maxScroll = maxScrollPx();
+      if (maxScroll <= 0) return;
+      int travel = this.sbTrackH - this.sbThumbH;
+      if (travel <= 0) { this.scrollOffset = 0; return; }
+      float frac = (float)(thumbTopY - this.sbTrackY) / travel;
+      frac = Math.max(0f, Math.min(1f, frac));
+      this.scrollOffset = Math.round(frac * maxScroll);
    }
 
    private void renderThumb(class_332 ctx, int mx, int my,
@@ -470,6 +497,21 @@ public class ScreenshotGalleryScreen extends class_437 {
       for (TurtUIButton btn : this.buttons) {
          if (btn.mouseClicked(mouseX, mouseY, button)) return true;
       }
+      // Scrollbar: click the thumb to drag it, click the track to page-jump toward the click.
+      if (button == 0 && this.sbVisible
+          && mouseX >= this.sbTrackX - 2 && mouseX <= this.sbTrackX + SB_W + 2
+          && mouseY >= this.sbTrackY && mouseY <= this.sbTrackY + this.sbTrackH) {
+         if (mouseY >= this.sbThumbY && mouseY <= this.sbThumbY + this.sbThumbH) {
+            this.draggingScrollbar = true;
+            this.sbGrabDy = (int)(mouseY - this.sbThumbY);
+         } else {
+            // Center the thumb on the click, then start dragging from there.
+            this.draggingScrollbar = true;
+            this.sbGrabDy = this.sbThumbH / 2;
+            this.scrollThumbToY((int)mouseY - this.sbGrabDy);
+         }
+         return true;
+      }
       // Uniform-grid click detection (mirrors renderFeaturedRow).
       if (mouseX >= this.gridX && mouseX <= this.gridX + this.gridW
           && mouseY >= this.gridY && mouseY <= this.gridY + this.gridH) {
@@ -513,6 +555,22 @@ public class ScreenshotGalleryScreen extends class_437 {
       return super.method_25402(click, bl);
    }
 
+   public boolean method_25403(class_11909 click, double deltaX, double deltaY) {
+      if (this.draggingScrollbar && click.method_74245() == 0) {
+         double my = this.uiScale.toLogicalY(click.comp_4799());
+         this.scrollThumbToY((int)my - this.sbGrabDy);
+         return true;
+      }
+      return super.method_25403(click, deltaX, deltaY);
+   }
+
+   public boolean method_25406(class_11909 click) {
+      if (click.method_74245() == 0) {
+         this.draggingScrollbar = false;
+      }
+      return super.method_25406(click);
+   }
+
    public boolean method_25401(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
       int maxScroll = maxScrollPx();
       if (maxScroll > 0) {
@@ -524,5 +582,30 @@ public class ScreenshotGalleryScreen extends class_437 {
 
    public void method_25419() {
       this.field_22787.method_1507(this.parent);
+   }
+
+   /** Release and forget a single file's cached thumbnail (used after deletion). */
+   private void releaseThumb(File file) {
+      class_2960 id = this.thumbCache.remove(file.getAbsolutePath());
+      if (id != null) {
+         try { class_310.method_1551().method_1531().method_4615(id); } catch (Throwable ignored) { }
+      }
+   }
+
+   /** Release every cached thumbnail GPU texture and clear the cache (called when the screen is removed). */
+   private void releaseThumbnails() {
+      try {
+         var tm = class_310.method_1551().method_1531();
+         for (class_2960 id : this.thumbCache.values()) {
+            if (id != null) tm.method_4615(id);
+         }
+      } catch (Throwable ignored) {
+      }
+      this.thumbCache.clear();
+   }
+
+   public void method_25432() {
+      this.releaseThumbnails();
+      super.method_25432();
    }
 }

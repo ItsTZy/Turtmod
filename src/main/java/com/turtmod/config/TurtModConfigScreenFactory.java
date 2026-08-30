@@ -109,13 +109,13 @@ public final class TurtModConfigScreenFactory {
             .build())
          .group(OptionGroup.createBuilder("Camera")
             .addOption(bool("Freelook", () -> cfg.visual.freelookEnabled, v -> cfg.visual.freelookEnabled = v))
-            .addOption(intOpt("Freelook Sensitivity %", () -> cfg.visual.freelookSensitivityPercent, v -> cfg.visual.freelookSensitivityPercent = v, 25, 200, 5))
+            .addOption(intOpt("Freelook Sensitivity %", () -> cfg.visual.freelookSensitivityPercent, v -> cfg.visual.freelookSensitivityPercent = v, 25, 200, 1))
             .addOption(bool("Hurt Cam", () -> cfg.visual.hurtCamEnabled, v -> cfg.visual.hurtCamEnabled = v))
             .addOption(enumOpt("Hurt Cam Mode", () -> cfg.visual.hurtCamMode, v -> cfg.visual.hurtCamMode = v, TurtModConfig.HurtCamMode.class))
-            .addOption(intOpt("Hurt Camera Shake %", () -> cfg.visual.hurtCameraShakePercent, v -> cfg.visual.hurtCameraShakePercent = v, 0, 150, 5))
+            .addOption(intOpt("Hurt Camera Shake %", () -> cfg.visual.hurtCameraShakePercent, v -> cfg.visual.hurtCameraShakePercent = v, 0, 150, 1))
             .build())
          .group(OptionGroup.createBuilder("Overlays & Fog")
-            .addOption(intOpt("Fire Offset Y", () -> cfg.visual.fireYOffset, v -> cfg.visual.fireYOffset = v, -100, 100, 5))
+            .addOption(intOpt("Fire Offset Y", () -> cfg.visual.fireYOffset, v -> cfg.visual.fireYOffset = v, -100, 100, 1))
             .addOption(bool("Disable Fire Overlay", () -> cfg.visual.disableFireOverlay, v -> cfg.visual.disableFireOverlay = v))
             .addOption(bool("Disable Pumpkin Blur", () -> cfg.visual.disablePumpkinBlur, v -> cfg.visual.disablePumpkinBlur = v))
             .addOption(bool("Disable Powder Snow", () -> cfg.visual.disablePowderSnowOverlay, v -> cfg.visual.disablePowderSnowOverlay = v))
@@ -124,13 +124,13 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Disable Water Fog", () -> cfg.visual.disableWaterFog, v -> cfg.visual.disableWaterFog = v))
             .addOption(bool("Disable Lava Fog", () -> cfg.visual.disableLavaFog, v -> cfg.visual.disableLavaFog = v))
             .addOption(bool("Disable Nether Fog", () -> cfg.visual.disableNetherFog, v -> cfg.visual.disableNetherFog = v))
-            .addOption(intOpt("Fog Distance %", () -> cfg.visual.fogDensityPercent, v -> cfg.visual.fogDensityPercent = v, 25, 400, 5))
+            .addOption(intOpt("Fog Distance %", () -> cfg.visual.fogDensityPercent, v -> cfg.visual.fogDensityPercent = v, 25, 400, 1))
             .build())
          .group(OptionGroup.createBuilder("Items")
             .addOption(bool("Held Item Tweaks", () -> cfg.visual.heldItemTweaksEnabled, v -> cfg.visual.heldItemTweaksEnabled = v))
-            .addOption(intOpt("Held Item Scale %", () -> cfg.visual.heldItemScalePercent, v -> cfg.visual.heldItemScalePercent = v, 50, 150, 5))
+            .addOption(intOpt("Held Item Scale %", () -> cfg.visual.heldItemScalePercent, v -> cfg.visual.heldItemScalePercent = v, 50, 150, 1))
             .addOption(bool("Enable Small Totem", () -> cfg.visual.enableSmallTotem, v -> cfg.visual.enableSmallTotem = v))
-            .addOption(intOpt("Totem Scale %", () -> Math.round(cfg.visual.totemScale * 100.0F), v -> cfg.visual.totemScale = (float)v / 100.0F, 25, 150, 5))
+            .addOption(intOpt("Totem Scale %", () -> Math.round(cfg.visual.totemScale * 100.0F), v -> cfg.visual.totemScale = (float)v / 100.0F, 25, 150, 1))
             .addOption(bool("Fishing Line Color", () -> cfg.visual.fishingRodOverlay, v -> cfg.visual.fishingRodOverlay = v))
             .addOption(color("Line Color", () -> cfg.visual.fishingRodOverlayColor, v -> cfg.visual.fishingRodOverlayColor = v, GradientKeys.FISHING_LINE))
             .addOption(numOpt("Line Opacity", () -> cfg.visual.fishingRodOverlayAlpha, v -> cfg.visual.fishingRodOverlayAlpha = v, 0.1F, 1.0F, 0.05F))
@@ -139,7 +139,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Recolor Block Outline", () -> cfg.visual.recolorBlockOutline, v -> cfg.visual.recolorBlockOutline = v))
             .addOption(color("Block Outline Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v))
             .addOption(intOpt("Block Outline Width", () -> cfg.visual.blockOutlineWidth, v -> cfg.visual.blockOutlineWidth = v, 1, 10, 1))
-            .addOption(intOpt("Block Outline Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 5))
+            .addOption(intOpt("Block Outline Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 1))
             .addOption(bool("Rainbow Block Outline", () -> cfg.visual.blockOutlineRainbow, v -> cfg.visual.blockOutlineRainbow = v))
             .build())
          .build();
@@ -166,14 +166,14 @@ public final class TurtModConfigScreenFactory {
             }, TurtModConfig.ArmorHudDurabilityMode.class))
             .addOption(bool("Low Durability Warning", () -> cfg.hud.armorHudWarnings, v -> cfg.hud.armorHudWarnings = v))
             .addOption(bool("Text Color at Full Durability", () -> cfg.hud.armorHudFullDurabilityTextColor, v -> cfg.hud.armorHudFullDurabilityTextColor = v))
-            .addOption(intOpt("Armor Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Armor Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 1))
             .addOption(bool("Movable Potion HUD", () -> cfg.hud.movablePotionHud, v -> cfg.hud.movablePotionHud = v))
             .addOption(enumOpt("Potion Style", () -> cfg.hud.potionHudStyle, v -> cfg.hud.potionHudStyle = v, TurtModConfig.PotionHudStyle.class))
             .addOption(enumOpt("Potion Sort By", () -> cfg.hud.potionSortMode, v -> cfg.hud.potionSortMode = v, TurtModConfig.PotionSortMode.class))
             .addOption(bool("Potion Horizontal", () -> cfg.hud.potionHudHorizontal, v -> cfg.hud.potionHudHorizontal = v))
             .addOption(intOpt("Potion Columns", () -> cfg.hud.potionHudColumns, v -> cfg.hud.potionHudColumns = v, 1, 4, 1))
             .addOption(bool("Potion Show Flags", () -> cfg.hud.potionShowFlags, v -> cfg.hud.potionShowFlags = v))
-            .addOption(intOpt("Potion Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Potion Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 1))
             .build())
          .group(OptionGroup.createBuilder("Counters & Info")
             .addOption(bool("FPS/Ping", () -> cfg.hud.minimalFpsPingOverlay || cfg.hud.pingHudEnabled, v -> { cfg.hud.minimalFpsPingOverlay = v; cfg.hud.pingHudEnabled = v; }))
@@ -204,7 +204,7 @@ public final class TurtModConfigScreenFactory {
             .build())
          .group(OptionGroup.createBuilder("Clean F3")
             .addOption(bool("Clean F3 Mode", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))
-            .addOption(intOpt("Clean F3 Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Clean F3 Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 1))
             .addOption(bool("Show FPS/Ping", () -> cfg.hud.cleanF3ShowFpsPing, v -> cfg.hud.cleanF3ShowFpsPing = v))
             .addOption(bool("Show Position", () -> cfg.hud.cleanF3ShowPosition, v -> cfg.hud.cleanF3ShowPosition = v))
             .addOption(bool("Show Facing", () -> cfg.hud.cleanF3ShowFacing, v -> cfg.hud.cleanF3ShowFacing = v))
@@ -225,7 +225,7 @@ public final class TurtModConfigScreenFactory {
          .group(OptionGroup.createBuilder("Hit Color")
             .addOption(bool("Hit Color", () -> cfg.visual.hitColor.enabled, v -> cfg.visual.hitColor.enabled = v))
             .addOption(color("Hit Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v)))
-            .addOption(intOpt("Hit Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 5))
+            .addOption(intOpt("Hit Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 1))
             .addOption(bool("Armor Damage Tint", () -> cfg.visual.armorDamageTint, v -> cfg.visual.armorDamageTint = v))
             .addOption(bool("Armor Trim Tint", () -> cfg.visual.armorDamageTintTrim, v -> cfg.visual.armorDamageTintTrim = v))
             .build())
@@ -237,7 +237,7 @@ public final class TurtModConfigScreenFactory {
          .group(OptionGroup.createBuilder("HUD Theme")
             // Clean, Lunar-style theme: background, text, accent, shadow. Background Opacity 0 = text-only.
             .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v, GradientKeys.HUD_BG))
-            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
+            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 1))
             .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v, GradientKeys.HUD_TEXT))
             .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v, GradientKeys.HUD_ACCENT))
             .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v))
@@ -293,10 +293,14 @@ public final class TurtModConfigScreenFactory {
          }
          case LOW_SHIELD -> resetShieldDefaults(cfg);
          case FOG_CONTROLS -> {
+            cfg.visual.fogTweaksEnabled = dv.fogTweaksEnabled;
             cfg.visual.disableAllFog = dv.disableAllFog;
+            cfg.visual.disableAtmosphericFog = dv.disableAtmosphericFog;
             cfg.visual.disableWaterFog = dv.disableWaterFog;
             cfg.visual.disableLavaFog = dv.disableLavaFog;
             cfg.visual.disableNetherFog = dv.disableNetherFog;
+            cfg.visual.disablePowderSnowFog = dv.disablePowderSnowFog;
+            cfg.visual.disableBlindnessFog = dv.disableBlindnessFog;
             cfg.visual.fogDensityPercent = dv.fogDensityPercent;
          }
          case OVERLAYS -> {
@@ -480,6 +484,8 @@ public final class TurtModConfigScreenFactory {
             cfg.misc.clearViewHidePotionParticles = dm.clearViewHidePotionParticles;
             cfg.misc.clearViewReduceEatingParticles = dm.clearViewReduceEatingParticles;
             cfg.misc.clearViewHideEatingParticles = dm.clearViewHideEatingParticles;
+            cfg.misc.clearViewHideCritParticles = dm.clearViewHideCritParticles;
+            cfg.misc.clearViewHideEnchantHitParticles = dm.clearViewHideEnchantHitParticles;
          }
          case CHAT_TWEAKS -> {
             cfg.hud.chatTweaksEnabled = dh.chatTweaksEnabled;
@@ -553,25 +559,27 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Gamma Level", () -> (int)Math.round(cfg.visual.fullbright.value), v -> cfg.visual.fullbright.value = v, 1, 32, 1));
          case FREELOOK -> group
             .addOption(bool("Enabled", () -> cfg.visual.freelookEnabled, v -> cfg.visual.freelookEnabled = v))
-            .addOption(intOpt("Sensitivity %", () -> cfg.visual.freelookSensitivityPercent, v -> cfg.visual.freelookSensitivityPercent = v, 25, 200, 5));
+            .addOption(intOpt("Sensitivity %", () -> cfg.visual.freelookSensitivityPercent, v -> cfg.visual.freelookSensitivityPercent = v, 25, 200, 1));
          case HIT_COLOR -> group
             .addOption(bool("Enabled", () -> cfg.visual.hitColor.enabled, v -> cfg.visual.hitColor.enabled = v))
             .addOption(color("Color", () -> cfg.visual.hitColor.color, v -> cfg.visual.hitColor.setColor(v)))
-            .addOption(intOpt("Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 5))
+            .addOption(intOpt("Alpha", () -> cfg.visual.hitColor.alpha, v -> cfg.visual.hitColor.setAlpha(v), 0, 255, 1))
             .addOption(bool("Armor Damage Tint", () -> cfg.visual.armorDamageTint, v -> cfg.visual.armorDamageTint = v))
             .addOption(bool("Armor Trim Tint", () -> cfg.visual.armorDamageTintTrim, v -> cfg.visual.armorDamageTintTrim = v));
          case LOW_FIRE -> group
             .addOption(bool("Disable Fire Overlay", () -> cfg.visual.disableFireOverlay, v -> cfg.visual.disableFireOverlay = v))
-            .addOption(intOpt("Fire Offset Y", () -> cfg.visual.fireYOffset, v -> cfg.visual.fireYOffset = v, -100, 100, 5));
+            .addOption(intOpt("Fire Offset Y", () -> cfg.visual.fireYOffset, v -> cfg.visual.fireYOffset = v, -100, 100, 1));
          case LOW_SHIELD -> addShieldOptions(group, cfg);
          case FOG_CONTROLS -> group
+            .addOption(bool("Enabled", () -> cfg.visual.fogTweaksEnabled, v -> cfg.visual.fogTweaksEnabled = v))
             .addOption(bool("Disable All Fog", () -> cfg.visual.disableAllFog, v -> cfg.visual.disableAllFog = v))
+            .addOption(bool("Disable Atmospheric Fog", () -> cfg.visual.disableAtmosphericFog, v -> cfg.visual.disableAtmosphericFog = v))
             .addOption(bool("Disable Water Fog", () -> cfg.visual.disableWaterFog, v -> cfg.visual.disableWaterFog = v))
             .addOption(bool("Disable Lava Fog", () -> cfg.visual.disableLavaFog, v -> cfg.visual.disableLavaFog = v))
             .addOption(bool("Disable Nether Fog", () -> cfg.visual.disableNetherFog, v -> cfg.visual.disableNetherFog = v))
             .addOption(bool("Disable Powder Snow Fog", () -> cfg.visual.disablePowderSnowFog, v -> cfg.visual.disablePowderSnowFog = v))
             .addOption(bool("Disable Blindness Fog", () -> cfg.visual.disableBlindnessFog, v -> cfg.visual.disableBlindnessFog = v))
-            .addOption(intOpt("Fog Distance %", () -> cfg.visual.fogDensityPercent, v -> cfg.visual.fogDensityPercent = v, 25, 400, 5));
+            .addOption(intOpt("Fog Distance %", () -> cfg.visual.fogDensityPercent, v -> cfg.visual.fogDensityPercent = v, 25, 400, 1));
          case OVERLAYS -> group
             .addOption(bool("Disable Pumpkin Blur", () -> cfg.visual.disablePumpkinBlur, v -> cfg.visual.disablePumpkinBlur = v))
             .addOption(bool("Disable Powder Snow", () -> cfg.visual.disablePowderSnowOverlay, v -> cfg.visual.disablePowderSnowOverlay = v))
@@ -580,20 +588,20 @@ public final class TurtModConfigScreenFactory {
          case CAMERA_SETTINGS -> group
             .addOption(bool("Enabled", () -> cfg.visual.hurtCamEnabled, v -> cfg.visual.hurtCamEnabled = v))
             .addOption(enumOpt("Mode", () -> cfg.visual.hurtCamMode, v -> cfg.visual.hurtCamMode = v, TurtModConfig.HurtCamMode.class))
-            .addOption(intOpt("Shake %", () -> cfg.visual.hurtCameraShakePercent, v -> cfg.visual.hurtCameraShakePercent = v, 0, 150, 5));
+            .addOption(intOpt("Shake %", () -> cfg.visual.hurtCameraShakePercent, v -> cfg.visual.hurtCameraShakePercent = v, 0, 150, 1));
          case BLOCK_OUTLINE -> group
             .addOption(bool("Enabled", () -> cfg.visual.recolorBlockOutline, v -> cfg.visual.recolorBlockOutline = v))
             .addOption(color("Color", () -> cfg.visual.blockOutlineColor, v -> cfg.visual.blockOutlineColor = v))
             .addOption(intOpt("Width", () -> cfg.visual.blockOutlineWidth, v -> cfg.visual.blockOutlineWidth = v, 1, 10, 1))
-            .addOption(intOpt("Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 5))
+            .addOption(intOpt("Opacity", () -> cfg.visual.blockOutlineAlpha, v -> cfg.visual.blockOutlineAlpha = v, 0, 255, 1))
             .addOption(bool("Rainbow", () -> cfg.visual.blockOutlineRainbow, v -> cfg.visual.blockOutlineRainbow = v));
          case SMALL_TOTEM -> group
             .addOption(bool("Enabled", () -> cfg.visual.enableSmallTotem, v -> cfg.visual.enableSmallTotem = v))
-            .addOption(intOpt("Totem Scale %", () -> Math.round(cfg.visual.totemScale * 100.0F), v -> cfg.visual.totemScale = (float)v / 100.0F, 25, 150, 5))
-            .addOption(intOpt("Totem Offset X", () -> Math.round(cfg.visual.totemOffsetX * 100.0F), v -> cfg.visual.totemOffsetX = (float)v / 100.0F, -100, 100, 5))
-            .addOption(intOpt("Totem Offset Y", () -> Math.round(cfg.visual.totemOffsetY * 100.0F), v -> cfg.visual.totemOffsetY = (float)v / 100.0F, -100, 100, 5))
-            .addOption(intOpt("Totem Offset Z", () -> Math.round(cfg.visual.totemOffsetZ * 100.0F), v -> cfg.visual.totemOffsetZ = (float)v / 100.0F, -100, 100, 5))
-            .addOption(intOpt("Totem Pop Scale %", () -> cfg.visual.totemPopScalePercent, v -> cfg.visual.totemPopScalePercent = v, 25, 200, 5))
+            .addOption(intOpt("Totem Scale %", () -> Math.round(cfg.visual.totemScale * 100.0F), v -> cfg.visual.totemScale = (float)v / 100.0F, 25, 150, 1))
+            .addOption(intOpt("Totem Offset X", () -> Math.round(cfg.visual.totemOffsetX * 100.0F), v -> cfg.visual.totemOffsetX = (float)v / 100.0F, -100, 100, 1))
+            .addOption(intOpt("Totem Offset Y", () -> Math.round(cfg.visual.totemOffsetY * 100.0F), v -> cfg.visual.totemOffsetY = (float)v / 100.0F, -100, 100, 1))
+            .addOption(intOpt("Totem Offset Z", () -> Math.round(cfg.visual.totemOffsetZ * 100.0F), v -> cfg.visual.totemOffsetZ = (float)v / 100.0F, -100, 100, 1))
+            .addOption(intOpt("Totem Pop Scale %", () -> cfg.visual.totemPopScalePercent, v -> cfg.visual.totemPopScalePercent = v, 25, 200, 1))
             .addOption(intOpt("Totem Pop Offset X", () -> cfg.visual.totemPopOffsetX, v -> cfg.visual.totemPopOffsetX = v, -100, 100, 1))
             .addOption(intOpt("Totem Pop Offset Y", () -> cfg.visual.totemPopOffsetY, v -> cfg.visual.totemPopOffsetY = v, -100, 100, 1))
             .addOption(intOpt("Totem Pop Offset Z", () -> cfg.visual.totemPopOffsetZ, v -> cfg.visual.totemPopOffsetZ = v, -100, 100, 1))
@@ -606,7 +614,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Show Dimension", () -> cfg.misc.discordRpc.showDimension, v -> cfg.misc.discordRpc.showDimension = v));
          case HELD_ITEM -> group
             .addOption(bool("Held Item Tweaks", () -> cfg.visual.heldItemTweaksEnabled, v -> cfg.visual.heldItemTweaksEnabled = v))
-            .addOption(intOpt("Held Item Scale %", () -> cfg.visual.heldItemScalePercent, v -> cfg.visual.heldItemScalePercent = v, 50, 150, 5))
+            .addOption(intOpt("Held Item Scale %", () -> cfg.visual.heldItemScalePercent, v -> cfg.visual.heldItemScalePercent = v, 50, 150, 1))
             .addOption(bool("Custom Main Hand XYZ", () -> cfg.visual.customHeldItemSize, v -> cfg.visual.customHeldItemSize = v))
             .addOption(numOpt("Main Scale X", () -> cfg.visual.heldItemScaleX, v -> cfg.visual.heldItemScaleX = v, 0.1F, 3.0F, 0.1F))
             .addOption(numOpt("Main Scale Y", () -> cfg.visual.heldItemScaleY, v -> cfg.visual.heldItemScaleY = v, 0.1F, 3.0F, 0.1F))
@@ -644,7 +652,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Low Durability Warning", () -> cfg.hud.armorHudWarnings, v -> cfg.hud.armorHudWarnings = v))
             .addOption(bool("Text Color at Full Durability", () -> cfg.hud.armorHudFullDurabilityTextColor, v -> cfg.hud.armorHudFullDurabilityTextColor = v))
             .addOption(intOpt("Warning Threshold %", () -> cfg.hud.armorHudWarningThresholdPercent, v -> cfg.hud.armorHudWarningThresholdPercent = v, 1, 100, 1))
-            .addOption(intOpt("Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.armorHudScalePercent, v -> cfg.hud.armorHudScalePercent = v, 50, 300, 1));
          case POTION_HUD -> group
             .addOption(bool("Enabled", () -> cfg.hud.movablePotionHud, v -> cfg.hud.movablePotionHud = v))
             .addOption(enumOpt("Style", () -> cfg.hud.potionHudStyle, v -> cfg.hud.potionHudStyle = v, TurtModConfig.PotionHudStyle.class))
@@ -654,13 +662,13 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Show Flags", () -> cfg.hud.potionShowFlags, v -> cfg.hud.potionShowFlags = v))
             .addOption(bool("Compact Timer", () -> cfg.hud.potionTimerCompact, v -> cfg.hud.potionTimerCompact = v))
             .addOption(bool("Clock Timer (1:30)", () -> cfg.hud.potionTimerClock, v -> cfg.hud.potionTimerClock = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.potionHudScalePercent, v -> cfg.hud.potionHudScalePercent = v, 50, 300, 1));
          case FPS_PING -> group
             .addOption(bool("FPS HUD", () -> cfg.hud.minimalFpsPingOverlay, v -> cfg.hud.minimalFpsPingOverlay = v))
             .addOption(bool("Ping HUD", () -> cfg.hud.pingHudEnabled, v -> cfg.hud.pingHudEnabled = v))
             .addOption(bool("Color-Coded FPS", () -> cfg.hud.fpsColorCoded, v -> cfg.hud.fpsColorCoded = v))
-            .addOption(intOpt("FPS Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 5))
-            .addOption(intOpt("Ping Scale %", () -> cfg.hud.pingHudScalePercent, v -> cfg.hud.pingHudScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("FPS Scale %", () -> cfg.hud.overlayScalePercent, v -> cfg.hud.overlayScalePercent = v, 50, 300, 1))
+            .addOption(intOpt("Ping Scale %", () -> cfg.hud.pingHudScalePercent, v -> cfg.hud.pingHudScalePercent = v, 50, 300, 1))
             .addOption(bool("Background", () -> cfg.hud.fpsPingShowBackground, v -> cfg.hud.fpsPingShowBackground = v));
          case REACH -> group
             .addOption(bool("Enabled", () -> cfg.hud.reachDisplay, v -> cfg.hud.reachDisplay = v))
@@ -674,30 +682,30 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Custom Pressed Color", () -> cfg.hud.keystrokesUsePressedColor, v -> cfg.hud.keystrokesUsePressedColor = v))
             .addOption(color("Pressed Color", () -> cfg.hud.keystrokesPressedColor, v -> cfg.hud.keystrokesPressedColor = v, GradientKeys.KEYSTROKES_PRESSED))
             .addOption(color("Pressed Text Color", () -> cfg.hud.keystrokesPressedTextColor, v -> cfg.hud.keystrokesPressedTextColor = v, GradientKeys.KEYSTROKES_PRESSED_TEXT))
-            .addOption(intOpt("Scale %", () -> cfg.hud.keystrokesHudScalePercent, v -> cfg.hud.keystrokesHudScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.keystrokesHudScalePercent, v -> cfg.hud.keystrokesHudScalePercent = v, 50, 300, 1));
          case CPS_COUNTER -> group
             .addOption(bool("Enabled", () -> cfg.hud.cpsCounterHud, v -> cfg.hud.cpsCounterHud = v))
             .addOption(bool("Show Both", () -> cfg.hud.cpsShowBoth, v -> cfg.hud.cpsShowBoth = v))
             .addOption(bool("Show Background", () -> cfg.hud.cpsShowBackground, v -> cfg.hud.cpsShowBackground = v))
             .addOption(bool("Rainbow Text", () -> cfg.hud.cpsRainbow, v -> cfg.hud.cpsRainbow = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.cpsCounterScalePercent, v -> cfg.hud.cpsCounterScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.cpsCounterScalePercent, v -> cfg.hud.cpsCounterScalePercent = v, 50, 300, 1));
          case SPRINT_HUD -> group
             .addOption(bool("Enabled", () -> cfg.hud.toggleSprintHud, v -> cfg.hud.toggleSprintHud = v))
             .addOption(enumOpt("Style", () -> cfg.hud.sprintDisplayStyle, v -> cfg.hud.sprintDisplayStyle = v, TurtModConfig.SprintDisplayStyle.class))
             .addOption(bool("Show Sneaking", () -> cfg.hud.sprintShowSneaking, v -> cfg.hud.sprintShowSneaking = v))
             .addOption(bool("Show Swimming", () -> cfg.hud.sprintShowSwimming, v -> cfg.hud.sprintShowSwimming = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.toggleSprintHudScalePercent, v -> cfg.hud.toggleSprintHudScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Scale %", () -> cfg.hud.toggleSprintHudScalePercent, v -> cfg.hud.toggleSprintHudScalePercent = v, 50, 300, 1))
             .addOption(bool("Background", () -> cfg.hud.sprintShowBackground, v -> cfg.hud.sprintShowBackground = v));
          case INVENTORY_HUD -> group
             .addOption(bool("Enabled", () -> cfg.hud.inventoryHudEnabled, v -> cfg.hud.inventoryHudEnabled = v))
             .addOption(bool("Show Background", () -> cfg.hud.inventoryHudBackground, v -> cfg.hud.inventoryHudBackground = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.inventoryHudScalePercent, v -> cfg.hud.inventoryHudScalePercent = v, 50, 150, 5));
+            .addOption(intOpt("Scale %", () -> cfg.hud.inventoryHudScalePercent, v -> cfg.hud.inventoryHudScalePercent = v, 50, 150, 1));
          case CUSTOM_HITBOXES -> addHitboxOptions(group, cfg);
          case SCOREBOARD -> group
             .addOption(bool("Hide Scoreboard", () -> cfg.visual.hideScoreboard, v -> cfg.visual.hideScoreboard = v))
             .addOption(bool("Hide Numbers", () -> cfg.visual.scoreboardHideNumbers, v -> cfg.visual.scoreboardHideNumbers = v))
             .addOption(bool("Hide Background", () -> cfg.visual.scoreboardHideBackground, v -> cfg.visual.scoreboardHideBackground = v))
-            .addOption(intOpt("Scale %", () -> cfg.visual.scoreboardScalePercent, v -> cfg.visual.scoreboardScalePercent = v, 30, 200, 5))
+            .addOption(intOpt("Scale %", () -> cfg.visual.scoreboardScalePercent, v -> cfg.visual.scoreboardScalePercent = v, 30, 200, 1))
             .addOption(intOpt("Offset X", () -> cfg.visual.scoreboardOffsetX, v -> cfg.visual.scoreboardOffsetX = v, -400, 200, 2))
             .addOption(intOpt("Offset Y", () -> cfg.visual.scoreboardOffsetY, v -> cfg.visual.scoreboardOffsetY = v, -200, 200, 2));
          case BETTER_SCREENSHOT -> group
@@ -705,7 +713,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Corner Preview", () -> cfg.hud.screenshotPreview, v -> cfg.hud.screenshotPreview = v))
             .addOption(enumOpt("Preview Corner", () -> cfg.hud.screenshotPreviewCorner, v -> cfg.hud.screenshotPreviewCorner = v, TurtModConfig.ScreenshotCorner.class))
             .addOption(intOpt("Preview Seconds", () -> cfg.hud.screenshotPreviewSeconds, v -> cfg.hud.screenshotPreviewSeconds = v, 1, 15, 1))
-            .addOption(intOpt("Preview Size %", () -> cfg.hud.screenshotPreviewScalePercent, v -> cfg.hud.screenshotPreviewScalePercent = v, 40, 200, 5))
+            .addOption(intOpt("Preview Size %", () -> cfg.hud.screenshotPreviewScalePercent, v -> cfg.hud.screenshotPreviewScalePercent = v, 40, 200, 1))
             .addOption(bool("Shutter Sound", () -> cfg.hud.screenshotShutterSound, v -> cfg.hud.screenshotShutterSound = v))
             .addOption(bool("Camera Flash", () -> cfg.hud.screenshotFlash, v -> cfg.hud.screenshotFlash = v))
             .addOption(bool("Pause-Menu Gallery Button", () -> cfg.hud.screenshotMenuButton, v -> cfg.hud.screenshotMenuButton = v));
@@ -718,7 +726,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(intOpt("Offset Y", () -> cfg.hud.moduleToastOffsetY, v -> cfg.hud.moduleToastOffsetY = v, -200, 200, 2));
          case CLEAN_F3 -> group
             .addOption(bool("Enabled", () -> cfg.hud.cleanF3Mode, v -> cfg.hud.cleanF3Mode = v))
-            .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 5))
+            .addOption(intOpt("Scale %", () -> cfg.hud.cleanF3ScalePercent, v -> cfg.hud.cleanF3ScalePercent = v, 50, 300, 1))
             .addOption(bool("Background", () -> cfg.hud.cleanF3ShowBackground, v -> cfg.hud.cleanF3ShowBackground = v))
             .addOption(bool("Right Column (system info)", () -> cfg.hud.cleanF3RightColumn, v -> cfg.hud.cleanF3RightColumn = v))
             .addOption(bool("Theme Colours", () -> cfg.hud.cleanF3ThemeColors, v -> cfg.hud.cleanF3ThemeColors = v))
@@ -749,20 +757,22 @@ public final class TurtModConfigScreenFactory {
             .addOption(enumOpt("Style", () -> cfg.combat.playerHealthIndicatorStyle, v -> cfg.combat.playerHealthIndicatorStyle = v, TurtModConfig.PlayerHealthIndicatorStyle.class))
             .addOption(intOpt("Max Hearts", () -> cfg.combat.playerHealthIndicatorMaxHearts, v -> cfg.combat.playerHealthIndicatorMaxHearts = v, 1, 40, 1))
             .addOption(numOpt("Vertical Offset", () -> cfg.combat.playerHealthIndicatorYOffset, v -> cfg.combat.playerHealthIndicatorYOffset = v, -2.0F, 3.0F, 0.1F))
-            .addOption(intOpt("Sprite Scale %", () -> cfg.combat.playerHealthIndicatorSpriteScalePercent, v -> cfg.combat.playerHealthIndicatorSpriteScalePercent = v, 25, 300, 5))
+            .addOption(intOpt("Sprite Scale %", () -> cfg.combat.playerHealthIndicatorSpriteScalePercent, v -> cfg.combat.playerHealthIndicatorSpriteScalePercent = v, 25, 300, 1))
             .addOption(bool("Exact Health Widget", () -> cfg.combat.showExactHealthNumber, v -> cfg.combat.showExactHealthNumber = v))
-            .addOption(intOpt("Widget Offset X", () -> cfg.combat.healthOffsetX, v -> cfg.combat.healthOffsetX = v, -400, 400, 5))
-            .addOption(intOpt("Widget Offset Y", () -> cfg.combat.healthOffsetY, v -> cfg.combat.healthOffsetY = v, -400, 400, 5))
-            .addOption(intOpt("Widget Scale %", () -> cfg.combat.healthScalePercent, v -> cfg.combat.healthScalePercent = v, 50, 300, 5));
+            .addOption(intOpt("Widget Offset X", () -> cfg.combat.healthOffsetX, v -> cfg.combat.healthOffsetX = v, -400, 400, 1))
+            .addOption(intOpt("Widget Offset Y", () -> cfg.combat.healthOffsetY, v -> cfg.combat.healthOffsetY = v, -400, 400, 1))
+            .addOption(intOpt("Widget Scale %", () -> cfg.combat.healthScalePercent, v -> cfg.combat.healthScalePercent = v, 50, 300, 1));
          case ZOOM -> group
             .addOption(bool("Enabled", () -> cfg.visual.zoomEnabled, v -> cfg.visual.zoomEnabled = v))
             .addOption(bool("Toggle Mode", () -> cfg.visual.zoomToggleMode, v -> cfg.visual.zoomToggleMode = v))
-            .addOption(numOpt("Zoom Level", () -> cfg.visual.zoomBaseLevel, v -> cfg.visual.zoomBaseLevel = v, 1.0F, 10.0F, 0.5F))
+            .addOption(numOpt("Zoom Level", () -> cfg.visual.zoomBaseLevel, v -> cfg.visual.zoomBaseLevel = v, 1.0F, 10.0F, 0.1F))
             .addOption(bool("Smooth Zoom", () -> cfg.visual.zoomSmoothInOut, v -> cfg.visual.zoomSmoothInOut = v))
-            .addOption(bool("Hide Arms", () -> cfg.visual.zoomHideArms, v -> cfg.visual.zoomHideArms = v));
+            .addOption(bool("Hide Arms", () -> cfg.visual.zoomHideArms, v -> cfg.visual.zoomHideArms = v))
+            .addOption(bool("Slow/Precise Aim", () -> cfg.visual.zoomNormalizeSensitivity, v -> cfg.visual.zoomNormalizeSensitivity = v))
+            .addOption(bool("Smooth Camera", () -> cfg.visual.zoomSmoothCamera, v -> cfg.visual.zoomSmoothCamera = v));
          case THEME_SETTINGS -> group
             .addOption(color("Background Color", () -> cfg.theme.hudBackgroundColor, v -> cfg.theme.hudBackgroundColor = v, GradientKeys.HUD_BG))
-            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 5))
+            .addOption(intOpt("Background Opacity", () -> cfg.theme.hudBackgroundAlpha, v -> cfg.theme.hudBackgroundAlpha = v, 0, 255, 1))
             .addOption(color("Text Color", () -> cfg.theme.hudTextColor, v -> cfg.theme.hudTextColor = v, GradientKeys.HUD_TEXT))
             .addOption(color("Accent Color", () -> cfg.theme.hudAccentColor, v -> cfg.theme.hudAccentColor = v, GradientKeys.HUD_ACCENT))
             .addOption(bool("Text Shadow", () -> cfg.theme.enableShadows, v -> cfg.theme.enableShadows = v));
@@ -773,7 +783,7 @@ public final class TurtModConfigScreenFactory {
          case COORDINATES_HUD -> group
             .addOption(bool("Enabled", () -> cfg.hud.coordinatesHud, v -> cfg.hud.coordinatesHud = v))
             .addOption(enumOpt("Display Mode", () -> cfg.hud.coordinatesHudMode, v -> cfg.hud.coordinatesHudMode = v, TurtModConfig.CoordinatesHudMode.class))
-            .addOption(intOpt("Scale %", () -> cfg.hud.coordinatesHudScalePercent, v -> cfg.hud.coordinatesHudScalePercent = v, 50, 300, 10))
+            .addOption(intOpt("Scale %", () -> cfg.hud.coordinatesHudScalePercent, v -> cfg.hud.coordinatesHudScalePercent = v, 50, 300, 1))
             .addOption(bool("Show Background", () -> cfg.hud.coordsShowBackground, v -> cfg.hud.coordsShowBackground = v))
             .addOption(bool("Show Chunk", () -> cfg.hud.coordsShowChunk, v -> cfg.hud.coordsShowChunk = v))
             .addOption(bool("Show Direction", () -> cfg.hud.coordsShowDirection, v -> cfg.hud.coordsShowDirection = v))
@@ -801,7 +811,7 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.misc.hideParticlesEnabled, v -> cfg.misc.hideParticlesEnabled = v))
             .addOption(bool("Hide All Particles", () -> cfg.misc.hideParticles, v -> cfg.misc.hideParticles = v))
             .addOption(bool("Fast Particles", () -> cfg.misc.particlesFast, v -> cfg.misc.particlesFast = v))
-            .addOption(intOpt("Particle Lifetime %", () -> cfg.misc.particleLifePercent, v -> cfg.misc.particleLifePercent = v, 0, 100, 5))
+            .addOption(intOpt("Particle Lifetime %", () -> cfg.misc.particleLifePercent, v -> cfg.misc.particleLifePercent = v, 0, 100, 1))
             .addOption(button("Pick Particles to Hide...", () -> openPicker(
                "Hide Particles", "Click a particle to hide/show (spawns a preview)",
                registryIds(net.minecraft.class_7923.field_41180), cfg.misc.hiddenParticleIds,
@@ -810,10 +820,12 @@ public final class TurtModConfigScreenFactory {
             .addOption(bool("Enabled", () -> cfg.misc.clearViewEnabled, v -> cfg.misc.clearViewEnabled = v))
             .addOption(bool("Hide Own Potion Particles", () -> cfg.misc.clearViewHidePotionParticles, v -> cfg.misc.clearViewHidePotionParticles = v))
             .addOption(bool("Shrink Eating Particles", () -> cfg.misc.clearViewReduceEatingParticles, v -> cfg.misc.clearViewReduceEatingParticles = v))
-            .addOption(bool("Hide Eating Particles", () -> cfg.misc.clearViewHideEatingParticles, v -> cfg.misc.clearViewHideEatingParticles = v));
+            .addOption(bool("Hide Eating Particles", () -> cfg.misc.clearViewHideEatingParticles, v -> cfg.misc.clearViewHideEatingParticles = v))
+            .addOption(bool("Hide Crit Particles", () -> cfg.misc.clearViewHideCritParticles, v -> cfg.misc.clearViewHideCritParticles = v))
+            .addOption(bool("Hide Enchant Hit Particles", () -> cfg.misc.clearViewHideEnchantHitParticles, v -> cfg.misc.clearViewHideEnchantHitParticles = v));
          case CHAT_TWEAKS -> group
             .addOption(bool("Enabled", () -> cfg.hud.chatTweaksEnabled, v -> cfg.hud.chatTweaksEnabled = v))
-            .addOption(intOpt("Chat History", () -> cfg.hud.chatHistoryLength, v -> cfg.hud.chatHistoryLength = v, 100, 1000, 50));
+            .addOption(intOpt("Chat History", () -> cfg.hud.chatHistoryLength, v -> cfg.hud.chatHistoryLength = v, 100, 1000, 10));
          case COMMAND_KEYS -> group
             .addOption(bool("Enabled", () -> cfg.misc.commandKeysEnabled, v -> cfg.misc.commandKeysEnabled = v))
             .addOption(button("Edit Command Keys...", () -> {
@@ -873,7 +885,7 @@ public final class TurtModConfigScreenFactory {
 
    private static void addShieldOptions(OptionGroup.Builder group, TurtModConfig cfg) {
       group
-         .addOption(intOpt("Shield Offset Y", () -> cfg.visual.shieldYOffset, v -> cfg.visual.shieldYOffset = v, -100, 100, 5))
+         .addOption(intOpt("Shield Offset Y", () -> cfg.visual.shieldYOffset, v -> cfg.visual.shieldYOffset = v, -100, 100, 1))
          .addOption(bool("Shield Status Recolor", () -> cfg.visual.shieldStatusRecolor, v -> cfg.visual.shieldStatusRecolor = v))
          .addOption(bool("Use Usable Color", () -> cfg.visual.shieldUseUsableColor, v -> cfg.visual.shieldUseUsableColor = v))
          .addOption(color("Usable Color", () -> cfg.visual.shieldUsableColor, v -> cfg.visual.shieldUsableColor = v))
@@ -883,8 +895,8 @@ public final class TurtModConfigScreenFactory {
          .addOption(color("Blocking Color", () -> cfg.visual.shieldUsingColor, v -> cfg.visual.shieldUsingColor = v))
          .addOption(bool("Self Only", () -> cfg.visual.shieldSelfOnly, v -> cfg.visual.shieldSelfOnly = v))
          .addOption(bool("Custom Shield Size", () -> cfg.visual.customShieldSize, v -> cfg.visual.customShieldSize = v))
-         .addOption(numOpt("Self Shield Scale", () -> cfg.visual.selfShieldScale, v -> cfg.visual.selfShieldScale = v, 0.5F, 2.0F, 0.1F))
-         .addOption(numOpt("Others Shield Scale", () -> cfg.visual.othersShieldScale, v -> cfg.visual.othersShieldScale = v, 0.5F, 2.0F, 0.1F))
+         .addOption(numOpt("Self Shield Scale", () -> cfg.visual.selfShieldScale, v -> cfg.visual.selfShieldScale = v, 0.5F, 2.0F, 0.05F))
+         .addOption(numOpt("Others Shield Scale", () -> cfg.visual.othersShieldScale, v -> cfg.visual.othersShieldScale = v, 0.5F, 2.0F, 0.05F))
          .addOption(bool("Fix Blocking Animation", () -> cfg.visual.shieldFixBlockingAnim, v -> cfg.visual.shieldFixBlockingAnim = v))
          .addOption(bool("Shield Sounds", () -> cfg.visual.shieldFixSounds, v -> cfg.visual.shieldFixSounds = v))
          .addOption(bool("Factor 5-Tick Delay", () -> cfg.visual.shieldFix5TickDelay, v -> cfg.visual.shieldFix5TickDelay = v));
@@ -1112,7 +1124,7 @@ public final class TurtModConfigScreenFactory {
       cfg.visual.zoomOutPerScroll = 0.06427523F;
       cfg.visual.zoomSmoothInOut = true;
       cfg.visual.zoomHideArms = true;
-      cfg.visual.zoomNormalizeSensitivity = true;
+      cfg.visual.zoomNormalizeSensitivity = false;
       cfg.visual.zoomSmoothCamera = false;
       cfg.visual.zoomResetOnStop = true;
       ConfigManager.save(cfg);

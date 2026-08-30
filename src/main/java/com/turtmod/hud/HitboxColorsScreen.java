@@ -59,12 +59,9 @@ public class HitboxColorsScreen extends class_437 {
    private int searchX, searchY, searchW, searchH;
    private float listScroll = 0f, addScroll = 0f;
 
-   // Colour picker (opens for one entity at a time).
+   // Colour picker (opens for one entity at a time) — the shared Photoshop-style picker used everywhere.
    private String editing = null;   // entity id whose colour is being edited
-   private float pickH, pickS, pickV, pickA = 1f;
-   private int pickX, pickY;
-   private int dragMode = 0;   // 1 = SV square, 2 = hue, 3 = alpha
-   private static final int PICK_W = 150, PICK_H = 110, HUE_H = 12, ALPHA_H = 12;
+   private com.turtmod.ui.TurtColorPicker picker;
 
    private float openFade = 0f;
    private long lastFrameNs = System.nanoTime();
@@ -136,7 +133,7 @@ public class HitboxColorsScreen extends class_437 {
       if (this.view == View.LIST) renderList(ctx, lmx, lmy); else renderAdd(ctx, lmx, lmy);
 
       for (TurtUIButton b : this.buttons) b.render(ctx, lmx, lmy, this.field_22793);
-      if (this.editing != null) renderPicker(ctx, lmx, lmy);
+      if (this.picker != null) this.picker.render(ctx, this.field_22793, LOGICAL_W, LOGICAL_H, lmx, lmy);
 
       this.uiScale.pop(ctx);
       TurtUIUtils.drawOpenFade(ctx, this.field_22789, this.field_22790, this.openFade);
@@ -204,59 +201,12 @@ public class HitboxColorsScreen extends class_437 {
       ctx.method_44380();
    }
 
-   private void renderPicker(class_332 ctx, int mx, int my) {
-      int px = this.contentX + (this.contentW - PICK_W) / 2;
-      int py = this.contentY + (this.contentH - (PICK_H + HUE_H + ALPHA_H + 40)) / 2;
-      this.pickX = px; this.pickY = py;
-      int totalH = PICK_H + HUE_H + ALPHA_H + 40;
-      TurtUIUtils.drawRoundedRect(ctx, px - 8, py - 8, PICK_W + 16, totalH + 12, 5, Palette.alpha(Palette.PANEL_BG, 250));
-      TurtUIUtils.drawRoundedBorder(ctx, px - 8, py - 8, PICK_W + 16, totalH + 12, 5, Palette.alpha(PANEL_BORDER, 255));
-
-      for (int sxp = 0; sxp < PICK_W; sxp += 2) {
-         float sat = (float) sxp / (PICK_W - 1);
-         for (int syp = 0; syp < PICK_H; syp += 2) {
-            float val = 1f - (float) syp / (PICK_H - 1);
-            ctx.method_25294(px + sxp, py + syp, px + sxp + 2, py + syp + 2, 0xFF000000 | (Color.HSBtoRGB(this.pickH, sat, val) & 0xFFFFFF));
-         }
-      }
-      int mxp = px + Math.round(this.pickS * (PICK_W - 1)), myp = py + Math.round((1f - this.pickV) * (PICK_H - 1));
-      ctx.method_73198(mxp - 2, myp - 2, 5, 5, 0xFFFFFFFF);
-
-      int hy = py + PICK_H + 4;
-      for (int i = 0; i < PICK_W; i++) ctx.method_25294(px + i, hy, px + i + 1, hy + HUE_H, 0xFF000000 | (Color.HSBtoRGB((float) i / (PICK_W - 1), 1f, 1f) & 0xFFFFFF));
-      ctx.method_73198(px + Math.round(this.pickH * (PICK_W - 1)) - 1, hy - 1, 3, HUE_H + 2, 0xFFFFFFFF);
-
-      int ay = hy + HUE_H + 4;
-      int base = Color.HSBtoRGB(this.pickH, this.pickS, this.pickV) & 0xFFFFFF;
-      for (int i = 0; i < PICK_W; i++) {
-         int a = Math.round((float) i / (PICK_W - 1) * 255f);
-         ctx.method_25294(px + i, ay, px + i + 1, ay + ALPHA_H, (a << 24) | base);
-      }
-      ctx.method_73198(px + Math.round(this.pickA * (PICK_W - 1)) - 1, ay - 1, 3, ALPHA_H + 2, 0xFFFFFFFF);
-
-      // Preview + Done.
-      int prevY = ay + ALPHA_H + 6;
-      TurtUIUtils.drawRoundedRect(ctx, px, prevY, 40, 14, 3, new Color(currentColor(), true));
-      TurtUIUtils.drawRoundedBorder(ctx, px, prevY, 40, 14, 3, new Color(0, 0, 0, 255));
-      String label = this.editing.contains(":") ? this.editing.substring(this.editing.indexOf(':') + 1) : this.editing;
-      ctx.method_51433(this.field_22793, label, px + 46, prevY + 3, TEXT_MAIN.getRGB(), false);
-      int dnX = px + PICK_W - 44;
-      boolean dnHov = mx >= dnX && mx <= dnX + 44 && my >= prevY && my <= prevY + 14;
-      TurtUIUtils.drawRoundedRect(ctx, dnX, prevY, 44, 14, 3, dnHov ? Palette.GREEN : BTN_BG);
-      TurtUIUtils.drawRoundedBorder(ctx, dnX, prevY, 44, 14, 3, PANEL_BORDER);
-      ctx.method_25300(this.field_22793, "Done", dnX + 22, prevY + 3, (dnHov ? Palette.alpha(Palette.PANEL_BG, 255) : TEXT_MAIN).getRGB());
-      this.doneX = dnX; this.doneY = prevY;
-   }
-   private int doneX, doneY;
-
-   private int currentColor() {
-      return (Math.round(this.pickA * 255f) << 24) | (Color.HSBtoRGB(this.pickH, this.pickS, this.pickV) & 0xFFFFFF);
-   }
-
-   private void applyColor() {
+   private void closePicker() {
       if (this.editing != null) {
-         cfg().hud.hitboxEntityColors.put(this.editing, currentColor());
+         ConfigManager.save(cfg());
       }
+      this.editing = null;
+      this.picker = null;
    }
 
    private void drawField(class_332 ctx, int x, int y, int w, int h, String text, boolean focused, String ph) {
@@ -271,12 +221,9 @@ public class HitboxColorsScreen extends class_437 {
       double mx = this.uiScale.toLogicalX(click.comp_4798()), my = this.uiScale.toLogicalY(click.comp_4799());
       int button = click.method_74245();
 
-      if (this.editing != null) {   // picker is modal
-         if (pickerClick(mx, my)) return true;
-         // click outside the picker closes it
-         if (mx < this.pickX - 8 || mx > this.pickX + PICK_W + 8 || my < this.pickY - 8 || my > this.pickY + PICK_H + HUE_H + ALPHA_H + 52) {
-            applyColor(); ConfigManager.save(cfg()); this.editing = null;
-         }
+      if (this.picker != null) {   // picker is modal
+         if (this.picker.mouseClicked(mx, my, button)) return true;
+         if (this.picker.isOutside(mx, my)) closePicker();   // click outside closes (already applied live)
          return true;
       }
 
@@ -326,48 +273,27 @@ public class HitboxColorsScreen extends class_437 {
    private void openPicker(String id) {
       this.editing = id;
       int c = cfg().hud.hitboxEntityColors.getOrDefault(id, DEFAULT_COLOR);
-      float[] hsb = Color.RGBtoHSB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, null);
-      this.pickH = hsb[0]; this.pickS = hsb[1]; this.pickV = hsb[2];
-      this.pickA = ((c >>> 24) & 0xFF) / 255f;
+      String label = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+      this.picker = new com.turtmod.ui.TurtColorPicker(c, label, true,
+         argb -> cfg().hud.hitboxEntityColors.put(id, argb),   // live-apply while editing
+         this::closePicker);
    }
-
-   private boolean pickerClick(double mx, double my) {
-      int px = this.pickX, py = this.pickY;
-      if (mx >= this.doneX && mx <= this.doneX + 44 && my >= this.doneY && my <= this.doneY + 14) {
-         applyColor(); ConfigManager.save(cfg()); this.editing = null; return true;
-      }
-      if (mx >= px && mx < px + PICK_W && my >= py && my < py + PICK_H) { this.dragMode = 1; updateSV(mx, my); return true; }
-      int hy = py + PICK_H + 4;
-      if (mx >= px && mx < px + PICK_W && my >= hy && my < hy + HUE_H) { this.dragMode = 2; updateHue(mx); return true; }
-      int ay = hy + HUE_H + 4;
-      if (mx >= px && mx < px + PICK_W && my >= ay && my < ay + ALPHA_H) { this.dragMode = 3; updateAlpha(mx); return true; }
-      return false;
-   }
-
-   private void updateSV(double mx, double my) {
-      this.pickS = (float) Math.max(0, Math.min(1, (mx - this.pickX) / (PICK_W - 1)));
-      this.pickV = 1f - (float) Math.max(0, Math.min(1, (my - this.pickY) / (PICK_H - 1)));
-      applyColor();
-   }
-   private void updateHue(double mx) { this.pickH = (float) Math.max(0, Math.min(1, (mx - this.pickX) / (PICK_W - 1))); applyColor(); }
-   private void updateAlpha(double mx) { this.pickA = (float) Math.max(0, Math.min(1, (mx - this.pickX) / (PICK_W - 1))); applyColor(); }
 
    public boolean method_25403(class_11909 click, double dx, double dy) {
-      if (this.editing != null && this.dragMode != 0) {
+      if (this.picker != null) {
          double mx = this.uiScale.toLogicalX(click.comp_4798()), my = this.uiScale.toLogicalY(click.comp_4799());
-         if (this.dragMode == 1) updateSV(mx, my); else if (this.dragMode == 2) updateHue(mx); else updateAlpha(mx);
-         return true;
+         if (this.picker.mouseDragged(mx, my)) return true;
       }
       return super.method_25403(click, dx, dy);
    }
 
    public boolean method_25406(class_11909 click) {
-      if (this.dragMode != 0) { this.dragMode = 0; return true; }
+      if (this.picker != null) { this.picker.mouseReleased(); return true; }
       return super.method_25406(click);
    }
 
    public boolean method_25401(double mx, double my, double ha, double va) {
-      if (this.editing != null) return true;
+      if (this.picker != null) return true;
       if (this.view == View.LIST) {
          int rows = cfg().hud.hitboxEntityColors.size();
          float max = Math.max(0f, rows * ROW_H - (this.contentH - 28));
@@ -381,6 +307,11 @@ public class HitboxColorsScreen extends class_437 {
    }
 
    public boolean method_25400(class_11905 event) {
+      if (this.picker != null) {
+         String s = event.method_74226();
+         if (s != null && !s.isEmpty()) { this.picker.charTyped(s.charAt(0)); }
+         return true;
+      }
       if (this.searchFocused) {
          String s = event.method_74226();
          if (s != null && !s.isEmpty() && this.search.length() < 32) { this.search += s; this.addScroll = 0f; return true; }
@@ -390,7 +321,11 @@ public class HitboxColorsScreen extends class_437 {
 
    public boolean method_25404(class_11908 input) {
       int key = input.comp_4795();
-      if (this.editing != null && key == 256) { applyColor(); ConfigManager.save(cfg()); this.editing = null; return true; }
+      if (this.picker != null) {
+         if (key == 256 && !this.picker.isEditingField()) { closePicker(); return true; }   // Esc closes when not editing a field
+         this.picker.keyPressed(key);
+         return true;
+      }
       if (this.searchFocused) {
          if (key == 259) { if (!this.search.isEmpty()) this.search = this.search.substring(0, this.search.length() - 1); this.addScroll = 0f; return true; }
          if (key == 257 || key == 335 || key == 256) { this.searchFocused = false; return true; }

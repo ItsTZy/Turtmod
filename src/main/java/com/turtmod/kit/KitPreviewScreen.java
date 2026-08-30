@@ -23,6 +23,7 @@ public class KitPreviewScreen extends class_437 {
    private final String equipName;  // kit name to equip, or null for read-only (e.g. death items)
    private class_1799[] kit;
    private String error;
+   private class_1799 hoveredStack;   // stack under the cursor this frame (for the tooltip)
 
    private static final int SLOT = 18;
 
@@ -82,30 +83,37 @@ public class KitPreviewScreen extends class_437 {
       int left = (this.field_22789 - gridW) / 2;
       int top = 46;
 
+      this.hoveredStack = null;   // recomputed by drawSlot each frame
+
       // Main inventory rows (indices 9..35) then hotbar (0..8) underneath, like the real inventory.
       ctx.method_51433(font, "Inventory", left, top - 11, -5592406, false);
       for (int row = 0; row < 3; row++) {
          for (int col = 0; col < 9; col++) {
-            drawSlot(ctx, font, 9 + row * 9 + col, left + col * SLOT, top + row * SLOT);
+            drawSlot(ctx, font, 9 + row * 9 + col, left + col * SLOT, top + row * SLOT, mx, my);
          }
       }
       int hotbarY = top + 3 * SLOT + 4;
       for (int col = 0; col < 9; col++) {
-         drawSlot(ctx, font, col, left + col * SLOT, hotbarY);
+         drawSlot(ctx, font, col, left + col * SLOT, hotbarY, mx, my);
       }
 
       // Armor (36..39) + offhand (40), grouped on the right of a labelled row below.
       int gearY = hotbarY + SLOT + 14;
       ctx.method_51433(font, "Armor & Offhand", left, gearY - 11, -5592406, false);
       for (int i = 0; i < 4; i++) {
-         drawSlot(ctx, font, 39 - i, left + i * SLOT, gearY);
+         drawSlot(ctx, font, 39 - i, left + i * SLOT, gearY, mx, my);
       }
-      drawSlot(ctx, font, 40, left + 5 * SLOT, gearY);
+      drawSlot(ctx, font, 40, left + 5 * SLOT, gearY, mx, my);
 
       super.method_25394(ctx, mx, my, delta);
+
+      // Hover tooltip (item name + enchantments) drawn last so it sits on top of everything.
+      if (this.hoveredStack != null) {
+         ctx.method_51446(font, this.hoveredStack, mx, my);
+      }
    }
 
-   private void drawSlot(class_332 ctx, class_327 font, int index, int x, int y) {
+   private void drawSlot(class_332 ctx, class_327 font, int index, int x, int y, int mx, int my) {
       TurtUIUtils.drawRoundedRect(ctx, x, y, SLOT, SLOT, 3, new Color(255, 255, 255, 18));
       TurtUIUtils.drawRoundedBorder(ctx, x, y, SLOT, SLOT, 3, new Color(255, 255, 255, 28));
       if (this.kit != null && index < this.kit.length) {
@@ -113,6 +121,9 @@ public class KitPreviewScreen extends class_437 {
          if (stack != null && !stack.method_7960()) {
             ctx.method_51445(stack, x + 1, y + 1);
             ctx.method_51432(font, stack, x + 1, y + 1, null);
+            if (mx >= x && mx < x + SLOT && my >= y && my < y + SLOT) {
+               this.hoveredStack = stack;
+            }
          }
       }
    }

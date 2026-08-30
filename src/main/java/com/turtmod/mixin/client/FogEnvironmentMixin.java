@@ -45,6 +45,21 @@ public abstract class FogEnvironmentMixin {
          return;
       }
       Object self = this;
+      // Darkness fog is driven by the Overlays module's "Disable Darkness" (disableDarknessOverlay),
+      // independent of the Fog Tweaks module — handle it before the fog-module gate.
+      if (self instanceof class_7284) {
+         if (config.visual.disableDarknessOverlay) {
+            fog.field_60582 = Float.MAX_VALUE;
+            fog.field_60583 = Float.MAX_VALUE;
+            fog.field_60584 = Float.MAX_VALUE;
+            fog.field_60585 = Float.MAX_VALUE;
+         }
+         return;
+      }
+      // Everything below is the Fog Tweaks module.
+      if (!config.visual.fogTweaksEnabled) {
+         return;
+      }
       boolean disable;
       if (self instanceof class_11401) {
          disable = config.visual.disableLavaFog;
@@ -54,8 +69,6 @@ public abstract class FogEnvironmentMixin {
          disable = config.visual.disableWaterFog;
       } else if (self instanceof class_7283) {
          disable = config.visual.disableBlindnessFog;
-      } else if (self instanceof class_7284) {
-         disable = config.visual.disableDarknessOverlay;
       } else if (self instanceof class_11398) {
          boolean nether = level != null && "the_nether".equals(level.method_27983().method_29177().method_12832());
          disable = config.visual.disableAllFog || config.visual.disableAtmosphericFog

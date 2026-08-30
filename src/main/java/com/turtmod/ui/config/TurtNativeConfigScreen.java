@@ -111,6 +111,9 @@ public class TurtNativeConfigScreen extends class_437 {
 
    // Colour picker.
    private Option<?> pickerOpt;
+   // For plain (non-gradient) colours we use the shared Photoshop-style picker so every colour picker in
+   // the mod is identical. Gradient-capable colours keep the inline gradient editor below.
+   private com.turtmod.ui.TurtColorPicker solidPicker;
    private float pH;
    private float pS;
    private float pB;
@@ -224,7 +227,11 @@ public class TurtNativeConfigScreen extends class_437 {
          this.renderDropdown(ctx, mx, my);
          this.uiScale.pop(ctx);
       }
-      if (this.pickerOpt != null) {
+      if (this.solidPicker != null) {
+         this.uiScale.push(ctx);
+         this.solidPicker.render(ctx, this.field_22793, LOGICAL_W, LOGICAL_H, mx, my);
+         this.uiScale.pop(ctx);
+      } else if (this.pickerOpt != null) {
          this.uiScale.push(ctx);
          this.renderColorPicker(ctx, mx, my);
          this.uiScale.pop(ctx);
@@ -775,6 +782,10 @@ public class TurtNativeConfigScreen extends class_437 {
          }
          return super.method_25400(input);
       }
+      if (this.solidPicker != null) {
+         this.solidPicker.charTyped(chr);
+         return true;
+      }
       // Auto-focus search the moment the user starts typing (Steam/Discord-style); '/' focuses empty.
       if (this.pickerOpt == null && this.dropdownOpt == null) {
          if (chr == '/') {
@@ -793,6 +804,11 @@ public class TurtNativeConfigScreen extends class_437 {
 
    public boolean method_25404(class_11908 input) {
       int key = input.comp_4795();
+      if (this.solidPicker != null) {
+         if (key == 256 && !this.solidPicker.isEditingField()) { this.closePicker(); return true; }   // Esc closes
+         this.solidPicker.keyPressed(key);
+         return true;
+      }
       if (this.editingNum != null) {
          if (key == 257 || key == 335) { // Enter / numpad Enter
             this.commitNumEdit();
@@ -867,6 +883,13 @@ public class TurtNativeConfigScreen extends class_437 {
             }
          }
          this.dropdownOpt = null;
+         return true;
+      }
+
+      // Shared solid-colour picker captures all clicks while open.
+      if (this.solidPicker != null) {
+         if (this.solidPicker.mouseClicked(mx, my, button)) return true;
+         if (this.solidPicker.isOutside(mx, my)) this.closePicker();
          return true;
       }
 
@@ -1128,6 +1151,9 @@ public class TurtNativeConfigScreen extends class_437 {
    public boolean method_25403(class_11909 click, double dx, double dy) {
       int mx = (int) this.uiScale.toLogicalX(click.comp_4798());
       int my = (int) this.uiScale.toLogicalY(click.comp_4799());
+      if (this.solidPicker != null) {
+         if (this.solidPicker.mouseDragged(mx, my)) return true;
+      }
       if (this.dragPicker != 0) {
          if (this.dragPicker == 1) {
             this.updatePickerSV(mx, my);
@@ -1146,6 +1172,9 @@ public class TurtNativeConfigScreen extends class_437 {
    }
 
    public boolean method_25406(class_11909 click) {
+      if (this.solidPicker != null) {
+         this.solidPicker.mouseReleased();
+      }
       if (this.dragNumeric != null) {
          TurtSounds.tick();
       }
@@ -1172,6 +1201,12 @@ public class TurtNativeConfigScreen extends class_437 {
    }
 
    // ── Value helpers ─────────────────────────────────────────────────────────
+   /** True while either Shift key is held (used to disable slider snapping for fine dragging). */
+   private static boolean turtmod$shiftDown() {
+      net.minecraft.class_1041 w = net.minecraft.class_310.method_1551().method_22683();
+      return net.minecraft.class_3675.method_15987(w, 340) || net.minecraft.class_3675.method_15987(w, 344);
+   }
+
    private void updateNumericFromMouse(int mx) {
       Option<?> opt = this.dragNumeric;
       if (opt == null) {
@@ -1182,7 +1217,8 @@ public class TurtNativeConfigScreen extends class_437 {
       double step = ((Number) opt.getIncrement()).doubleValue();
       float frac = Math.max(0f, Math.min(1f, (float) (mx - this.dragTrackX) / this.dragTrackW));
       double raw = min + frac * (max - min);
-      if (step > 0) {
+      // Hold Shift to drag continuously (ignore the increment snap) for precise fine-tuning.
+      if (step > 0 && !turtmod$shiftDown()) {
          raw = min + Math.round((raw - min) / step) * step;
       }
       raw = Math.max(min, Math.min(max, raw));
@@ -1290,6 +1326,15 @@ public class TurtNativeConfigScreen extends class_437 {
       this.pS = hsb[1];
       this.pB = hsb[2];
 
+      // Plain colour (no gradient support) → shared Photoshop-style picker.
+      if (opt.getGradientKey() == null) {
+         int start = (this.pA << 24) | (argb & 0xFFFFFF);
+         this.solidPicker = new com.turtmod.ui.TurtColorPicker(start, opt.getName(), true,
+            a -> setOption(opt, new ConfigColor(a)),
+            this::closePicker);
+         return;
+      }
+
       // Gradient state: start from the current colour; load a saved gradient for this field if one exists.
       this.pickGradient = false;
       this.pickAnimate = false;
@@ -1328,10 +1373,13 @@ public class TurtNativeConfigScreen extends class_437 {
 
    /** Closes the picker, recording the chosen colour in the recent-colours strip. */
    private void closePicker() {
-      if (this.pickerOpt != null) {
+      if (this.solidPicker != null) {
+         pushRecent(this.solidPicker.argb());
+      } else if (this.pickerOpt != null) {
          pushRecent((this.pA << 24) | (ConfigColor.HSBtoRGB(this.pH, this.pS, this.pB) & 0xFFFFFF));
       }
       this.pickerOpt = null;
+      this.solidPicker = null;
       this.editingHex = false;
    }
 

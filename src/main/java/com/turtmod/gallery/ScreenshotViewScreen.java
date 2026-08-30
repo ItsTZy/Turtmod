@@ -40,10 +40,17 @@ public class ScreenshotViewScreen extends class_437 {
    /** Attach a pixel icon to a button and return it (for inline use when building the button row). */
    private static TurtUIButton icon(TurtUIButton b, String[] ic) { b.icon = ic; return b; }
 
+   // A single stable texture id reused for every screenshot. Registering a new image under the
+   // same id disposes the previous texture, so walking Prev/Next never accumulates textures
+   // (the old code used a per-file id and leaked one full-res texture per press).
+   private static final class_2960 VIEW_TEX = class_2960.method_60655("turtmod", "viewer/current");
+
    private int currentIndex = -1;
    private class_2960 textureId;
-   private int imageWidth;
+   private int imageWidth;   // original screenshot resolution (for display/fit math)
    private int imageHeight;
+   private int texW;         // uploaded texture size (may be downscaled from the original)
+   private int texH;
    private String errorMessage;
    private String statusMessage = "";
    private int statusTicks = 0;
@@ -143,47 +150,62 @@ public class ScreenshotViewScreen extends class_437 {
       this.errorMessage = null;
       if (file == null) {
          this.errorMessage = "No screenshot available.";
-      } else {
-         try {
-            FileInputStream input = new FileInputStream(file);
-
-            label41: {
-               try {
-                  class_1011 image = class_1011.method_4309(input);
-                  if (image != null) {
-                     this.imageWidth = image.method_4307();
-                     this.imageHeight = image.method_4323();
-                     int var10000 = Math.abs(file.getAbsolutePath().hashCode());
-                     String key = "viewer/" + var10000 + "_" + file.lastModified();
-                     this.textureId = class_2960.method_60655("turtmod", key);
-                     class_310.method_1551().method_1531().method_4616(this.textureId, new class_1043(() -> "turtmod:" + key, image));
-                     if (resetView) {
-                        this.pendingViewReset = true;
-                     }
-                     break label41;
-                  }
-
-                  this.errorMessage = "Could not load screenshot.";
-               } catch (Throwable var7) {
-                  try {
-                     input.close();
-                  } catch (Throwable var6) {
-                     var7.addSuppressed(var6);
-                  }
-
-                  throw var7;
-               }
-
-               input.close();
-               return;
-            }
-
-            input.close();
-         } catch (IOException var8) {
-            this.errorMessage = "Could not load screenshot.";
-         }
-
+         return;
       }
+      try (FileInputStream input = new FileInputStream(file)) {
+         class_1011 image = class_1011.method_4309(input);
+         if (image == null) {
+            this.errorMessage = "Could not load screenshot.";
+            return;
+         }
+         // Keep the original resolution for the on-screen fit/zoom math and the "WxH" label.
+         this.imageWidth = image.method_4307();
+         this.imageHeight = image.method_4323();
+         // Downscale huge screenshots so we never upload (or hold) a texture larger than what the
+         // window can actually show. This removes the per-press decode/upload stall as well.
+         class_1011 upload = this.downscaleToFit(image);
+         this.texW = upload.method_4307();
+         this.texH = upload.method_4323();
+         this.textureId = VIEW_TEX;
+         // Same stable id every time -> the previous texture is replaced and disposed, no leak.
+         class_310.method_1551().method_1531().method_4616(this.textureId, new class_1043(() -> "turtmod:viewer/current", upload));
+         if (upload != image) {
+            image.close();   // the downscaled copy owns the GPU texture; free the full-res source
+         }
+         if (resetView) {
+            this.pendingViewReset = true;
+         }
+      } catch (Throwable var8) {
+         this.errorMessage = "Could not load screenshot.";
+      }
+   }
+
+   /** Nearest-neighbour downscale so the longest side fits the framebuffer; returns the source untouched if already small. */
+   private class_1011 downscaleToFit(class_1011 src) {
+      int sw = src.method_4307();
+      int sh = src.method_4323();
+      int maxDim;
+      try {
+         maxDim = Math.max(class_310.method_1551().method_22683().method_4489(), class_310.method_1551().method_22683().method_4506());
+      } catch (Throwable ignored) {
+         maxDim = 2048;
+      }
+      maxDim = Math.max(512, maxDim);
+      if (sw <= maxDim && sh <= maxDim) {
+         return src;
+      }
+      float ratio = (float) maxDim / Math.max(sw, sh);
+      int dw = Math.max(1, Math.round(sw * ratio));
+      int dh = Math.max(1, Math.round(sh * ratio));
+      class_1011 dst = new class_1011(src.method_4318(), dw, dh, false);
+      for (int x = 0; x < dw; ++x) {
+         int sx = Math.min(sw - 1, (int) ((long) x * sw / dw));
+         for (int y = 0; y < dh; ++y) {
+            int sy = Math.min(sh - 1, (int) ((long) y * sh / dh));
+            dst.method_61941(x, y, src.method_61940(sx, sy));
+         }
+      }
+      return dst;
    }
 
    private void resetView() {
@@ -467,7 +489,7 @@ public class ScreenshotViewScreen extends class_437 {
          drawX = this.imageAreaX + this.imageAreaWidth / 2 - drawWidth / 2 + (int)Math.round(this.panX);
          drawY = this.imageAreaY + this.imageAreaHeight / 2 - drawHeight / 2 + (int)Math.round(this.panY);
          context.method_44379(this.imageAreaX, this.imageAreaY, this.imageAreaX + this.imageAreaWidth, this.imageAreaY + this.imageAreaHeight);
-         context.method_25302(class_10799.field_56883, this.textureId, drawX, drawY, 0.0F, 0.0F, drawWidth, drawHeight, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
+         context.method_25302(class_10799.field_56883, this.textureId, drawX, drawY, 0.0F, 0.0F, drawWidth, drawHeight, this.texW, this.texH, this.texW, this.texH);
          if (this.imgFade < 0.99F) {
             int veil = ((int)((1.0F - this.imgFade) * 255.0F) << 24) | (PANEL_BG.getRGB() & 0xFFFFFF);
             context.method_25294(this.imageAreaX, this.imageAreaY, this.imageAreaX + this.imageAreaWidth, this.imageAreaY + this.imageAreaHeight, veil);

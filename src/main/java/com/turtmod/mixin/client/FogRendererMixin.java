@@ -21,7 +21,7 @@ public abstract class FogRendererMixin {
    )
    private int turtmod$adjustFogDistanceChunks(int viewDistanceChunks) {
       TurtModConfig config = TurtModClient.getConfig();
-      if (config != null && config.misc.enabled && config.visual.disableAllFog) {
+      if (config != null && config.misc.enabled && config.visual.fogTweaksEnabled && config.visual.disableAllFog) {
          return Math.max(viewDistanceChunks, 64);
       }
       return viewDistanceChunks;
@@ -34,7 +34,7 @@ public abstract class FogRendererMixin {
    )
    private void turtmod$overrideSubmersionFog(class_4184 camera, CallbackInfoReturnable<class_5636> cir) {
       TurtModConfig config = TurtModClient.getConfig();
-      if (config != null && config.misc.enabled) {
+      if (config != null && config.misc.enabled && config.visual.fogTweaksEnabled) {
          if (config.visual.disableAllFog) {
             cir.setReturnValue(class_5636.field_60563);
          } else {

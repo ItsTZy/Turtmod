@@ -8,10 +8,11 @@
     "TurtMod"
   ],
   "contact": {
-    "homepage": "https://example.com/",
-    "sources": "https://example.com/"
+    "homepage": "https://modrinth.com/project/turtmod",
+    "sources": "https://github.com/ItsTZy/turtmod",
+    "issues": "https://github.com/ItsTZy/turtmod/issues"
   },
-  "license": "CC0-1.0",
+  "license": "GPL-3.0-only",
   "icon": "assets/turtmod/icon.png",
   "environment": "client",
   "entrypoints": {

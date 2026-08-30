@@ -61,3 +61,20 @@ MOD_HANDOFF.md
 PORTING_HANDOFF.md
 hand.txt
 .claude/
+
+# ── Publishing: keep reference mods, backups & decompiled sources OUT of the repo ──
+# (many reference mods are All-Rights-Reserved / no-license — must NOT be redistributed)
+repos/
+_mcref/
+_mcsrc/
+_intermediary_decompile_java_backup_*/
+_named_decompile_java_backup_*/
+_src_backup_*/
+_ui_backup_*/
+New folder/
+# stray decompiled package roots at project root
+/com/
+/net/
+# local build artifacts / temp
+LICENSE.tmp
+*.hprof
