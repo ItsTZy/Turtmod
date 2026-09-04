@@ -141,6 +141,10 @@ public final class TurtModClient implements ClientModInitializer {
       TurtLogger.success("TurtMod initialized successfully!");
       ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
       ClientLifecycleEvents.CLIENT_STOPPING.register((ClientLifecycleEvents.ClientStopping)(client) -> TurtDiscordRpcService.shutdown());
+      // Freelook: restore the camera when leaving a world/server. GameOptions is client-level and
+      // survives the disconnect, so without this an active Freelook leaves the game stuck in the
+      // third-person view it forced (and that stale value poisons the next activation).
+      ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> FreeLookFeature.reset(client));
       HudRenderCallback.EVENT.register(this::onHudRender);
 
       // Death coordinates: draw on the vanilla death screen (no mixin needed).
